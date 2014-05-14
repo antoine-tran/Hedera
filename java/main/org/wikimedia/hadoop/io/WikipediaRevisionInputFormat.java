@@ -20,6 +20,7 @@
 package org.wikimedia.hadoop.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
@@ -27,11 +28,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -166,11 +169,15 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		// 4 - just passed the </revision>
 		// 5 - just passed the </page>
 		private byte flag;
+		
+		// compression mode checking
+		private boolean compressed = false;
 
 		// indicating how many <revision> tags have been met, reset after every record
 		private int revisionVisited;
 
-		private FSDataInputStream fsin;
+		private Seekable fsin;
+		
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 		private DataOutputBuffer rev2Buf = new DataOutputBuffer();
@@ -203,13 +210,18 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			FileSystem fs = file.getFileSystem(conf);
 
 			if (codec != null) { // file is compressed
-				fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
+				compressed = true;
+				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
+				fsin = codec.createInputStream(fs.open(file));
+				
 				end = Long.MAX_VALUE;
 			} else { // file is uncompressed	
+				compressed = false;
+				// fsin = fs.open(file);
 				fsin = fs.open(file);
-				fsin.seek(start);
-				end = start + split.getLength();
 			}
+			fsin.seek(start);
+			end = start + split.getLength();
 			flag = 1;
 			revisionVisited = 0;
 		}
@@ -280,13 +292,18 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 		@Override
 		public void close() throws IOException {
-			fsin.close();
+			if (compressed) {
+				((CompressionInputStream)fsin).close();
+			} else {
+				((FSDataInputStream)fsin).close();
+			}
 		}
 
 		private boolean readUntilMatch() throws IOException {
 			int i = 0;
 			while (true) {
-				int b = fsin.read();
+				int b = (compressed) ? ((CompressionInputStream)fsin).read() :
+					((FSDataInputStream)fsin).read();
 				if (b == -1) {
 					flag = -1;
 					return false;
