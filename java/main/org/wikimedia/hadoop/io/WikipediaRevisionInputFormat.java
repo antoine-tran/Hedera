@@ -219,9 +219,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				compressed = false;
 				// fsin = fs.open(file);
 				fsin = fs.open(file);
+				fsin.seek(start);
+				end = start + split.getLength();
 			}
-			fsin.seek(start);
-			end = start + split.getLength();
+
 			flag = 1;
 			revisionVisited = 0;
 		}
