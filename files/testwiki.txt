@@ -1,0 +1,248 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.8/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.8/ http://www.mediawiki.org/xml/export-0.8.xsd" version="0.8" xml:lang="en">
+  <siteinfo>
+    <sitename>Wikipedia</sitename>
+    <base>http://en.wikipedia.org/wiki/Main_Page</base>
+    <generator>MediaWiki 1.23wmf11</generator>
+    <case>first-letter</case>
+    <namespaces>
+      <namespace key="-2" case="first-letter">Media</namespace>
+      <namespace key="-1" case="first-letter">Special</namespace>
+      <namespace key="0" case="first-letter" />
+      <namespace key="1" case="first-letter">Talk</namespace>
+      <namespace key="2" case="first-letter">User</namespace>
+      <namespace key="3" case="first-letter">User talk</namespace>
+      <namespace key="4" case="first-letter">Wikipedia</namespace>
+      <namespace key="5" case="first-letter">Wikipedia talk</namespace>
+      <namespace key="6" case="first-letter">File</namespace>
+      <namespace key="7" case="first-letter">File talk</namespace>
+      <namespace key="8" case="first-letter">MediaWiki</namespace>
+      <namespace key="9" case="first-letter">MediaWiki talk</namespace>
+      <namespace key="10" case="first-letter">Template</namespace>
+      <namespace key="11" case="first-letter">Template talk</namespace>
+      <namespace key="12" case="first-letter">Help</namespace>
+      <namespace key="13" case="first-letter">Help talk</namespace>
+      <namespace key="14" case="first-letter">Category</namespace>
+      <namespace key="15" case="first-letter">Category talk</namespace>
+      <namespace key="100" case="first-letter">Portal</namespace>
+      <namespace key="101" case="first-letter">Portal talk</namespace>
+      <namespace key="108" case="first-letter">Book</namespace>
+      <namespace key="109" case="first-letter">Book talk</namespace>
+      <namespace key="118" case="first-letter">Draft</namespace>
+      <namespace key="119" case="first-letter">Draft talk</namespace>
+      <namespace key="446" case="first-letter">Education Program</namespace>
+      <namespace key="447" case="first-letter">Education Program talk</namespace>
+      <namespace key="710" case="first-letter">TimedText</namespace>
+      <namespace key="711" case="first-letter">TimedText talk</namespace>
+      <namespace key="828" case="first-letter">Module</namespace>
+      <namespace key="829" case="first-letter">Module talk</namespace>
+    </namespaces>
+  </siteinfo>
+  <page>
+  <title>Noise (nuisance)</title>
+    <ns>0</ns>
+    <id>236948</id>
+    <redirect title="Noise pollution" />
+    <revision>
+      <id>16115078</id>
+      <timestamp>2003-05-30T12:56:08Z</timestamp>
+      <contributor>
+        <username>Heron</username>
+        <id>2954</id>
+      </contributor>
+      <comment>moved to &quot;Noise_(environmental)&quot;</comment>
+      <text xml:space="preserve">#REDIRECT [[Noise_(environmental)]]
+</text>
+      <sha1>svg343u2ddpnzp94g2qjnz4rypz5v9m</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>39741090</id>
+      <parentid>16115078</parentid>
+      <timestamp>2006-02-15T15:13:38Z</timestamp>
+      <contributor>
+        <username>Hyacinth</username>
+        <id>17171</id>
+      </contributor>
+      <comment>#REDIRECT [[Environmental noise]]</comment>
+      <text xml:space="preserve">#REDIRECT [[Environmental noise]]</text>
+      <sha1>o79jjog859wbrsekoswh22taikh6472</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>45911129</id>
+      <parentid>39741090</parentid>
+      <timestamp>2006-03-28T21:51:27Z</timestamp>
+      <contributor>
+        <username>RussBot</username>
+        <id>279219</id>
+      </contributor>
+      <minor />
+      <comment>Robot: Fixing [[Special:DoubleRedirects|double-redirect]] -&quot;Environmental noise&quot; +&quot;Noise pollution&quot;</comment>
+      <text xml:space="preserve">#REDIRECT [[Noise pollution]]</text>
+      <sha1>pdw5vrin295tt2x5o3qardcqcu0qvtw</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+  </page>
+  <page>
+    <title>Talk:PlayStation 3/Archive 11</title>
+    <ns>1</ns>
+    <id>236950</id>
+    <revision>
+      <id>978837</id>
+      <timestamp>2003-05-30T12:57:20Z</timestamp>
+      <contributor>
+        <username>Camster342</username>
+        <id>12227</id>
+      </contributor>
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Million to produce, but the $3Million refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [[http://news.bbc.co.uk/1/hi/business/1216551.stm]]
+&lt;br&gt; -- [[User:Camster342|Camster342]]</text>
+      <sha1>n9u01k8234h6rvh9makv2cagz7141nm</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>978850</id>
+      <parentid>978837</parentid>
+      <timestamp>2003-05-30T12:58:26Z</timestamp>
+      <contributor>
+        <username>Camster342</username>
+        <id>12227</id>
+      </contributor>
+      <minor />
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Million to produce, but the $3Million refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]</text>
+      <sha1>94ejpnac2cbdgs47nhgsknrhwb5p6lo</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+<revision>
+      <id>5071008</id>
+      <parentid>978850</parentid>
+      <timestamp>2003-05-30T13:01:19Z</timestamp>
+      <contributor>
+        <username>Camster342</username>
+        <id>12227</id>
+      </contributor>
+      <minor />
+      <comment>accidentally wrote Million instead of Billion...</comment>
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Billion to produce, but the $3Billion refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]</text>
+      <sha1>agopkji2cp2ymvo6jprixvqyu7h4n59</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>10138179</id>
+      <parentid>5071008</parentid>
+      <timestamp>2004-08-08T00:04:25Z</timestamp>
+      <contributor>
+        <username>ChrisErbach</username>
+        <id>74489</id>
+      </contributor>
+      <minor />
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Billion to produce, but the $3Billion refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]
+
+Anybody notice parallels between the [[Fifth generation computer systems project]] and the massively-parallel Cell chip used in the PS3? — [[User:ChrisErbach|ChrisErbach]]</text>
+      <sha1>lxqctb1edlijzibzar2z90911p1h7f1</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>10210326</id>
+      <parentid>10138179</parentid>
+      <timestamp>2005-02-10T20:04:27Z</timestamp>
+      <contributor>
+        <ip>200.172.115.194</ip>
+      </contributor>
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Billion to produce, but the $3Billion refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]
+
+Anybody notice parallels between the [[Fifth generation computer systems project]] and the massively-parallel Cell chip used in the PS3? — [[User:ChrisErbach|ChrisErbach]]
+
+
+----
+
+
+[http://www.gamespot.com/news/2005/02/09/news_6118242.html Elpida Memory tapped to make PS3 chips] 512MB [[XDR DRAM]]</text>
+      <sha1>m1em69kld4i9a4dy8po7x2bqyd39x1t</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>10219116</id>
+      <parentid>10210326</parentid>
+      <timestamp>2005-02-13T06:21:43Z</timestamp>
+      <contributor>
+        <ip>24.119.167.227</ip>
+      </contributor>
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Billion to produce, but the $3Billion refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]
+
+Anybody notice parallels between the [[Fifth generation computer systems project]] and the massively-parallel Cell chip used in the PS3? — [[User:ChrisErbach|ChrisErbach]]
+
+
+----
+
+
+[http://www.gamespot.com/news/2005/02/09/news_6118242.html Elpida Memory tapped to make PS3 chips] 512MB [[XDR DRAM]]
+
+nVidia has stated recently that the GPU for the PS3 wouldn't use either Direct X or Open GL, and would instead use Sony's own API.  With this in mind the section marked PS3 standards, at least needs to be edited and may need to be deleted altogether.</text>
+      <sha1>oedtjf7ydskspdh6mp3sol8ahw15m4x</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+    <revision>
+      <id>10229190</id>
+      <parentid>10229069</parentid>
+      <timestamp>2005-02-13T20:16:51Z</timestamp>
+      <contributor>
+        <ip>24.119.167.227</ip>
+      </contributor>
+      <text xml:space="preserve">I removed a statement that seemed to suggest the new processor for the PS3 will
+cost $3Billion to produce, but the $3Billion refers to the cost of building the
+new manufacturing plant in East Fishkill. At least this is what I deduce from
+reading the article on the BBC website [http://news.bbc.co.uk/1/hi/business/1216551.stm]
+&lt;br&gt; -- [[User:Camster342|Camster342]]
+
+Anybody notice parallels between the [[Fifth generation computer systems project]] and the massively-parallel Cell chip used in the PS3? — [[User:ChrisErbach|ChrisErbach]]
+
+
+----
+
+
+[http://www.gamespot.com/news/2005/02/09/news_6118242.html Elpida Memory tapped to make PS3 chips] 512MB [[XDR DRAM]]
+
+nVidia has stated recently that the GPU for the PS3 wouldn't use either Direct X or Open GL, and would instead use Sony's own API.  With this in mind the section marked PS3 standards, at least needs to be edited and may need to be deleted altogether.
+
+:Source? [[User:Sockatume|Socka]][[User talk: Sockatume|'''tume''']] 14:32, 13 Feb 2005 (UTC)
+
+
+Source: http://www.xbitlabs.com/news/multimedia/display/20041228125957.html</text>
+      <sha1>7jllai3eltc65o2rnx4j38qnz19rcp7</sha1>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+    </revision>
+  </page>
+</mediawiki>
