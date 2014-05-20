@@ -258,11 +258,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					else if (flag == 3) {
 						key.set(fsin.getPos() - START_REVISION.length);
 						rev1Buf.reset();
-						if (revisionVisited == 0) {
+						if (revisionVisited == 0) {							
 							rev1Buf.write(DUMMY_REV);
 						} else {
 							rev1Buf.write(rev2Buf.getData());
-							rev1Buf.write("helo".getBytes());
 						}
 						rev2Buf.reset();
 						rev2Buf.write(START_REVISION);

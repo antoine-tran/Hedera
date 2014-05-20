@@ -58,8 +58,9 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 		try {
 			hasNext = reader.nextKeyValue();
 			if (hasNext) {
-				Text content = reader.getCurrentValue();				
-				return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
+				LongWritable lw = reader.getCurrentKey();
+				Text content = reader.getCurrentValue();
+				return tuples.newTupleNoCopy(Arrays.asList(lw.toString(),content.toString()));	
 			}
 		} catch (InterruptedException e) {
 			throw new IOException(e);
