@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,7 +47,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.log4j.Logger;
 
-/** A InputFormat implementation that splits a Wikimedia Revision File into page fragments, output 
+/** A InputFormat implementation that splits a Wikipedia Revision File into page fragments, output 
  * them as input records.
  *
  * @author Tuan
@@ -67,7 +68,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static final byte[] END_REVISION = "</revision>".getBytes(StandardCharsets.UTF_8);
 
 	private static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
-	private static long THRESHOLD_SPLIT = 137438953472l;
+	private static long THRESHOLD = 137438953472l;
 
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
@@ -94,8 +95,19 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		List<InputSplit> splits = new ArrayList<>();
 		for (FileStatus fs : listStatus(context)) {
+			Path f = fs.getPath();
+			Configuration conf = context.getConfiguration();
+			FileSystem fsys = f.getFileSystem(conf);
 			if (isSplitable(context, fs.getPath())) {
-				splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), THRESHOLD_SPLIT));
+				splits.addAll(getSplitsForXMLTags(fs, conf, THRESHOLD));
+			} else {
+				long length = fs.getLen();
+				BlockLocation[] blkLocs = fsys.getFileBlockLocations(fs, 0, length);
+				if (length != 0) {
+					splits.add(new FileSplit(f, 0, length, blkLocs[0].getHosts()));
+				} else {
+					splits.add(new FileSplit(f, 0, length, new String[]{}));
+				}
 			}
 		}
 		return splits;
@@ -103,7 +115,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 	// Splits a (possibly compressed) xml files by <page></page> chunks, with respect to the 
 	// maximum size of one file
-	protected static List<FileSplit> getSplitsForXMLTags(FileStatus status, Configuration conf, 
+	protected List<FileSplit> getSplitsForXMLTags(FileStatus status, Configuration conf, 
 			long threshold) throws IOException {
 
 		List<FileSplit> splits = new ArrayList<>();
@@ -127,14 +139,19 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			}
 
 			long start = -1l;
-			long[] pos = new long[1];
+			long[] pos = new long[3];
+			byte[] buf = new byte[134217728];
 			while (true) {
-				if (readUntilMatch(fsin, START_PAGE, pos)) {
+				if (readUntilMatch(fsin, START_PAGE, pos, buf)) {
 					if (start < 0)
 						start = pos[0] - START_PAGE.length;
-					if (readUntilMatch(fsin, END_PAGE, pos)) {
+					if (readUntilMatch(fsin, END_PAGE, pos, buf)) {
 						if (pos[0] - start >= threshold) {
-							splits.add(new FileSplit(file, start, pos[0] - start, new String[]{}));
+							BlockLocation[] blkLocs = fs.getFileBlockLocations(status, start, 
+									pos[0] - start);
+							int blkIndex = getBlockIndex(blkLocs, start);
+							splits.add(new FileSplit(file, start, pos[0] - start, 
+									blkLocs[blkIndex].getHosts()));
 							start = -1;
 						}
 					} else break;
@@ -148,21 +165,29 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		}
 		return splits;
 	}
-
-	private static boolean readUntilMatch(InputStream in, byte[] match, long[] pos) throws IOException {
+	
+	private static boolean readUntilMatch(InputStream in, byte[] match, long[] pos, byte[] buf) 
+			throws IOException {
 		int i = 0;
 		while (true) {
-			int b = in.read();
-			pos[0]++;
-			if (b == -1) {
-				return false;
-			}
-			if (b == match[i]) {
-				i++;
-				if (i >= match.length) {
-					return true;
+			if (pos[1] == pos[2]) {
+				pos[2] = in.read(buf);
+				pos[1] = 0;
+				if (pos[2] == -1) {
+					return false;
 				}
-			} else i = 0;
+			} 
+			while (pos[1] < pos[2]) {
+				byte b = buf[(int) pos[1]];
+				pos[0]++;
+				pos[1]++;
+				if (b == match[i]) {
+					i++;
+					if (i >= match.length) {
+						return true;
+					}
+				} else i = 0;
+			}
 		}
 	}
 
@@ -248,8 +273,9 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public static class RevisionPairRecordReader extends RecordReader<LongWritable, Text> {
 		private static final Logger LOG = Logger.getLogger(RevisionPairRecordReader.class); 		
 
-		private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\"><text xml:space=\"preserve\">"
-				+ "</text></revision>\n").getBytes(StandardCharsets.UTF_8);
+		private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
+				+ "<text xml:space=\"preserve\"></text></revision>\n")
+				.getBytes(StandardCharsets.UTF_8);
 
 		private long start;
 		private long end;
