@@ -46,24 +46,34 @@ public class TestWikipediaRevisionPairLoader {
 		try (FileInputStream fis = new FileInputStream("files/testwiki.txt")) {
 			flag = 1;
 			revisionVisited = 0;
+			int matchAfterRevisionEndTag = -1;
 			while (readUntilMatch(fis)) {
 				if (flag == 5) {
-					try {
-						value.write(pageHeader.toByteArray());
-						value.write(rev1Buf.toByteArray(), 0, rev1Buf.size());
-						value.write(rev2Buf.toByteArray(), 0, rev2Buf.size());
-						value.write(END_PAGE, 0, END_PAGE.length);
-					} finally {
-						pageHeader.reset();
-						rev1Buf.reset();
-						rev2Buf.reset();
-					}
+					System.out.println(value);
+					value.reset();
+					pageHeader.reset();
+					rev1Buf.reset();
+					rev2Buf.reset();
+					revisionVisited = 0;
 				} 
-				else if (flag == 4 && revisionVisited == 2) {
-					value.write(pageHeader.toByteArray());
-					value.write(rev1Buf.toByteArray(), 0, rev1Buf.size());
-					value.write(rev2Buf.toByteArray(), 0, rev2Buf.size());
+				else if (flag == 4) {
+					value.write(pageHeader.toByteArray(), 0, pageHeader.size() - 10);
+					value.write(rev1Buf.toByteArray());
+					value.write(rev2Buf.toByteArray());
 					value.write(END_PAGE, 0, END_PAGE.length);
+				}
+				else if (flag == 2) {
+					pageHeader.write(START_PAGE);
+				}
+				else if (flag == 3) {
+					rev1Buf.reset();
+					if (revisionVisited == 0) {
+						rev1Buf.write(DUMMY_REV);
+					} else {
+						rev1Buf.write(rev2Buf.toByteArray());
+					}
+					rev2Buf.reset();
+					rev2Buf.write(START_REVISION);
 				}
 				else if (flag == -1) {
 					pageHeader.reset();
@@ -72,7 +82,6 @@ public class TestWikipediaRevisionPairLoader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println(value);
 	}
 
 	// A flag that tells in which block the cursor is:
@@ -127,50 +136,25 @@ public class TestWikipediaRevisionPairLoader {
 			else if (flag == 3) {
 				if (b == END_REVISION[i]) {
 					i++;
-					if (i >= END_REVISION.length) {
-						flag = 4;
-						revisionVisited++;
-						if (revisionVisited == 1) {
-							rev1Buf.write(END_REVISION);
-						} else if (revisionVisited == 2) {
-							rev2Buf.write(END_REVISION);
-						} else {
-							LOG.error("missing or mal-formed revision tag: " + 
-									rev1Buf.toString());
-						}
-						return true;
-					}
 				} else i = 0;
-				if (revisionVisited == 0) {
-					rev1Buf.write(b);
-				} else if (revisionVisited == 1) {
-					rev2Buf.write(b);
-				} else {
-					LOG.error("missing or mal-formed revision tag: " + 
-							rev1Buf.toString());
+				rev2Buf.write(b);
+				if (i >= END_REVISION.length) {
+					flag = 4;
+					revisionVisited++;
+					return true;
 				}
 			}
 
 			// Note that flag 4 can be the signal of a new record inside one old page
 			else if (flag == 4) {
-				if (b == END_PAGE[i]) {
+				if (b == END_PAGE[i] || b == START_REVISION[i]) {
 					i++;
-					if (i >= END_PAGE.length) {
+					if (b == END_PAGE[i] && i >= END_PAGE.length) {
 						flag = 5;
 						return true;							
-					}
-				} else if (b == START_REVISION[i]) {
-					i++;
-					if (i >= START_REVISION.length) {
+					} else if (b ==  START_REVISION[i] && i >= START_REVISION.length) {
 						flag = 3;
-						if (revisionVisited == 0) {
-							rev1Buf.write(START_REVISION);
-						} else if (revisionVisited == 1) {
-							rev2Buf.write(START_REVISION);
-						} else {
-							LOG.error("missing or mal-formed revision tag: " + 
-									rev1Buf.toString());
-						}
+						return true;
 					}
 				} else i = 0;
 			} 
