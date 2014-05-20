@@ -22,10 +22,13 @@ package org.wikimedia.hadoop.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Seekable;
@@ -36,6 +39,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -62,15 +66,95 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static final byte[] START_REVISION = "<revision>".getBytes(StandardCharsets.UTF_8);
 	private static final byte[] END_REVISION = "</revision>".getBytes(StandardCharsets.UTF_8);
 
+	private static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
+
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
 		Configuration conf = context.getConfiguration();
+
+		// Tu should have done this already (??): Set maximum splitsize to be 64MB
+		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
+
 		String recordReader = conf.get(RECORD_READER);
 		if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPairRecordReader")) {
 			return new RevisionPairRecordReader();
 		} else if (recordReader.equalsIgnoreCase("RevisionRecordReader")) {
 			return new RevisionRecordReader();
 		} else return null;
+	}
+
+	@Override
+	public List<InputSplit> getSplits(JobContext context) throws IOException {
+		List<InputSplit> splits = new ArrayList<>();
+		for (FileStatus fs : listStatus(context)) {
+			splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), DEFAULT_MAX_BLOCK_SIZE));
+		}
+		return splits;
+	}
+
+	// Splits a (possibly compressed) xml files by <page></page> chunks, with respect to the maximum size of one file
+	protected static List<FileSplit> getSplitsForXMLTags(FileStatus status, Configuration conf, long maxSize) 
+			throws IOException {
+
+		List<FileSplit> splits = new ArrayList<>();
+		Path file = status.getPath();
+		if (status.isDirectory()) {
+			throw new IOException("Not a file: " + file);
+		}
+
+		CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
+		CompressionCodec codec = compressionCodecs.getCodec(file);
+		FileSystem fs = file.getFileSystem(conf);
+		InputStream fsin = null;
+
+		try {
+			if (codec != null) { // file is compressed
+				fsin = codec.createInputStream(fs.open(file));
+			} else { // file is uncompressed	
+				FSDataInputStream stream = fs.open(file);
+				stream.seek(0);
+				fsin = stream;
+			}
+
+			long start = -1l;
+			long end = 0;
+			long[] pos = new long[1];
+			while (true) {
+				if (readUntilMatch(fsin, START_PAGE, pos)) {
+					if (start < 0)
+						start = pos[0] - START_PAGE.length;
+					if (readUntilMatch(fsin, END_PAGE, pos)) {
+						if (pos[0] - start >= maxSize) {
+							splits.add(new FileSplit(file, start, end - start, new String[]{}));
+							start = -1;
+						} else end = pos[0];
+					} else break;
+				} else break;
+			}
+			/*if (start < pos[0]) {
+				splits.add(new FileSplit(file, start, pos[0] - start, new String[]{}));
+			}*/
+		} finally {
+			if (fsin != null) fsin.close();
+		}
+		return splits;
+	}
+
+	private static boolean readUntilMatch(InputStream in, byte[] match, long[] pos) throws IOException {
+		int i = 0;
+		while (true) {
+			int b = in.read();
+			pos[0]++;
+			if (b == -1) {
+				return false;
+			}
+			if (b == match[i]) {
+				i++;
+				if (i >= match.length) {
+					return true;
+				}
+			} else i = 0;
+		}
 	}
 
 	/** read a meta-history xml file and output as a record every pair of consecutive revisions.
@@ -204,9 +288,6 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			conf.set(START_TAG_KEY, START_PAGE_TAG);
 			conf.set(END_TAG_KEY, END_PAGE_TAG);
 
-			// Tu should have done this already (??): Set maximum splitsize to be 64MB
-			conf.setLong("mapreduce.input.fileinputformat.split.maxsize", 67108864l);
-
 			FileSplit split = (FileSplit) input;
 			start = split.getStart();
 			Path file = split.getPath();
@@ -224,7 +305,6 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				end = Long.MAX_VALUE;
 			} else { // file is uncompressed	
 				compressed = false;
-				// fsin = fs.open(file);
 				fsin = fs.open(file);
 				fsin.seek(start);
 				end = start + split.getLength();
