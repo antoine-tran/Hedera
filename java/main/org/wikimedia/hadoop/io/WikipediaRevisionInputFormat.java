@@ -336,13 +336,16 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			if (codec != null) { // file is compressed
 				compressed = true;
 				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-				fsin = codec.createInputStream(fs.open(file));
+				CompressionInputStream cis = codec.createInputStream(fs.open(file));
 				
+				// This is extremely slow because of I/O overhead
+				while (cis.getPos() < start) cis.read();
+				fsin = cis;
 			} else { // file is uncompressed	
 				compressed = false;
 				fsin = fs.open(file);
+				fsin.seek(start);
 			}
-			fsin.seek(start);
 
 			flag = 1;
 			revisionVisited = 0;
@@ -360,7 +363,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 						revisionVisited = 0;						
 					} 
 					else if (flag == 4) {
-						value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+						value.set(pageHeader.getData(), 0, pageHeader.getLength() 
+								- START_REVISION.length);
 						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
 						value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
 						value.append(END_PAGE, 0, END_PAGE.length);
