@@ -70,7 +70,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static long THRESHOLD_SPLIT = 137438953472l;
 
 	@Override
-	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
+	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
+			TaskAttemptContext context) {
 		Configuration conf = context.getConfiguration();
 
 		// Tu should have done this already (??): Set maximum splitsize to be 128MB
@@ -85,10 +86,17 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	}
 
 	@Override
+	public boolean isSplitable(JobContext context, Path path) {
+		return false;
+	}
+	
+	@Override
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		List<InputSplit> splits = new ArrayList<>();
 		for (FileStatus fs : listStatus(context)) {
-			splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), THRESHOLD_SPLIT));
+			if (isSplitable(context, fs.getPath())) {
+				splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), THRESHOLD_SPLIT));
+			}
 		}
 		return splits;
 	}
