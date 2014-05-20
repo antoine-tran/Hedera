@@ -52,7 +52,7 @@ import org.apache.log4j.Logger;
 public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public static final String START_TAG_KEY = "xmlinput.start";
 	public static final String END_TAG_KEY = "xmlinput.end";
-	
+
 	public static final String RECORD_READER = "wiki.revision.recordreader";
 
 	private static final String START_PAGE_TAG = "<page>";
@@ -61,7 +61,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static final byte[] END_PAGE = END_PAGE_TAG.getBytes(StandardCharsets.UTF_8);
 	private static final byte[] START_REVISION = "<revision>".getBytes(StandardCharsets.UTF_8);
 	private static final byte[] END_REVISION = "</revision>".getBytes(StandardCharsets.UTF_8);
-	
+
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
 		Configuration conf = context.getConfiguration();
@@ -155,8 +155,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public static class RevisionPairRecordReader extends RecordReader<LongWritable, Text> {
 		private static final Logger LOG = Logger.getLogger(RevisionPairRecordReader.class); 		
 
-		private static final byte[] DUMMY_REV = "<revision beginningofpage=\"true\"><text xml:space=\"preserve\"></text></revision>\n"
-				.getBytes(StandardCharsets.UTF_8);
+		private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\"><text xml:space=\"preserve\">"
+				+ "</text></revision>\n").getBytes(StandardCharsets.UTF_8);
 
 		private long start;
 		private long end;
@@ -169,15 +169,22 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		// 4 - just passed the </revision>
 		// 5 - just passed the </page>
 		private byte flag;
-		
+
 		// compression mode checking
 		private boolean compressed = false;
 
 		// indicating how many <revision> tags have been met, reset after every record
 		private int revisionVisited;
 
+		// indicating the flow conditifion within [flag = 4]
+		// -1 - Unmatched
+		//  1 - Matched <revision> tag partially
+		//  2 - Matched </page> tag partially
+		//  3 - Matched both <revision> and </page> partially
+		private int lastMatchTag = -1;
+
 		private Seekable fsin;
-		
+
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 		private DataOutputBuffer rev2Buf = new DataOutputBuffer();
@@ -213,7 +220,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				compressed = true;
 				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
 				fsin = codec.createInputStream(fs.open(file));
-				
+
 				end = Long.MAX_VALUE;
 			} else { // file is uncompressed	
 				compressed = false;
@@ -233,43 +240,39 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				if (readUntilMatch()) {
 					if (flag == 2) {
 						key.set(fsin.getPos() - START_PAGE.length);
-					}
-					try {
-						while (readUntilMatch()) {
-							if (flag == 5) {
-								try {
-									value.set(pageHeader.getData());
-									value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-									value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-									value.append(END_PAGE, 0, END_PAGE.length);
-								} finally {
-									pageHeader.reset();
-									rev1Buf.reset();
-									rev2Buf.reset();
-								}
-								return true;
-							} 
-							else if (flag == 4 && revisionVisited == 2) {
-								value.set(pageHeader.getData());
-								value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-								value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-								value.append(END_PAGE, 0, END_PAGE.length);
-								return true;
-							}
-							else if (flag == -1) {
-								pageHeader.reset();
-								return false;
-							}
-						}
-					} finally {
-						revisionVisited = 0;
-						if (rev1Buf.getLength() > 0) rev1Buf.reset();
-						if (rev2Buf.getLength() > 0)  {
-							rev2Buf.writeTo(rev1Buf);
-							rev2Buf.flush();
+					}					
+					while (readUntilMatch()) {  
+						if (flag == 5) {								
+							pageHeader.reset();
+							rev1Buf.reset();
 							rev2Buf.reset();
+							revisionVisited = 0;
+						} 
+						else if (flag == 4) {
+							value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+							value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+							value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+							value.append(END_PAGE, 0, END_PAGE.length);
+							return true;
 						}
-					}
+						else if (flag == 2) {
+							pageHeader.write(START_PAGE);
+						}
+						else if (flag == 3) {
+							rev1Buf.reset();
+							if (revisionVisited == 0) {
+								rev1Buf.write(DUMMY_REV);
+							} else {
+								rev1Buf.write(rev2Buf.getData());
+							}
+							rev2Buf.reset();
+							rev2Buf.write(START_REVISION);
+						}
+						else if (flag == -1) {
+							pageHeader.reset();
+						}
+					}						
+
 				}
 			}
 			return false;
@@ -315,7 +318,6 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					if (b == START_PAGE[i]) {
 						i++;
 						if (i >= START_PAGE.length) {
-							pageHeader.write(START_PAGE);
 							flag = 2;
 							return true;
 						}
@@ -326,67 +328,51 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				else if (flag == 2) {
 					if (b == START_REVISION[i]) {
 						i++;
-						if (i >= START_REVISION.length) {
-							rev1Buf.write(DUMMY_REV);
-							rev2Buf.write(START_REVISION);
-							revisionVisited = 1;
-							flag = 3;
-							return true;
-						}
 					} else i = 0;
 					pageHeader.write(b);
+					if (i >= START_REVISION.length) {
+						flag = 3;
+						return true;
+					}
 				}
 
 				// inside <revision></revision> block
 				else if (flag == 3) {
 					if (b == END_REVISION[i]) {
 						i++;
-						if (i >= END_REVISION.length) {
-							flag = 4;
-							revisionVisited++;
-							if (revisionVisited == 1) {
-								rev1Buf.write(END_REVISION);
-							} else if (revisionVisited == 2) {
-								rev2Buf.write(END_REVISION);
-							} else {
-								LOG.error("missing or mal-formed revision tag: " + 
-										rev1Buf.getData().toString());
-							}
-							return true;
-						}
 					} else i = 0;
-					if (revisionVisited == 1) {
-						rev1Buf.write(b);
-					} else if (revisionVisited == 2) {
-						rev2Buf.write(b);
-					} else {
-						LOG.error("missing or mal-formed revision tag: " + 
-								rev1Buf.getData().toString());
+					rev2Buf.write(b);
+					if (i >= END_REVISION.length) {
+						flag = 4;
+						revisionVisited++;
+						return true;
 					}
 				}
 
 				// Note that flag 4 can be the signal of a new record inside one old page
 				else if (flag == 4) {
-					if (b == END_PAGE[i]) {
-						i++;
-						if (i >= END_PAGE.length) {
-							flag = 5;
-							return true;							
-						}
-					} else if (b == START_REVISION[i]) {
-						i++;
-						if (i >= START_REVISION.length) {
-							flag = 3;
-							if (revisionVisited == 0) {
-								rev1Buf.write(START_REVISION);
-							} else if (revisionVisited == 1) {
-								rev2Buf.write(START_REVISION);
-							} else {
-								LOG.error("missing or mal-formed revision tag: " + 
-										rev1Buf.getData().toString());
-							}
-						}
+					int curMatch = 0;				
+					if ((i < END_PAGE.length && b == END_PAGE[i]) 
+							&& (i < START_REVISION.length && b == START_REVISION[i])) {
+						curMatch = 3;
+					} else if (i < END_PAGE.length && b == END_PAGE[i]) {
+						curMatch = 2;
+					} else if (i < START_REVISION.length && b == START_REVISION[i]) {
+						curMatch = 1;
+					}				
+					if (curMatch > 0 && (i == 0 || lastMatchTag == 3 || curMatch == lastMatchTag)) {					
+						i++;			
+						lastMatchTag = curMatch;
 					} else i = 0;
+					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
+						flag = 5;
+						lastMatchTag = -1;
+						return true;							
+					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
+						flag = 3;
+						lastMatchTag = -1;
+						return true;
+					}				
 				} 
 			}
 		}
@@ -450,7 +436,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 		private long start;
 		private long end;
-		
+
 		// A flag that tells in which block the cursor is:
 		// -1: EOF
 		// 1 - outside the <page> tag
@@ -463,10 +449,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		private FSDataInputStream fsin;
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer revBuf = new DataOutputBuffer();
-		
+
 		private final LongWritable key = new LongWritable();
 		private final Text value = new Text();
-		
+
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
@@ -544,12 +530,74 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		public float getProgress() throws IOException, InterruptedException {
 			return (fsin.getPos() - start) / (float) (end - start);
 		}
-		
+
 		@Override
 		public void close() throws IOException {
 			fsin.close();
 		}
-		
+
+		private boolean readUntilMatch1() throws IOException {
+			int i = 0;
+			while (true) {				
+				int b = fsin.read();
+				if (b == -1) {
+					flag = -1;
+					return false;
+				}
+
+				// ignore every character until reaching a new page
+				if (flag == 1 || flag == 5) {
+					if (b == START_PAGE[i]) {
+						i++;
+						if (i >= START_PAGE.length) {
+							flag = 2;
+							return true;
+						}
+					} else i = 0;
+				}
+
+				// put everything between <page> tag and the first <revision> tag into pageHeader
+				else if (flag == 2) {
+					if (b == START_REVISION[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					if (i >= START_REVISION.length) {
+						flag = 3;
+						return true;
+					}
+				}
+
+				// inside <revision></revision> block everything goes to revBuf
+				else if (flag == 3) {
+					if (b == END_REVISION[i]) {
+						i++;
+					} else i = 0;
+					revBuf.write(b);
+					if (i >= END_REVISION.length) {
+						flag = 4;
+						return true;
+					}
+				}
+
+				// Note that flag 4 can be the signal of a new record inside one old page
+				else if (flag == 4) {
+					if (b == END_PAGE[i]) {
+						i++;
+						if (i >= END_PAGE.length) {
+							flag = 5;
+							return true;							
+						}
+					} else if (b == START_REVISION[i]) {
+						i++;
+						if (i >= START_REVISION.length) {
+							flag = 3;
+						}
+					} else i = 0;
+				} 
+			}			
+		}
+
 		private boolean readUntilMatch() throws IOException {
 			int i = 0;
 			while (true) {				
@@ -558,7 +606,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					flag = -1;
 					return false;
 				}
-				
+
 				// ignore every character until reaching a new page
 				if (flag == 1 || flag == 5) {
 					if (b == START_PAGE[i]) {
@@ -570,7 +618,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 						}
 					} else i = 0;
 				}
-				
+
 				// put everything between <page> tag and the first <revision> tag into pageHeader
 				else if (flag == 2) {
 					if (b == START_REVISION[i]) {
@@ -583,7 +631,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					} else i = 0;
 					pageHeader.write(b);
 				}
-				
+
 				// inside <revision></revision> block everything goes to revBuf
 				else if (flag == 3) {
 					if (b == END_REVISION[i]) {
@@ -596,7 +644,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					} else i = 0;
 					revBuf.write(b);
 				}
-				
+
 				// Note that flag 4 can be the signal of a new record inside one old page
 				else if (flag == 4) {
 					if (b == END_PAGE[i]) {

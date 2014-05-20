@@ -7,11 +7,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.Seekable;
-import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -29,7 +24,7 @@ public class TestWikipediaRevisionPairLoader {
 	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
 			+ "<text xml:space=\"preserve\"></text></revision>\n")
 			.getBytes(StandardCharsets.UTF_8);
-	
+
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -37,7 +32,7 @@ public class TestWikipediaRevisionPairLoader {
 	@After
 	public void tearDown() throws Exception {
 	}
-	
+
 	private final StringBuffer value = new StringBuffer();
 
 	@Test
@@ -46,8 +41,7 @@ public class TestWikipediaRevisionPairLoader {
 		try (FileInputStream fis = new FileInputStream("files/testwiki.txt")) {
 			flag = 1;
 			revisionVisited = 0;
-			int matchAfterRevisionEndTag = -1;
-			while (readUntilMatch(fis)) {
+			while (readUntilMatch(fis)) {  
 				if (flag == 5) {
 					System.out.println(value);
 					value.reset();
@@ -95,13 +89,20 @@ public class TestWikipediaRevisionPairLoader {
 
 	// indicating how many <revision> tags have been met, reset after every record
 	private int revisionVisited;
-	
+
+	// indicating the flow conditifion within [flag = 4]
+	// -1 - Unmatched
+	//  1 - Matched <revision> tag partially
+	//  2 - Matched </page> tag partially
+	//  3 - Matched both <revision> and </page> partially
+	private int lastMatchTag = -1;
+
 	private ByteArrayOutputStream pageHeader = new ByteArrayOutputStream();
 	private ByteArrayOutputStream rev1Buf = new ByteArrayOutputStream();
 	private ByteArrayOutputStream rev2Buf = new ByteArrayOutputStream();
 
 	private boolean readUntilMatch(FileInputStream fsin) throws IOException {
-        int i = 0;
+		int i = 0;
 		while (true) {
 			int b = fsin.read();
 			if (b == -1) {
@@ -147,16 +148,28 @@ public class TestWikipediaRevisionPairLoader {
 
 			// Note that flag 4 can be the signal of a new record inside one old page
 			else if (flag == 4) {
-				if (b == END_PAGE[i] || b == START_REVISION[i]) {
-					i++;
-					if (b == END_PAGE[i] && i >= END_PAGE.length) {
-						flag = 5;
-						return true;							
-					} else if (b ==  START_REVISION[i] && i >= START_REVISION.length) {
-						flag = 3;
-						return true;
-					}
+				int curMatch = 0;				
+				if ((i < END_PAGE.length && b == END_PAGE[i]) 
+						&& (i < START_REVISION.length && b == START_REVISION[i])) {
+					curMatch = 3;
+				} else if (i < END_PAGE.length && b == END_PAGE[i]) {
+					curMatch = 2;
+				} else if (i < START_REVISION.length && b == START_REVISION[i]) {
+					curMatch = 1;
+				}				
+				if (curMatch > 0 && (i == 0 || lastMatchTag == 3 || curMatch == lastMatchTag)) {					
+					i++;			
+					lastMatchTag = curMatch;
 				} else i = 0;
+				if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
+					flag = 5;
+					lastMatchTag = -1;
+					return true;							
+				} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
+					flag = 3;
+					lastMatchTag = -1;
+					return true;
+				}				
 			} 
 		}
 	}
