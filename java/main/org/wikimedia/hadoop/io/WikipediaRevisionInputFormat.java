@@ -290,6 +290,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 			FileSplit split = (FileSplit) input;
 			start = split.getStart();
+			end = start + split.getLength();
 			Path file = split.getPath();
 
 			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
@@ -301,14 +302,12 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				compressed = true;
 				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
 				fsin = codec.createInputStream(fs.open(file));
-
-				end = Long.MAX_VALUE;
+				
 			} else { // file is uncompressed	
 				compressed = false;
 				fsin = fs.open(file);
-				fsin.seek(start);
-				end = start + split.getLength();
 			}
+			fsin.seek(start);
 
 			flag = 1;
 			revisionVisited = 0;
