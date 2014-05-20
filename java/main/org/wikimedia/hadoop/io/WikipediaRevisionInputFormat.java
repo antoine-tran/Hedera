@@ -237,42 +237,37 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		@Override
 		public boolean nextKeyValue() throws IOException, InterruptedException {
 			if (fsin.getPos() < end) {
-				if (readUntilMatch()) {
-					if (flag == 2) {
-						key.set(fsin.getPos() - START_PAGE.length);
-					}					
-					while (readUntilMatch()) {  
-						if (flag == 5) {								
-							pageHeader.reset();
-							rev1Buf.reset();
-							rev2Buf.reset();
-							revisionVisited = 0;
-						} 
-						else if (flag == 4) {
-							value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
-							value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-							value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-							value.append(END_PAGE, 0, END_PAGE.length);
-							return true;
+				while (readUntilMatch()) {  
+					if (flag == 5) {								
+						pageHeader.reset();
+						rev1Buf.reset();
+						rev2Buf.reset();
+						revisionVisited = 0;
+					} 
+					else if (flag == 4) {
+						value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+						value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+						value.append(END_PAGE, 0, END_PAGE.length);
+						return true;
+					}
+					else if (flag == 2) {
+						pageHeader.write(START_PAGE);
+					}
+					else if (flag == 3) {
+						key.set(fsin.getPos() - START_REVISION.length);
+						rev1Buf.reset();
+						if (revisionVisited == 0) {
+							rev1Buf.write(DUMMY_REV);
+						} else {
+							rev1Buf.write(rev2Buf.getData());
 						}
-						else if (flag == 2) {
-							pageHeader.write(START_PAGE);
-						}
-						else if (flag == 3) {
-							rev1Buf.reset();
-							if (revisionVisited == 0) {
-								rev1Buf.write(DUMMY_REV);
-							} else {
-								rev1Buf.write(rev2Buf.getData());
-							}
-							rev2Buf.reset();
-							rev2Buf.write(START_REVISION);
-						}
-						else if (flag == -1) {
-							pageHeader.reset();
-						}
-					}						
-
+						rev2Buf.reset();
+						rev2Buf.write(START_REVISION);
+					}
+					else if (flag == -1) {
+						pageHeader.reset();
+					}
 				}
 			}
 			return false;
