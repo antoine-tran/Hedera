@@ -242,7 +242,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 						pageHeader.reset();
 						rev1Buf.reset();
 						rev2Buf.reset();
-						revisionVisited = 0;
+						value.clear();
+						revisionVisited = 0;						
 					} 
 					else if (flag == 4) {
 						value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
@@ -261,6 +262,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 							rev1Buf.write(DUMMY_REV);
 						} else {
 							rev1Buf.write(rev2Buf.getData());
+							rev1Buf.write("helo".getBytes());
 						}
 						rev2Buf.reset();
 						rev2Buf.write(START_REVISION);
