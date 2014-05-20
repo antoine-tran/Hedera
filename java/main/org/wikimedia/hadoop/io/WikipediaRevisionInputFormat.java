@@ -67,12 +67,13 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static final byte[] END_REVISION = "</revision>".getBytes(StandardCharsets.UTF_8);
 
 	private static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
+	private static long THRESHOLD_SPLIT = 137438953472l;
 
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
 		Configuration conf = context.getConfiguration();
 
-		// Tu should have done this already (??): Set maximum splitsize to be 64MB
+		// Tu should have done this already (??): Set maximum splitsize to be 128MB
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
 
 		String recordReader = conf.get(RECORD_READER);
@@ -87,14 +88,15 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		List<InputSplit> splits = new ArrayList<>();
 		for (FileStatus fs : listStatus(context)) {
-			splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), DEFAULT_MAX_BLOCK_SIZE));
+			splits.addAll(getSplitsForXMLTags(fs, context.getConfiguration(), THRESHOLD_SPLIT));
 		}
 		return splits;
 	}
 
-	// Splits a (possibly compressed) xml files by <page></page> chunks, with respect to the maximum size of one file
-	protected static List<FileSplit> getSplitsForXMLTags(FileStatus status, Configuration conf, long maxSize) 
-			throws IOException {
+	// Splits a (possibly compressed) xml files by <page></page> chunks, with respect to the 
+	// maximum size of one file
+	protected static List<FileSplit> getSplitsForXMLTags(FileStatus status, Configuration conf, 
+			long threshold) throws IOException {
 
 		List<FileSplit> splits = new ArrayList<>();
 		Path file = status.getPath();
@@ -117,17 +119,16 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			}
 
 			long start = -1l;
-			long end = 0;
 			long[] pos = new long[1];
 			while (true) {
 				if (readUntilMatch(fsin, START_PAGE, pos)) {
 					if (start < 0)
 						start = pos[0] - START_PAGE.length;
 					if (readUntilMatch(fsin, END_PAGE, pos)) {
-						if (pos[0] - start >= maxSize) {
-							splits.add(new FileSplit(file, start, end - start, new String[]{}));
+						if (pos[0] - start >= threshold) {
+							splits.add(new FileSplit(file, start, pos[0] - start, new String[]{}));
 							start = -1;
-						} else end = pos[0];
+						}
 					} else break;
 				} else break;
 			}
