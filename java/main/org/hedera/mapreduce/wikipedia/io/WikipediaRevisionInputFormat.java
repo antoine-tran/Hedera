@@ -81,10 +81,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		} else return null;
 	}
 
-	/*@Override
+	@Override
 	public boolean isSplitable(JobContext context, Path path) {
 		return false;
-	}*/
+	}
 	
 	@Override
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
