@@ -1,4 +1,4 @@
-package org.hedera.pig.wikipedia.load;
+package org.hedera.pig.load.wikipedia;
 
 import java.io.IOException;
 import java.util.Arrays;

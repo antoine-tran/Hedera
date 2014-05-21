@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.mapreduce.wikipedia.io;
+package org.hedera.mapreduce.io.wikipedia;
 
 import java.io.IOException;
 
@@ -21,15 +21,15 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_TAG_KEY;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_TAG_KEY;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_PAGE_TAG;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_PAGE_TAG;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_REVISION;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.DEFAULT_MAX_BLOCK_SIZE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.DEFAULT_MAX_BLOCK_SIZE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_TAG_KEY;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_TAG_KEY;
 
 /** read a meta-history xml file, output as a record the revision together with the page info.
  *
@@ -109,6 +109,10 @@ public class WikiRevisionRecordReader extends RecordReader<LongWritable, Text> {
 	//  2 - Matched </page> tag partially
 	//  3 - Matched both <revision> and </page> partially
 	private int lastMatchTag = -1;
+
+	// a direct buffer to improve the local IO performance
+	private byte[] buf = new byte[134217728];
+	private int[] pos = new int[2];
 
 	private Seekable fsin;
 
@@ -206,75 +210,83 @@ public class WikiRevisionRecordReader extends RecordReader<LongWritable, Text> {
 	}
 
 	private boolean readUntilMatch() throws IOException {
+		if (buf == null && pos.length != 2)
+			throw new IOException("Internal buffer corrupted.");
 		int i = 0;
 		while (true) {
-			int b = (compressed) ? ((CompressionInputStream)fsin).read() :
-				((FSDataInputStream)fsin).read();
-			if (b == -1) {
-				flag = -1;
-				return false;
-			}
+			if (pos[0] == pos[1]) {				
+				pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
+					((FSDataInputStream)fsin).read(buf);
+				pos[0] = 0;
+				if (pos[1] == -1) {
+					return false;
+				}
+			} 
+			while (pos[0] < pos[1]) {
+				byte b = buf[pos[0]];
+				pos[0]++;
 
-			// ignore every character until reaching a new page
-			if (flag == 1 || flag == 5) {
-				if (b == START_PAGE[i]) {
-					i++;
-					if (i >= START_PAGE.length) {
-						flag = 2;
+				// ignore every character until reaching a new page
+				if (flag == 1 || flag == 5) {
+					if (b == START_PAGE[i]) {
+						i++;
+						if (i >= START_PAGE.length) {
+							flag = 2;
+							return true;
+						}
+					} else i = 0;
+				}
+
+				// put everything between <page> tag and the first <revision> tag into pageHeader
+				else if (flag == 2) {
+					if (b == START_REVISION[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					if (i >= START_REVISION.length) {
+						flag = 3;
 						return true;
 					}
-				} else i = 0;
-			}
-
-			// put everything between <page> tag and the first <revision> tag into pageHeader
-			else if (flag == 2) {
-				if (b == START_REVISION[i]) {
-					i++;
-				} else i = 0;
-				pageHeader.write(b);
-				if (i >= START_REVISION.length) {
-					flag = 3;
-					return true;
 				}
-			}
 
-			// inside <revision></revision> block
-			else if (flag == 3) {
-				if (b == END_REVISION[i]) {
-					i++;
-				} else i = 0;
-				revBuf.write(b);
-				if (i >= END_REVISION.length) {
-					flag = 4;
-					return true;
+				// inside <revision></revision> block
+				else if (flag == 3) {
+					if (b == END_REVISION[i]) {
+						i++;
+					} else i = 0;
+					revBuf.write(b);
+					if (i >= END_REVISION.length) {
+						flag = 4;
+						return true;
+					}
 				}
-			}
 
-			// Note that flag 4 can be the signal of a new record inside one old page
-			else if (flag == 4) {
-				int curMatch = 0;				
-				if ((i < END_PAGE.length && b == END_PAGE[i]) 
-						&& (i < START_REVISION.length && b == START_REVISION[i])) {
-					curMatch = 3;
-				} else if (i < END_PAGE.length && b == END_PAGE[i]) {
-					curMatch = 2;
-				} else if (i < START_REVISION.length && b == START_REVISION[i]) {
-					curMatch = 1;
-				}				
-				if (curMatch > 0 && (i == 0 || lastMatchTag == 3 || curMatch == lastMatchTag)) {					
-					i++;			
-					lastMatchTag = curMatch;
-				} else i = 0;
-				if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
-					flag = 5;
-					lastMatchTag = -1;
-					return true;							
-				} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
-					flag = 3;
-					lastMatchTag = -1;
-					return true;
-				}				
-			} 
-		}		
+				// Note that flag 4 can be the signal of a new record inside one old page
+				else if (flag == 4) {
+					int curMatch = 0;				
+					if ((i < END_PAGE.length && b == END_PAGE[i]) 
+							&& (i < START_REVISION.length && b == START_REVISION[i])) {
+						curMatch = 3;
+					} else if (i < END_PAGE.length && b == END_PAGE[i]) {
+						curMatch = 2;
+					} else if (i < START_REVISION.length && b == START_REVISION[i]) {
+						curMatch = 1;
+					}				
+					if (curMatch > 0 && (i == 0 || lastMatchTag == 3 || curMatch == lastMatchTag)) {					
+						i++;			
+						lastMatchTag = curMatch;
+					} else i = 0;
+					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
+						flag = 5;
+						lastMatchTag = -1;
+						return true;							
+					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
+						flag = 3;
+						lastMatchTag = -1;
+						return true;
+					}				
+				} 
+			}		
+		}
 	}
 }

@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hedera.mapreduce.wikipedia.io;
+package org.hedera.mapreduce.io.wikipedia;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,9 +74,9 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
 
 		String recordReader = conf.get(RECORD_READER);
-		if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPairRecordReader")) {
+		if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
 			return new WikiRevisionPairRecordReader();
-		} else if (recordReader.equalsIgnoreCase("RevisionRecordReader")) {
+		} else if (recordReader.equalsIgnoreCase("Revision")) {
 			return new WikiRevisionRecordReader();
 		} else return null;
 	}

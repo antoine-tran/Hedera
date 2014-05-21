@@ -1,4 +1,4 @@
-package org.hedera.mapreduce.wikipedia.io;
+package org.hedera.mapreduce.io.wikipedia;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,15 +21,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
 
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_TAG_KEY;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_TAG_KEY;
-
-import static  org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_PAGE_TAG;
-import static  org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_PAGE_TAG;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.START_REVISION;
-import static org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_TAG_KEY;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_TAG_KEY;
 
 /** read a meta-history xml file and output as a record every pair of consecutive revisions.
  * For example,  Given the following input containing two pages and four revisions,

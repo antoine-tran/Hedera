@@ -1,4 +1,4 @@
-package org.hedera.pig.wikipedia.load;
+package org.hedera.pig.load.wikipedia;
 
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
@@ -20,7 +20,15 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat;
+import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
 
 public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMetadata {
 
@@ -36,6 +44,11 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	
 	protected TupleFactory tuples;
 	protected BagFactory bags;
+	
+	/*
+	 * Test objects 
+	 */
+	private DateTimeFormatter dtf = DateTimeFormat.forPattern("YYYY-MM-ddTHH:mm:ssZ");
 	
 	@Override
 	public InputFormat getInputFormat() throws IOException {
@@ -58,6 +71,24 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 			hasNext = reader.nextKeyValue();
 			if (hasNext) {
 				Text content = reader.getCurrentValue();
+				Document doc = Jsoup.parse(content.toString(), "", Parser.xmlParser());
+				Elements elems = doc.select("page > revision");	
+				DateTime dt = null;
+				for (Element e : elems) {
+					Elements subElems = e.getElementsByTag("timestamp");
+					if (subElems == null) {
+						return tuples.newTupleNoCopy(Arrays.asList("1"));
+					} else {
+						DateTime dt1 = dtf.parseDateTime(subElems.get(0).text());
+						if (dt == null) dt = dt1;
+						else if (dt1.isAfter(dt)) {
+							return tuples.newTupleNoCopy(Arrays.asList("1"));
+						} else {
+							return tuples.newTupleNoCopy(Arrays.asList("0"));
+						}
+					}
+					
+				}
 				return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
 			}
 		} catch (InterruptedException e) {

@@ -1,16 +1,18 @@
 /**
  * 
  */
-package org.hedera.pig;
+package org.hedera.pig.eval.wikipedia;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
+
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
+import org.hedera.pig.eval.PageFunc;
 import org.mortbay.log.Log;
 
 
@@ -107,7 +109,6 @@ public class ExtractTemplate extends PageFunc<DataBag> {
 		}
 		else return false;		
 	}
-	
 	
 	
 	/* (non-Javadoc)

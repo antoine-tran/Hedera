@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.pig.wikipedia.load;
+package org.hedera.pig.load.wikipedia;
 
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
@@ -24,7 +24,7 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat;
+import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
