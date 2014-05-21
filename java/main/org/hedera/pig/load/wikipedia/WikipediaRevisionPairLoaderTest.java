@@ -24,6 +24,7 @@ import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -48,7 +49,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	/*
 	 * Test objects 
 	 */
-	private DateTimeFormatter dtf = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'");
+	private DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
 
 	@Override
 	public InputFormat getInputFormat() throws IOException {
