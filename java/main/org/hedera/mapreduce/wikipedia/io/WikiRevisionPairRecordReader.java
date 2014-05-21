@@ -266,9 +266,10 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 			throw new IOException("Internal buffer corrupted.");
 		int i = 0;
 		while (true) {
-			if (pos[0] == pos[1]) {
+			if (pos[0] == pos[1]) {				
 				pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
 					((FSDataInputStream)fsin).read(buf);
+				LOG.info(pos[1] + " bytes read from the stream...");
 				pos[0] = 0;
 				if (pos[1] == -1) {
 					return false;
