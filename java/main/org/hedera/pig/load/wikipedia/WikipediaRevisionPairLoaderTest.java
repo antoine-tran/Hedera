@@ -71,12 +71,12 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 			hasNext = reader.nextKeyValue();
 			if (hasNext) {
 				Text content = reader.getCurrentValue();
-				Document doc = Jsoup.parse(content.toString(), "");
-				Elements elems = doc.select("page > revision");	
+				Document doc = Jsoup.parse(content.toString(), "");				
+				Elements elems = doc.select("page > revision");				
 				DateTime dt = null;
 				for (Element e : elems) {
 					Elements subElems = e.getElementsByTag("timestamp");
-					if (subElems == null) {
+					if (subElems == null || subElems.isEmpty()) {
 						return tuples.newTupleNoCopy(Arrays.asList("1"));
 					} else {
 						DateTime dt1 = dtf.parseDateTime(subElems.get(0).text());
@@ -87,14 +87,14 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 							return tuples.newTupleNoCopy(Arrays.asList("0"));
 						}
 					}
-					
 				}
-				return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
+				return tuples.newTupleNoCopy(Arrays.asList("0"));
+				// return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
 			}
+			return null;
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}
-		return null;
 	}
 	
 	@Override
