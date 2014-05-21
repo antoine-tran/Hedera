@@ -135,4 +135,9 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	protected void defineSchema() throws FrontendException {
 		// TODO: define schema here
 	}
+	
+	/*public static void main(String[] args) {
+		WikipediaRevisionPairLoaderTest wrplt = new WikipediaRevisionPairLoaderTest();
+		System.out.println(wrplt.dtf.parseDateTime("2010-01-15T04:50:27Z"));
+	}*/
 }
