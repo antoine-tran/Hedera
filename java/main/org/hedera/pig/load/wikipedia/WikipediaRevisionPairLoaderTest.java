@@ -35,21 +35,21 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	private static final WikipediaRevisionInputFormat INPUT_FORMAT = new WikipediaRevisionInputFormat();
 
 	protected RecordReader<LongWritable, Text> reader;
-	
+
 	// a cached object that defines the output schema of a Wikipedia page. Use volatile to fix
 	// the infamous double-checked locking issue, and to make access to this object thread-safe
 	protected volatile ResourceSchema schema;
-	
+
 	// protected diff_match_patch dmp;
-	
+
 	protected TupleFactory tuples;
 	protected BagFactory bags;
-	
+
 	/*
 	 * Test objects 
 	 */
 	private DateTimeFormatter dtf = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'");
-	
+
 	@Override
 	public InputFormat getInputFormat() throws IOException {
 		return INPUT_FORMAT;
@@ -66,10 +66,8 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 
 	@Override
 	public Tuple getNext() throws IOException {
-		boolean hasNext;
 		try {
-			hasNext = reader.nextKeyValue();
-			if (hasNext) {
+			if (reader.nextKeyValue()) {
 				Text content = reader.getCurrentValue();
 				Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("page > revision");				
@@ -96,12 +94,12 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 			throw new IOException(e);
 		}
 	}
-	
+
 	@Override
 	public void setLocation(String loc, Job job) throws IOException {
 		setInputPaths(job, loc);
 	}
-	
+
 	@Override
 	public String[] getPartitionKeys(String loc, Job job) throws IOException {
 		setLocation(loc, job);
@@ -131,11 +129,11 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	@Override
 	public void setPartitionFilter(Expression arg0) throws IOException {
 	}
-	
+
 	protected void defineSchema() throws FrontendException {
 		// TODO: define schema here
 	}
-	
+
 	/*public static void main(String[] args) {
 		WikipediaRevisionPairLoaderTest wrplt = new WikipediaRevisionPairLoaderTest();
 		System.out.println(wrplt.dtf.parseDateTime("2010-01-15T04:50:27Z"));

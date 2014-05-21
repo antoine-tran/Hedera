@@ -122,7 +122,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			} else if (recordReader.equalsIgnoreCase("Revision")) {
 				return new WikiRevisionRecordReader();
 			} else return null;
-		} else return null;
+		} else return new WikiRevisionPairRecordReader();
 	}
 
 	@Override
