@@ -1,4 +1,4 @@
-package org.wikimedia.pig;
+package org.hedera.pig;
 
 import java.io.IOException;
 

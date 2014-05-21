@@ -8,13 +8,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.log4j.Logger;
+import org.hedera.mapreduce.wikipedia.io.WikipediaRevisionInputFormat.RevisionPairRecordReader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.wikimedia.hadoop.io.WikipediaRevisionInputFormat.RevisionPairRecordReader;
 
 public class TestWikipediaRevisionPairLoader {
-	private static final Logger LOG = Logger.getLogger(RevisionPairRecordReader.class); 
+	private static final Logger LOG = Logger.getLogger(WikiRevisionPairRecordReader.class); 
 	private static final String START_PAGE_TAG = "<page>";
 	private static final String END_PAGE_TAG = "</page>";
 	private static final byte[] START_PAGE = START_PAGE_TAG.getBytes(StandardCharsets.UTF_8);
