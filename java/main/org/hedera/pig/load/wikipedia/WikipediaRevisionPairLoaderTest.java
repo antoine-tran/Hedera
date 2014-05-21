@@ -48,7 +48,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	/*
 	 * Test objects 
 	 */
-	private DateTimeFormatter dtf = DateTimeFormat.forPattern("YYYY-MM-ddTHH:mm:ssZ");
+	private DateTimeFormatter dtf = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'");
 	
 	@Override
 	public InputFormat getInputFormat() throws IOException {

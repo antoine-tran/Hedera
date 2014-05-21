@@ -25,6 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -53,8 +57,23 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public static final String START_TAG_KEY = "xmlinput.start";
 	public static final String END_TAG_KEY = "xmlinput.end";
 
-	private static final String RECORD_READER = "wiki.revision.recordreader";
-
+	public static final String RECORD_READER_OPT = "recordreader";
+	public static final String TIME_SCALE_OPT = "timescale";
+	public static enum TimeScale {
+		HOUR("hour"),
+		DAY("day"),
+		WEEK("week"),
+		MONTH("month");		
+		private final String val;		
+		private TimeScale(String v) {val = v;}		
+		public String toString() {
+			return val;
+		}
+	}
+	private static Options opts = new Options();	
+	private static final GnuParser parser = new GnuParser();
+	private CommandLine options;
+	
 	public static final String START_PAGE_TAG = "<page>";
 	public static final String END_PAGE_TAG = "</page>";
 	public static final byte[] START_PAGE = START_PAGE_TAG.getBytes(StandardCharsets.UTF_8);
@@ -65,6 +84,29 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	protected static long THRESHOLD = 137438953472l;
 
+	public WikipediaRevisionInputFormat() {
+		super();
+	}
+
+	public WikipediaRevisionInputFormat(String optString) {
+		super();
+		initOptions();
+		if (optString != null && !optString.isEmpty()) {
+			try {
+				options = parser.parse(opts, optString.split(" "));
+			} catch (org.apache.commons.cli.ParseException e) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp( "[-" + RECORD_READER_OPT + "] [-" + TIME_SCALE_OPT + "]", opts);
+				throw new RuntimeException(e);
+			}	
+		}
+	}
+
+	private static void initOptions() {
+		opts.addOption(RECORD_READER_OPT, true, "The driver class for record reader");
+		opts.addOption(TIME_SCALE_OPT, true, "The time scale used to coalesce the timeline");
+	}
+
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
@@ -73,11 +115,13 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		// Tu should have done this already (??): Set maximum splitsize to be 128MB
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
 
-		String recordReader = conf.get(RECORD_READER);
-		if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
-			return new WikiRevisionPairRecordReader();
-		} else if (recordReader.equalsIgnoreCase("Revision")) {
-			return new WikiRevisionRecordReader();
+		if (options != null) {
+			String recordReader = options.getOptionValue(RECORD_READER_OPT);
+			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
+				return new WikiRevisionPairRecordReader();
+			} else if (recordReader.equalsIgnoreCase("Revision")) {
+				return new WikiRevisionRecordReader();
+			} else return null;
 		} else return null;
 	}
 
@@ -85,7 +129,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public boolean isSplitable(JobContext context, Path path) {
 		return false;
 	}
-	
+
 	@Override
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		List<InputSplit> splits = new ArrayList<>();
@@ -160,7 +204,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		}
 		return splits;
 	}
-	
+
 	private static boolean readUntilMatch(InputStream in, byte[] match, long[] pos, byte[] buf) 
 			throws IOException {
 		int i = 0;
