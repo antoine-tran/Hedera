@@ -69,6 +69,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		public String toString() {
 			return val;
 		}
+		
+		public boolean equalsName(String name) {
+			return (val.equals(name));
+		}
 	}
 	private static Options opts = new Options();	
 	private static final GnuParser parser = new GnuParser();
@@ -96,7 +100,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				options = parser.parse(opts, optString.split(" "));
 			} catch (org.apache.commons.cli.ParseException e) {
 				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp( "[-" + RECORD_READER_OPT + "] [-" + TIME_SCALE_OPT + "]", opts);
+				formatter.printHelp("[-" + RECORD_READER_OPT + "] [-" + TIME_SCALE_OPT + "]", opts);
 				throw new RuntimeException(e);
 			}	
 		}
@@ -121,7 +125,20 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 				return new WikiRevisionPairRecordReader();
 			} else if (recordReader.equalsIgnoreCase("Revision")) {
 				return new WikiRevisionRecordReader();
-			} else return null;
+			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
+				if (!options.hasOption(TIME_SCALE_OPT)) {
+					throw new RuntimeException("Must specify the time scale for RevisionDistant");
+				} else {
+					String scale = options.getOptionValue(TIME_SCALE_OPT);
+					TimeScale ts = null;
+					for (TimeScale t : TimeScale.values()) {
+						if (t.equalsName(scale)) {
+							ts = t;
+						}
+					}
+					return new WikiRevisionDiffReader(ts);
+				}
+			} else throw new RuntimeException("unknown recorder driver");
 		} else return new WikiRevisionPairRecordReader();
 	}
 

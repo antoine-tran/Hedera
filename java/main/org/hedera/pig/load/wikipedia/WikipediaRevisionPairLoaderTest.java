@@ -49,7 +49,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	/*
 	 * Test objects 
 	 */
-	private DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
+	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
 
 	@Override
 	public InputFormat getInputFormat() throws IOException {
