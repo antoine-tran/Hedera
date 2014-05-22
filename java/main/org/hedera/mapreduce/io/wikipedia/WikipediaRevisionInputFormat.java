@@ -302,4 +302,12 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		String[] hosts = blkLocations[blkLocations.length-1].getHosts();
 		return makeSplit(path, start, size,hosts);
 	}
+
+	/**
+	 * Tuan, Tu (22.05.2014) - For some reasons, the Pig version in the Hadoop@L3S does not recognize this method
+	 * in FileInputFormat. We need to hard-code and copied the source code over here
+	 */
+	protected FileSplit makeSplit(Path file, long start, long length, String[] hosts) {
+		return new FileSplit(file, start, length, hosts);
+	}
 }
