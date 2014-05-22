@@ -246,11 +246,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					ByteMatcher matcher;
 					{
 						long st = Math.min(start + skip + splitSize, length - 1);
-						split = makeSplit(path,
-								st,
-								Math.min(splitSize, length - st),
-								clusterMap, blkLocations);
-						System.err.println("split move to: " + split);
+						split = makeSplit(path, st, Math.min(splitSize, length - st), clusterMap, blkLocations);
 						if ( in != null )
 							in.close();
 						if ( split.getLength() <= 1 ) {
@@ -271,7 +267,6 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 								split.getStart(),
 								Math.min(split.getLength() + splitSize, length - split.getStart()),
 								clusterMap, blkLocations);
-						System.err.println("split extend to: " + split);
 					}
 					if ( matcher.getLastUnmatchPos() > 0
 							&&  matcher.getPos() > matcher.getLastUnmatchPos()
@@ -305,7 +300,6 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private FileSplit makeSplit(Path path, long start, long size, NetworkTopology clusterMap, 
 			BlockLocation[] blkLocations) throws IOException {
 		String[] hosts = blkLocations[blkLocations.length-1].getHosts();
-		return makeSplit(path, start, size,
-				hosts);
+		return makeSplit(path, start, size,hosts);
 	}
 }
