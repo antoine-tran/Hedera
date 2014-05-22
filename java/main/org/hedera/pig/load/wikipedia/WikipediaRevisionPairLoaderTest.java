@@ -10,6 +10,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.log4j.Logger;
 import org.apache.pig.Expression;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.LoadMetadata;
@@ -33,6 +34,8 @@ import org.jsoup.select.Elements;
 
 public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMetadata {
 
+	private static final Logger LOG = Logger.getLogger(WikipediaRevisionPairLoaderTest.class);
+	
 	private static final WikipediaRevisionInputFormat INPUT_FORMAT = new WikipediaRevisionInputFormat();
 
 	protected RecordReader<LongWritable, Text> reader;
@@ -69,7 +72,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 	public Tuple getNext() throws IOException {
 		try {
 			if (reader.nextKeyValue()) {
-				Text content = reader.getCurrentValue();
+				Text content = reader.getCurrentValue();				
 				return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
 				/*Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("revision");				

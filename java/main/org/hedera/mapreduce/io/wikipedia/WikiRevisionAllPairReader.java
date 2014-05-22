@@ -24,11 +24,11 @@ import org.apache.log4j.Logger;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_TAG_KEY;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_TAG_KEY;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_ID;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_ID;
 
 /** read a meta-history xml file and output as a record every pair of consecutive revisions.
  * For example,  Given the following input containing two pages and four revisions,
@@ -115,19 +115,21 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	private static final Logger LOG = Logger.getLogger(WikiRevisionAllPairReader.class); 		
 
 	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
-			+ "<text xml:space=\"preserve\"></text></revision>\n")
+			+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"
+			+ "</text></revision>\n")
 			.getBytes(StandardCharsets.UTF_8);
 
 	private long start;
 	private long end;
-
-	// A flag that tells in which block the cursor is:
-	// -1: EOF
-	// 1 - outside the <page> tag
-	// 2 - just passed the <page> tag but outside the <revision>
-	// 3 - just passed the (next) <revision>
-	// 4 - just passed the </revision>
-	// 5 - just passed the </page>
+	
+    // -1: EOF
+	// 1 - beginning of the first <page> tag
+	// 2 - just passed the <page> tag but outside the <id> tag
+	// 3 - just passed the <id>
+	// 4 - just passed the </id> but outside <revision>
+	// 5 - just passed the <revision>
+	// 6 - just passed the </revision>
+	// 7 - just passed the </revision>
 	private byte flag;
 
 	// compression mode checking
@@ -136,7 +138,7 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	// indicating how many <revision> tags have been met, reset after every page end
 	private int revisionVisited;
 
-	// indicating the flow conditifion within [flag = 4]
+	// indicating the flow conditifion within [flag = 6]
 	// -1 - Unmatched
 	//  1 - Matched <revision> tag partially
 	//  2 - Matched </page> tag partially
@@ -150,11 +152,9 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	private Seekable fsin;
 
 	private DataOutputBuffer pageHeader = new DataOutputBuffer();
+	private DataOutputBuffer keyBuf = new DataOutputBuffer();
 	private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 	private DataOutputBuffer rev2Buf = new DataOutputBuffer();
-
-	// TODO implement this later
-	private Pattern exclude;
 
 	private final LongWritable key = new LongWritable();
 	private final Text value = new Text();
@@ -181,7 +181,9 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			CompressionInputStream cis = codec.createInputStream(fs.open(file));
 
 			// This is extremely slow because of I/O overhead
-			while (cis.getPos() < start) cis.read();
+			// while (cis.getPos() < start) cis.skip(start);read();
+			cis.skip(start - 1);
+			
 			fsin = cis;
 		} else { // file is uncompressed	
 			compressed = false;
@@ -191,20 +193,21 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 
 		flag = 1;
 		revisionVisited = 0;
+		pos[0] = pos[1] = 0;
 	}
 
 	@Override
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (fsin.getPos() < end) {
 			while (readUntilMatch()) {  
-				if (flag == 5) {								
+				if (flag == 7) {								
 					pageHeader.reset();
 					rev1Buf.reset();
 					rev2Buf.reset();
 					value.clear();
 					revisionVisited = 0;						
 				} 
-				else if (flag == 4) {
+				else if (flag == 6) {					
 					value.set(pageHeader.getData(), 0, pageHeader.getLength() 
 							- START_REVISION.length);
 					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
@@ -212,11 +215,15 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 					value.append(END_PAGE, 0, END_PAGE.length);
 					return true;
 				}
+				else if (flag == 4) {
+					String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
+					key.set(Long.parseLong(pageId));	
+					keyBuf.reset();
+				}				
 				else if (flag == 2) {
 					pageHeader.write(START_PAGE);
 				}
-				else if (flag == 3) {
-					key.set(fsin.getPos() - START_REVISION.length);
+				else if (flag == 5) {
 					rev1Buf.reset();
 					if (revisionVisited == 0) {							
 						rev1Buf.write(DUMMY_REV);
@@ -278,7 +285,7 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 				byte b = buf[pos[0]];
 				pos[0]++;
 				// ignore every character until reaching a new page
-				if (flag == 1 || flag == 5) {
+				if (flag == 1 || flag == 7) {
 					if (b == START_PAGE[i]) {
 						i++;
 						if (i >= START_PAGE.length) {
@@ -288,33 +295,58 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 					} else i = 0;
 				}
 
-				// put everything between <page> tag and the first <revision> tag into pageHeader
+				// put everything between <page> tag and the first <id> tag into pageHeader
 				else if (flag == 2) {
-					if (b == START_REVISION[i]) {
+					if (b == START_ID[i]) {
 						i++;
 					} else i = 0;
 					pageHeader.write(b);
-					if (i >= START_REVISION.length) {
+					if (i >= START_ID.length) {
 						flag = 3;
 						return true;
 					}
 				}
 
-				// inside <revision></revision> block
+				// put everything in <id></id> block into pageHeader and keyBuf
 				else if (flag == 3) {
+					if (b == END_ID[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					keyBuf.write(b);
+					if (i >= END_ID.length) {
+						flag = 4;
+						return true;
+					}
+				}
+				
+				// put everything between </id> tag and the first <revision> tag into pageHeader
+				else if (flag == 4) {
+					if (b == START_REVISION[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					if (i >= START_REVISION.length) {
+						flag = 5;
+						return true;
+					}
+				}
+				
+				// inside <revision></revision> block
+				else if (flag == 5) {
 					if (b == END_REVISION[i]) {
 						i++;
 					} else i = 0;
 					rev2Buf.write(b);
 					if (i >= END_REVISION.length) {
-						flag = 4;
+						flag = 6;
 						revisionVisited++;
 						return true;
 					}
 				}
 
 				// Note that flag 4 can be the signal of a new record inside one old page
-				else if (flag == 4) {
+				else if (flag == 6) {
 					int curMatch = 0;				
 					if ((i < END_PAGE.length && b == END_PAGE[i]) 
 							&& (i < START_REVISION.length && b == START_REVISION[i])) {
@@ -329,11 +361,11 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 						lastMatchTag = curMatch;
 					} else i = 0;
 					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
-						flag = 5;
+						flag = 7;
 						lastMatchTag = -1;
 						return true;							
 					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
-						flag = 3;
+						flag = 5;
 						lastMatchTag = -1;
 						return true;
 					}				

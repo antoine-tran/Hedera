@@ -27,8 +27,10 @@ import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_ID;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_ID;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
 
@@ -51,18 +53,20 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 	// A flag that tells in which block the cursor is:
 	// -1: EOF
 	// 1 - outside the <page> tag
-	// 2 - just passed the <page> tag but outside the <revision>
-	// 3 - just passed the (next) <revision>
-	// 4 - just passed the <timestamp> inside the <revision>
-	// 5 - just passed the </timestamp> but still inside the <revision></revision> block
-	// 6 - just passed the </revision>
-	// 7 - just passed the </page>
+	// 2 - just passed the <page> tag but outside the <id> tag
+	// 3 - just passed the <id> tag
+	// 4 - just passed the </id> tag but outside the <revision> tag
+	// 5 - just passed the (next) <revision>
+	// 6 - just passed the <timestamp> inside the <revision>
+	// 7 - just passed the </timestamp> but still inside the <revision></revision> block
+	// 8 - just passed the </revision>
+	// 9 - just passed the </page>
 	private byte flag;
 
 	// compression mode checking
 	private boolean compressed = false;
 
-	// indicating the flow condition within [flag = 4]
+	// indicating the flow condition within [flag = 8]
 	// -1 - Unmatched
 	//  1 - Matched <revision> tag partially
 	//  2 - Matched </page> tag partially
@@ -80,7 +84,7 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 	private DataOutputBuffer rev2Buf = new DataOutputBuffer();
 	private DataOutputBuffer tmpBuf = new DataOutputBuffer();
 	private DataOutputBuffer tsBuf = new DataOutputBuffer();
-
+	private DataOutputBuffer keyBuf = new DataOutputBuffer();
 
 	// remember the last time point
 	private DateTime curTs;
@@ -123,8 +127,8 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 			// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
 			CompressionInputStream cis = codec.createInputStream(fs.open(file));
 
-			// This is extremely slow because of I/O overhead
-			while (cis.getPos() < start) cis.read();
+			cis.skip(start - 1);
+			
 			fsin = cis;
 		} else { // file is uncompressed	
 			compressed = false;
@@ -140,7 +144,7 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (fsin.getPos() < end) {
 			while (readUntilMatch()) {  
-				if (flag == 7) {
+				if (flag == 9) {
 					key.set(fsin.getPos() - rev2Buf.getLength() - END_PAGE.length);						
 					value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
 					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
@@ -155,22 +159,7 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 					curTs = null;
 					return true;
 				} 
-				/*else if (flag == 6) {
-					rev1Buf.reset();
-				}*/
-				else if (flag == 2) {
-					pageHeader.write(START_PAGE);
-				}
-				else if (flag == 3) {
-					if (curTs == null) {							
-						rev1Buf.write(DUMMY_REV);
-					} 
-					tmpBuf.write(START_REVISION);
-				}
-				else if (flag == 4) {
-					tsBuf.reset();
-				}
-				else if (flag == 5) {
+				else if (flag == 7) {
 					String ts = new String(tsBuf.getData(),0, tsBuf.getLength() - END_TIMESTAMP.length);
 					tsBuf.reset();
 					DateTime dt = roundup(ts);
@@ -198,6 +187,23 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 						tmpBuf.reset();
 						curTs = dt;
 					}
+				}
+				else if (flag == 4) {
+					String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
+					key.set(Long.parseLong(pageId));	
+					keyBuf.reset();
+				}
+				else if (flag == 2) {
+					pageHeader.write(START_PAGE);
+				}
+				else if (flag == 5) {
+					if (curTs == null) {							
+						rev1Buf.write(DUMMY_REV);
+					} 
+					tmpBuf.write(START_REVISION);
+				}
+				else if (flag == 6) {
+					tsBuf.reset();
 				}
 				else if (flag == -1) {
 					pageHeader.reset();
@@ -303,7 +309,7 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 				byte b = buf[pos[0]];
 				pos[0]++;
 				// ignore every character until reaching a new page
-				if (flag == 1 || flag == 7) {
+				if (flag == 1 || flag == 9) {
 					if (b == START_PAGE[i]) {
 						i++;
 						if (i >= START_PAGE.length) {
@@ -312,59 +318,84 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 						}
 					} else i = 0;
 				}
-
-				// put everything between <page> tag and the first <revision> tag into pageHeader
+				
+				// put everything between <page> tag and the first <id> tag into pageHeader
 				else if (flag == 2) {
-					if (b == START_REVISION[i]) {
+					if (b == START_ID[i]) {
 						i++;
 					} else i = 0;
 					pageHeader.write(b);
-					if (i >= START_REVISION.length) {
+					if (i >= START_ID.length) {
 						flag = 3;
 						return true;
 					}
 				}
 
-				// everything between <revision> and <timestamp> goes into tmpBuf buffer
+				// put everything in <id></id> block into pageHeader and keyBuf
 				else if (flag == 3) {
+					if (b == END_ID[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					keyBuf.write(b);
+					if (i >= END_ID.length) {
+						flag = 4;
+						return true;
+					}
+				}
+				
+				// put everything between </id> tag and the first <revision> tag into pageHeader
+				else if (flag == 4) {
+					if (b == START_REVISION[i]) {
+						i++;
+					} else i = 0;
+					pageHeader.write(b);
+					if (i >= START_REVISION.length) {
+						flag = 5;
+						return true;
+					}
+				}
+
+				// everything between <revision> and <timestamp> goes into tmpBuf buffer
+				else if (flag == 5) {
 					if (b == START_TIMESTAMP[i]) {
 						i++;
 					} else i = 0;
 					tmpBuf.write(b);					
 					if (i >= START_TIMESTAMP.length) {
-						flag = 4;
+						flag = 6;
 						// tsBuf.reset();
 						return true;
 					}
 				}
 
 				// everything between <timestamp> </timestamp> block goes into tmpBuf and tsBuf buffers
-				else if (flag == 4) {
+				else if (flag == 6) {
 					if (b == END_TIMESTAMP[i]) {
 						i++;
 					} else i = 0;
 					tsBuf.write(b);
 					tmpBuf.write(b);
 					if (i >= END_TIMESTAMP.length) {
-						flag = 5;
+						flag = 7;
 						return true;
 					}
 				}
 
 				// everything up to </revision> goes into rev2Buf
-				else if (flag == 5) {
+				else if (flag == 7) {
 					if (b == END_REVISION[i]) {
 						i++;
 					} else i = 0;
 					rev2Buf.write(b);
 					if (i >= END_REVISION.length) {
-						flag = 6;
+						flag = 8;
 						return true;
 					}
 				}
 
 				// Note that flag 6 can be the signal of a new revision inside one old page
-				else if (flag == 6) {
+				else if (flag == 8) {
 					int curMatch = 0;				
 					if ((i < END_PAGE.length && b == END_PAGE[i]) 
 							&& (i < START_REVISION.length && b == START_REVISION[i])) {
@@ -379,11 +410,11 @@ public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Tex
 						lastMatchTag = curMatch;
 					} else i = 0;
 					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
-						flag = 7;
+						flag = 9;
 						lastMatchTag = -1;
 						return true;							
 					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
-						flag = 3;
+						flag = 5;
 						lastMatchTag = -1;
 						return true;
 					}				
