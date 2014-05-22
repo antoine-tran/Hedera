@@ -122,7 +122,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		if (options != null) {
 			String recordReader = options.getOptionValue(RECORD_READER_OPT);
 			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
-				return new WikiRevisionPairRecordReader();
+				return new WikiRevisionAllPairReader();
 			} else if (recordReader.equalsIgnoreCase("Revision")) {
 				return new WikiRevisionRecordReader();
 			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
@@ -136,10 +136,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 							ts = t;
 						}
 					}
-					return new WikiRevisionDiffReader(ts);
+					return new WikiRevisionSamplePairReader(ts);
 				}
 			} else throw new RuntimeException("unknown recorder driver");
-		} else return new WikiRevisionPairRecordReader();
+		} else return new WikiRevisionAllPairReader();
 	}
 
 	@Override

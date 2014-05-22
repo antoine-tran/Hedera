@@ -20,28 +20,102 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
-import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.TimeScale;
-import org.joda.time.DateTime;
-import org.joda.time.MutableDateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_TAG_KEY;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_TAG_KEY;
 
-public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
-	private static final Logger LOG = Logger.getLogger(WikiRevisionPairRecordReader.class); 		
+/** read a meta-history xml file and output as a record every pair of consecutive revisions.
+ * For example,  Given the following input containing two pages and four revisions,
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;ABC&lt;/title&gt;
+ *    &lt;id&gt;123&lt;/id&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;100&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;200&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;300&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ *  &lt;page&gt;
+ *    &lt;title&gt;DEF&lt;/title&gt;
+ *    &lt;id&gt;456&lt;/id&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;400&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre>
+ * it will produce four keys like this:
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;ABC&lt;/title&gt;
+ *    &lt;id&gt;123&lt;/id&gt;
+ *    &lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
+ *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
+ *      &lt;id&gt;100&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre>
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;ABC&lt;/title&gt;
+ *    &lt;id&gt;123&lt;/id&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;100&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;200&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre>
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;ABC&lt;/title&gt;
+ *    &lt;id&gt;123&lt;/id&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;200&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *    &lt;revision&gt;
+ *      &lt;id&gt;300&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre>
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;DEF&lt;/title&gt;
+ *    &lt;id&gt;456&lt;/id&gt;
+ *    &lt;revision&gt;&lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
+ *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
+ *      &lt;id&gt;400&lt;/id&gt;
+ *      ....
+ *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre> 
+ * 
+ * @author tuan*/
+public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> {
+	private static final Logger LOG = Logger.getLogger(WikiRevisionAllPairReader.class); 		
 
-	public static final String START_TIMESTAMP_TAG = "<timestamp>";
-	public static final String END_TIMESTAMP_TAG = "</timestamp>";
-	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
-	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
-	
 	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
-			+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"
-			+ "</text></revision>\n")
+			+ "<text xml:space=\"preserve\"></text></revision>\n")
 			.getBytes(StandardCharsets.UTF_8);
 
 	private long start;
@@ -52,19 +126,17 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 	// 1 - outside the <page> tag
 	// 2 - just passed the <page> tag but outside the <revision>
 	// 3 - just passed the (next) <revision>
-	// 4 - just passed the <timestamp> inside the <revision>
-	// 5 - just passed the </timestamp> but still inside the <revision></revision> block
-	// 6 - just passed the </revision>
-	// 7 - just passed the </page>
+	// 4 - just passed the </revision>
+	// 5 - just passed the </page>
 	private byte flag;
 
 	// compression mode checking
 	private boolean compressed = false;
 
-	// indicating how many <revision> tags have been met, reset after each page end
+	// indicating how many <revision> tags have been met, reset after every page end
 	private int revisionVisited;
 
-	// indicating the flow condition within [flag = 4]
+	// indicating the flow conditifion within [flag = 4]
 	// -1 - Unmatched
 	//  1 - Matched <revision> tag partially
 	//  2 - Matched </page> tag partially
@@ -80,34 +152,13 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 	private DataOutputBuffer pageHeader = new DataOutputBuffer();
 	private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 	private DataOutputBuffer rev2Buf = new DataOutputBuffer();
-	private DataOutputBuffer tsBuf = new DataOutputBuffer();
-	
-	// remember the last time point
-	private DateTime curTs;
 
 	// TODO implement this later
 	private Pattern exclude;
-	
-	// remember the time scale constant
-	private TimeScale timeScale;
-	
-	// mark whether the current revision should be skipped
-	private boolean skipped;
-	
-	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
 
 	private final LongWritable key = new LongWritable();
 	private final Text value = new Text();
 
-	public WikiRevisionDiffReader() {
-		super();
-	}
-	
-	public WikiRevisionDiffReader(TimeScale ts) {
-		super();
-		this.timeScale = ts;
-	}
-	
 	@Override
 	public void initialize(InputSplit input, TaskAttemptContext tac)
 			throws IOException, InterruptedException {
@@ -146,48 +197,34 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (fsin.getPos() < end) {
 			while (readUntilMatch()) {  
-				if (flag == 7) {								
+				if (flag == 5) {								
 					pageHeader.reset();
 					rev1Buf.reset();
 					rev2Buf.reset();
 					value.clear();
-					revisionVisited = 0;	
-					skipped = false;
-					curTs = null;
+					revisionVisited = 0;						
 				} 
-				else if (flag == 6) {
-					if (!skipped) {
-						value.set(pageHeader.getData(), 0, pageHeader.getLength() 
-								- START_REVISION.length);
-						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-						value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-						value.append(END_PAGE, 0, END_PAGE.length);
-						
-						rev1Buf.reset();
-						rev1Buf.write(rev2Buf.getData());
-						rev2Buf.reset();
-						
-						return true;
-					}
-					skipped = false;
+				else if (flag == 4) {
+					value.set(pageHeader.getData(), 0, pageHeader.getLength() 
+							- START_REVISION.length);
+					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+					value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+					value.append(END_PAGE, 0, END_PAGE.length);
+					return true;
 				}
 				else if (flag == 2) {
 					pageHeader.write(START_PAGE);
 				}
 				else if (flag == 3) {
-					// This is a trick: We mark the offset not to the beginning <revision>,
-					// but <timestamp>
-					// key.set(fsin.getPos() - START_REVISION.length);
+					key.set(fsin.getPos() - START_REVISION.length);
+					rev1Buf.reset();
 					if (revisionVisited == 0) {							
 						rev1Buf.write(DUMMY_REV);
-					} 
+					} else {
+						rev1Buf.write(rev2Buf.getData());
+					}
+					rev2Buf.reset();
 					rev2Buf.write(START_REVISION);
-				}
-				else if (flag == 4) {
-					tsBuf.reset();
-				}
-				else if (flag == 5) {
-					skipped = shouldSkip();
 				}
 				else if (flag == -1) {
 					pageHeader.reset();
@@ -195,29 +232,6 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 			}
 		}
 		return false;
-	}
-	
-	// Check whether the current revision should be skipped
-	private boolean shouldSkip() {
-		if (tsBuf.getLength() == 0)
-			return false;
-		
-		// TODO: Might need to control the exception here
-		DateTime tmpDt = dtf.parseDateTime(new String(tsBuf.getData(), 0, tsBuf.getLength() 
-				- END_TIMESTAMP.length));
-		
-		if (curTs == null) {
-			curTs = tmpDt;
-			return false;
-		}
-		
-		
-		// TODO
-		return false;
-	}
-	
-	private static MutableDateTime roundup(String timestamp) {
-		return null;
 	}
 
 	@Override
@@ -288,44 +302,19 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 
 				// inside <revision></revision> block
 				else if (flag == 3) {
-					if (b == START_TIMESTAMP[i]) {
-						i++;
-					} else i = 0;
-					rev2Buf.write(b);
-					if (i >= START_TIMESTAMP.length) {
-						flag = 4;
-						// tsBuf.reset();
-						return true;
-					}
-				}
-
-				else if (flag == 4) {
-					if (b == END_TIMESTAMP[i]) {
-						i++;
-					} else i = 0;
-					tsBuf.write(b);
-					rev2Buf.write(b);
-					if (i >= END_TIMESTAMP.length) {
-						flag = 5;
-						return true;
-					}
-				}
-				
-				else if (flag == 5) {
 					if (b == END_REVISION[i]) {
 						i++;
 					} else i = 0;
-					if (!skipped) rev2Buf.write(b);
+					rev2Buf.write(b);
 					if (i >= END_REVISION.length) {
-						flag = 6;
-						//TODO: cho vao nextKeyVAlu
+						flag = 4;
 						revisionVisited++;
 						return true;
 					}
 				}
-				
+
 				// Note that flag 4 can be the signal of a new record inside one old page
-				else if (flag == 6) {
+				else if (flag == 4) {
 					int curMatch = 0;				
 					if ((i < END_PAGE.length && b == END_PAGE[i]) 
 							&& (i < START_REVISION.length && b == START_REVISION[i])) {
@@ -340,7 +329,7 @@ public class WikiRevisionDiffReader extends RecordReader<LongWritable, Text> {
 						lastMatchTag = curMatch;
 					} else i = 0;
 					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
-						flag = 7;
+						flag = 5;
 						lastMatchTag = -1;
 						return true;							
 					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {

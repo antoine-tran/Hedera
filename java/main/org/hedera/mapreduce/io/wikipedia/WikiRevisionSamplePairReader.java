@@ -20,102 +20,29 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
+import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.TimeScale;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.MutableDateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_TAG_KEY;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_TAG_KEY;
 
-/** read a meta-history xml file and output as a record every pair of consecutive revisions.
- * For example,  Given the following input containing two pages and four revisions,
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;ABC&lt;/title&gt;
- *    &lt;id&gt;123&lt;/id&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;100&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;200&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;300&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- *  &lt;page&gt;
- *    &lt;title&gt;DEF&lt;/title&gt;
- *    &lt;id&gt;456&lt;/id&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;400&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre>
- * it will produce four keys like this:
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;ABC&lt;/title&gt;
- *    &lt;id&gt;123&lt;/id&gt;
- *    &lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
- *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
- *      &lt;id&gt;100&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre>
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;ABC&lt;/title&gt;
- *    &lt;id&gt;123&lt;/id&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;100&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;200&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre>
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;ABC&lt;/title&gt;
- *    &lt;id&gt;123&lt;/id&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;200&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;300&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre>
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;DEF&lt;/title&gt;
- *    &lt;id&gt;456&lt;/id&gt;
- *    &lt;revision&gt;&lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
- *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
- *      &lt;id&gt;400&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre> 
- * 
- * @author tuan*/
-public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Text> {
-	private static final Logger LOG = Logger.getLogger(WikiRevisionPairRecordReader.class); 		
+public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Text> {
+	private static final Logger LOG = Logger.getLogger(WikiRevisionAllPairReader.class); 		
+
+	public static final String START_TIMESTAMP_TAG = "<timestamp>";
+	public static final String END_TIMESTAMP_TAG = "</timestamp>";
+	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
 
 	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
-			+ "<text xml:space=\"preserve\"></text></revision>\n")
+			+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"
+			+ "</text></revision>\n")
 			.getBytes(StandardCharsets.UTF_8);
 
 	private long start;
@@ -126,17 +53,16 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 	// 1 - outside the <page> tag
 	// 2 - just passed the <page> tag but outside the <revision>
 	// 3 - just passed the (next) <revision>
-	// 4 - just passed the </revision>
-	// 5 - just passed the </page>
+	// 4 - just passed the <timestamp> inside the <revision>
+	// 5 - just passed the </timestamp> but still inside the <revision></revision> block
+	// 6 - just passed the </revision>
+	// 7 - just passed the </page>
 	private byte flag;
 
 	// compression mode checking
 	private boolean compressed = false;
 
-	// indicating how many <revision> tags have been met, reset after every page end
-	private int revisionVisited;
-
-	// indicating the flow conditifion within [flag = 4]
+	// indicating the flow condition within [flag = 4]
 	// -1 - Unmatched
 	//  1 - Matched <revision> tag partially
 	//  2 - Matched </page> tag partially
@@ -146,18 +72,35 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 	// a direct buffer to improve the local IO performance
 	private byte[] buf = new byte[134217728];
 	private int[] pos = new int[2];
-	
+
 	private Seekable fsin;
 
 	private DataOutputBuffer pageHeader = new DataOutputBuffer();
 	private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 	private DataOutputBuffer rev2Buf = new DataOutputBuffer();
+	private DataOutputBuffer tmpBuf = new DataOutputBuffer();
+	private DataOutputBuffer tsBuf = new DataOutputBuffer();
 
-	// TODO implement this later
-	private Pattern exclude;
+
+	// remember the last time point
+	private DateTime curTs;
+
+	// remember the time scale constant
+	private TimeScale timeScale;
+
+	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
 
 	private final LongWritable key = new LongWritable();
 	private final Text value = new Text();
+
+	public WikiRevisionSamplePairReader() {
+		super();
+	}
+
+	public WikiRevisionSamplePairReader(TimeScale ts) {
+		super();
+		this.timeScale = ts;
+	}
 
 	@Override
 	public void initialize(InputSplit input, TaskAttemptContext tac)
@@ -190,48 +133,130 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 		}
 
 		flag = 1;
-		revisionVisited = 0;
+		pos[0] = pos[1] = 0;
 	}
 
 	@Override
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (fsin.getPos() < end) {
 			while (readUntilMatch()) {  
-				if (flag == 5) {								
-					pageHeader.reset();
+				if (flag == 7) {
+					key.set(fsin.getPos() - rev2Buf.getLength() - END_PAGE.length);						
+					value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+					value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
+					value.append(END_PAGE, 0, END_PAGE.length);
+					// flush the last pair
+
+					pageHeader.reset();	
 					rev1Buf.reset();
 					rev2Buf.reset();
-					value.clear();
-					revisionVisited = 0;						
-				} 
-				else if (flag == 4) {
-					value.set(pageHeader.getData(), 0, pageHeader.getLength() 
-							- START_REVISION.length);
-					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-					value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-					value.append(END_PAGE, 0, END_PAGE.length);
+					tmpBuf.reset();
+					curTs = null;
 					return true;
-				}
+				} 
+				/*else if (flag == 6) {
+					rev1Buf.reset();
+				}*/
 				else if (flag == 2) {
 					pageHeader.write(START_PAGE);
 				}
 				else if (flag == 3) {
-					key.set(fsin.getPos() - START_REVISION.length);
-					rev1Buf.reset();
-					if (revisionVisited == 0) {							
+					if (curTs == null) {							
 						rev1Buf.write(DUMMY_REV);
-					} else {
+					} 
+					tmpBuf.write(START_REVISION);
+				}
+				else if (flag == 4) {
+					tsBuf.reset();
+				}
+				else if (flag == 5) {
+					String ts = new String(tsBuf.getData(),0, tsBuf.getLength() - END_TIMESTAMP.length);
+					tsBuf.reset();
+					DateTime dt = roundup(ts);
+
+					if (curTs != null && dt.isAfter(curTs)) {
+						key.set(fsin.getPos() - tmpBuf.getLength() - rev2Buf.getLength());						
+						value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+						value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
+						value.append(END_PAGE, 0, END_PAGE.length);
+
+						rev1Buf.reset();
 						rev1Buf.write(rev2Buf.getData());
+
+						rev2Buf.reset();
+						rev2Buf.write(tmpBuf.getData());		
+						tmpBuf.reset();
+						curTs = dt;	
+
+						return true;
+						
+					} else {
+						rev2Buf.reset();
+						rev2Buf.write(tmpBuf.getData());		
+						tmpBuf.reset();
+						curTs = dt;
 					}
-					rev2Buf.reset();
-					rev2Buf.write(START_REVISION);
 				}
 				else if (flag == -1) {
 					pageHeader.reset();
+					rev1Buf.reset();
+					rev2Buf.reset();
+					tmpBuf.reset();
+					value.clear();
+					return false;
 				}
 			}
 		}
 		return false;
+	}
+
+	@SuppressWarnings("null")
+	private DateTime roundup(String timestamp) {
+		MutableDateTime mdt = dtf.parseMutableDateTime(timestamp);
+
+		if (timeScale == TimeScale.HOUR) {
+			if (mdt.getMinuteOfHour() > 0 || mdt.getSecondOfMinute() > 0 || mdt.getMillisOfSecond() > 0) {
+				mdt.addHours(1);
+			}
+			mdt.setMinuteOfHour(0);
+			mdt.setSecondOfMinute(0);
+			mdt.setMillisOfSecond(0);
+
+
+		} else if (timeScale == TimeScale.DAY) {
+			if (mdt.getHourOfDay() > 1 || mdt.getMinuteOfHour() > 0 || mdt.getSecondOfMinute() > 0 
+					|| mdt.getMillisOfSecond() > 0) {
+				mdt.addDays(1);
+			}
+			mdt.setHourOfDay(1);
+			mdt.setMinuteOfHour(0);
+			mdt.setSecondOfMinute(0);
+			mdt.setMillisOfSecond(0);
+
+		} else if (timeScale == TimeScale.WEEK) {
+			if (mdt.getDayOfWeek() > 1 || mdt.getHourOfDay() > 1 || mdt.getMinuteOfHour() > 0 
+					|| mdt.getSecondOfMinute() > 0 || mdt.getMillisOfSecond() > 0) {
+				mdt.addWeeks(1);								
+			}
+			mdt.setDayOfWeek(DateTimeConstants.MONDAY);
+			mdt.setHourOfDay(1);
+			mdt.setMinuteOfHour(0);
+			mdt.setSecondOfMinute(0);
+			mdt.setMillisOfSecond(0);
+		} else if (timeScale == TimeScale.MONTH) {
+			if (mdt.getDayOfMonth() > 1 || mdt.getHourOfDay() > 1 || mdt.getMinuteOfHour() > 0 
+					|| mdt.getSecondOfMinute() > 0 || mdt.getMillisOfSecond() > 0) {
+				mdt.addWeeks(1);								
+			}
+			mdt.setDayOfMonth(1);
+			mdt.setHourOfDay(1);
+			mdt.setMinuteOfHour(0);
+			mdt.setSecondOfMinute(0);
+			mdt.setMillisOfSecond(0);
+		}
+		return mdt.toDateTimeISO();
 	}
 
 	@Override
@@ -278,7 +303,7 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 				byte b = buf[pos[0]];
 				pos[0]++;
 				// ignore every character until reaching a new page
-				if (flag == 1 || flag == 5) {
+				if (flag == 1 || flag == 7) {
 					if (b == START_PAGE[i]) {
 						i++;
 						if (i >= START_PAGE.length) {
@@ -300,21 +325,46 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 					}
 				}
 
-				// inside <revision></revision> block
+				// everything between <revision> and <timestamp> goes into tmpBuf buffer
 				else if (flag == 3) {
+					if (b == START_TIMESTAMP[i]) {
+						i++;
+					} else i = 0;
+					tmpBuf.write(b);					
+					if (i >= START_TIMESTAMP.length) {
+						flag = 4;
+						// tsBuf.reset();
+						return true;
+					}
+				}
+
+				// everything between <timestamp> </timestamp> block goes into tmpBuf and tsBuf buffers
+				else if (flag == 4) {
+					if (b == END_TIMESTAMP[i]) {
+						i++;
+					} else i = 0;
+					tsBuf.write(b);
+					tmpBuf.write(b);
+					if (i >= END_TIMESTAMP.length) {
+						flag = 5;
+						return true;
+					}
+				}
+
+				// everything up to </revision> goes into rev2Buf
+				else if (flag == 5) {
 					if (b == END_REVISION[i]) {
 						i++;
 					} else i = 0;
 					rev2Buf.write(b);
 					if (i >= END_REVISION.length) {
-						flag = 4;
-						revisionVisited++;
+						flag = 6;
 						return true;
 					}
 				}
 
-				// Note that flag 4 can be the signal of a new record inside one old page
-				else if (flag == 4) {
+				// Note that flag 6 can be the signal of a new revision inside one old page
+				else if (flag == 6) {
 					int curMatch = 0;				
 					if ((i < END_PAGE.length && b == END_PAGE[i]) 
 							&& (i < START_REVISION.length && b == START_REVISION[i])) {
@@ -329,7 +379,7 @@ public class WikiRevisionPairRecordReader extends RecordReader<LongWritable, Tex
 						lastMatchTag = curMatch;
 					} else i = 0;
 					if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
-						flag = 5;
+						flag = 7;
 						lastMatchTag = -1;
 						return true;							
 					} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {

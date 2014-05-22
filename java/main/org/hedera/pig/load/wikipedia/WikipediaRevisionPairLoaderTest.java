@@ -70,7 +70,8 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 		try {
 			if (reader.nextKeyValue()) {
 				Text content = reader.getCurrentValue();
-				Document doc = Jsoup.parse(content.toString(), "");				
+				return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
+				/*Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("revision");				
 				DateTime dt = null;
 				for (Element e : elems) {
@@ -86,9 +87,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 							return tuples.newTupleNoCopy(Arrays.asList("0"));
 						}
 					}
-				}
-				// return tuples.newTupleNoCopy(Arrays.asList("0"));
-				// return tuples.newTupleNoCopy(Arrays.asList(content.toString()));	
+				}*/
 			}
 			return null;
 		} catch (InterruptedException e) {
