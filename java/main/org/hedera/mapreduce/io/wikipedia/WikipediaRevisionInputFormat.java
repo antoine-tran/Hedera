@@ -304,7 +304,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 	private FileSplit makeSplit(Path path, long start, long size, NetworkTopology clusterMap, 
 			BlockLocation[] blkLocations) throws IOException {
-		String[] hosts = blkLocations[blkLocations.length].getHosts();
+		String[] hosts = blkLocations[blkLocations.length-1].getHosts();
 		return makeSplit(path, start, size,
 				hosts);
 	}
