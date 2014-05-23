@@ -27,8 +27,11 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.BagFactory;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -57,7 +60,7 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 
 	private static Options opts = new Options();	
 	private static final GnuParser parser = new GnuParser();
-	
+
 	private CommandLine options;
 	private Trie searcher;
 
@@ -75,7 +78,7 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 		if (optString != null && !optString.isEmpty()) {
 			try {				
 				options = parser.parse(opts, optString.split(" "));
-				
+
 				// build the string search engine
 				String[] words = options.getOptionValues("word");
 				searcher = new Trie().removeOverlaps().onlyWholeWords().caseInsensitive();
@@ -131,7 +134,13 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	}
 
 	private void defineSchema() {
-		// TODO: define schema here
+		Schema schema = new Schema();
+
+		// canonical fields in Wikipedia SQL dump
+		schema.add(new FieldSchema("pageid", DataType.LONG));
+		schema.add(new FieldSchema("revid", DataType.LONG));
+		
+		this.schema = new ResourceSchema(schema);
 	}
 
 	@Override
@@ -147,9 +156,8 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 		try {
 			if (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
-				String keyId = String.valueOf(key.get());
 				Text content = reader.getCurrentValue();	
-				
+
 				Document doc = Jsoup.parse(content.toString());				
 				Elements elems = doc.select("text");				
 				if (elems != null && !elems.isEmpty()) {
@@ -157,13 +165,13 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 					String text = e.text();
 					Collection<Emit> emits = searcher.parseText(text);
 					if (emits != null && !emits.isEmpty()) {
-						
+
 						// get the revision id. We have only one revision per <key,value> pair, so this should be fine
 						Elements elements = doc.select("page > revision > id");
 						if (elements != null && !elements.isEmpty()) {
 							Element idElement = elements.get(0);
-							String revId = idElement.text();
-							return tuples.newTupleNoCopy(Arrays.asList(keyId,revId));
+							long revId = Long.parseLong(idElement.text());
+							return tuples.newTupleNoCopy(Arrays.asList(key.get(),revId));
 						}
 					}
 				}
