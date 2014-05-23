@@ -211,8 +211,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	 * @param job the job context
 	 * @throws IOException
 	 */
-	public List<InputSplit> getSplits(JobContext jc, FileStatus file, String pattern, long splitSize) 
-			throws IOException {
+	public List<InputSplit> getSplits(JobContext jc, FileStatus file, String pattern, 
+			long splitSize) throws IOException {
 
 		NetworkTopology clusterMap = new NetworkTopology();
 		List<InputSplit> splits = new ArrayList<InputSplit>();
@@ -226,7 +226,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		if ((length != 0) && isSplitable(jc, path)) { 
 			long bytesRemaining = length;
 
-			SeekableInputStream in = SeekableInputStream.getInstance(path, 0, length, fs, this.compressionCodecs);
+			SeekableInputStream in = SeekableInputStream.getInstance(path, 0, length, fs, 
+					this.compressionCodecs);
 			SplitCompressionInputStream is = in.getSplitCompressionInputStream();
 			long start = 0;
 			long skip = 0;
@@ -246,7 +247,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					ByteMatcher matcher;
 					{
 						long st = Math.min(start + skip + splitSize, length - 1);
-						split = makeSplit(path, st, Math.min(splitSize, length - st), clusterMap, blkLocations);
+						split = makeSplit(path, st, Math.min(splitSize, length - st), 
+								clusterMap, blkLocations);
 						if ( in != null )
 							in.close();
 						if ( split.getLength() <= 1 ) {
@@ -259,8 +261,10 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 					// read until the next page end in the look-ahead split
 					boolean reach = false;
-					while ( !matcher.readUntilMatch(END_PAGE_TAG, null, split.getStart() + split.getLength()) ) {
-						if (matcher.getPos() >= length  ||  split.getLength() == length - split.getStart())
+					while ( !matcher.readUntilMatch(END_PAGE_TAG, null, split.getStart() 
+							+ split.getLength()) ) {
+						if (matcher.getPos() >= length  ||  split.getLength() == length 
+								- split.getStart())
 							break READLOOP;
 						reach = false;
 						split = makeSplit(path,
@@ -271,7 +275,8 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					if ( matcher.getLastUnmatchPos() > 0
 							&&  matcher.getPos() > matcher.getLastUnmatchPos()
 							&&  !processedPageEnds.contains(matcher.getPos()) ) {
-						splits.add(makeSplit(path, start, matcher.getPos() - start, clusterMap, blkLocations));
+						splits.add(makeSplit(path, start, matcher.getPos() - start, clusterMap, 
+								blkLocations));
 						processedPageEnds.add(matcher.getPos());
 						long newstart = Math.max(matcher.getLastUnmatchPos(), start);
 						bytesRemaining = length - newstart;
@@ -304,8 +309,9 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	}
 
 	/**
-	 * Tuan, Tu (22.05.2014) - For some reasons, the Pig version in the Hadoop@L3S does not recognize this method
-	 * in FileInputFormat. We need to hard-code and copied the source code over here
+	 * Tuan, Tu (22.05.2014) - For some reasons, the Pig version in the Hadoop@L3S does not 
+	 * recognize this method in FileInputFormat. We need to hard-code and copied the source
+	 * code over here
 	 */
 	protected FileSplit makeSplit(Path file, long start, long length, String[] hosts) {
 		return new FileSplit(file, start, length, hosts);

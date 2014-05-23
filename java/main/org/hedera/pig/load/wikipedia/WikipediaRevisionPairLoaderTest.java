@@ -74,7 +74,7 @@ public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMet
 			if (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
 				Text content = reader.getCurrentValue();				
-				return tuples.newTupleNoCopy(Arrays.asList(key,content.toString()));	
+				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content.toString()));	
 				/*Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("revision");				
 				DateTime dt = null;
