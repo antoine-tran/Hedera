@@ -112,9 +112,13 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		super();
 	}
 
+	static  {
+		opts.addOption(RECORD_READER_OPT, true, "The driver class for record reader");
+		opts.addOption(TIME_SCALE_OPT, true, "The time scale used to coalesce the timeline");
+	}
+	
 	public WikipediaRevisionInputFormat(String optString) {
 		super();
-		initOptions();
 		if (optString != null && !optString.isEmpty()) {
 			try {
 				options = parser.parse(opts, optString.split(" "));
@@ -126,10 +130,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		}
 	}	
 
-	private static void initOptions() {
-		opts.addOption(RECORD_READER_OPT, true, "The driver class for record reader");
-		opts.addOption(TIME_SCALE_OPT, true, "The time scale used to coalesce the timeline");
-	}
+
 
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 

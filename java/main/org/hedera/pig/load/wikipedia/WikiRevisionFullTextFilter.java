@@ -6,7 +6,15 @@ package org.hedera.pig.load.wikipedia;
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
+import org.ahocorasick.trie.Emit;
+import org.ahocorasick.trie.Trie;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -39,26 +47,54 @@ import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.REV
 public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata {
 
 	private WikipediaRevisionInputFormat input;
-	
+
 	// a cached object that defines the output schema of a Wikipedia revision
 	// Use volatile to fix the infamous double-checked locking issue, 
 	// and to make access to this object thread-safe
 	protected volatile ResourceSchema schema;
-	
+
 	private RecordReader<LongWritable, Text> reader;
+
+	private static Options opts = new Options();	
+	private static final GnuParser parser = new GnuParser();
 	
+	private CommandLine options;
+	private Trie searcher;
+
 	protected TupleFactory tuples;
 	protected BagFactory bags;
-	
-	public WikiRevisionFullTextFilter() {
-		input = new WikipediaRevisionInputFormat("-" + RECORD_READER_OPT + " " + REVISION_READER);
+
+	static {
+		opts.addOption("w", "word", true, "The keywords used for full text search");		
 	}
-	
+
+	public WikiRevisionFullTextFilter(String optString) {
+		input = new WikipediaRevisionInputFormat("-" + RECORD_READER_OPT + " " + REVISION_READER);
+
+		// extract the list of keywords from the gnu options
+		if (optString != null && !optString.isEmpty()) {
+			try {				
+				options = parser.parse(opts, optString.split(" "));
+				
+				// build the string search engine
+				String[] words = options.getOptionValues("word");
+				searcher = new Trie().removeOverlaps().onlyWholeWords().caseInsensitive();
+				for (String w : words) {
+					searcher.addKeyword(w);
+				}
+			} catch (org.apache.commons.cli.ParseException e) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("<-w " +" [YOUR_KEYWORD]>", opts);
+				throw new RuntimeException(e);
+			}	
+		}
+	}
+
 	@Override
 	public void setLocation(String loc, Job job) throws IOException {
 		setInputPaths(job, loc);
 	}
-	
+
 	@Override
 	public String[] getPartitionKeys(String loc, Job job) throws IOException {
 		setLocation(loc, job);
@@ -78,7 +114,7 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 		}
 		return schema;
 	}
-	
+
 	@Override
 	public ResourceStatistics getStatistics(String arg0, Job arg1)
 			throws IOException {
@@ -93,11 +129,11 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	public InputFormat getInputFormat() throws IOException {
 		return input;
 	}
-	
+
 	private void defineSchema() {
 		// TODO: define schema here
 	}
-	
+
 	@Override
 	public void prepareToRead(RecordReader reader, PigSplit split)
 			throws IOException {
@@ -110,12 +146,26 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	public Tuple getNext() throws IOException {
 		try {
 			if (reader.nextKeyValue()) {
-				Text content = reader.getCurrentValue();				
-				Document doc = Jsoup.parse(content.toString());
-				Elements elems = doc.select("text");
+				LongWritable key = reader.getCurrentKey();
+				String keyId = String.valueOf(key.get());
+				Text content = reader.getCurrentValue();	
+				
+				Document doc = Jsoup.parse(content.toString());				
+				Elements elems = doc.select("text");				
 				if (elems != null && !elems.isEmpty()) {
 					Element e = elems.get(0);
 					String text = e.text();
+					Collection<Emit> emits = searcher.parseText(text);
+					if (emits != null && !emits.isEmpty()) {
+						
+						// get the revision id. We have only one revision per <key,value> pair, so this should be fine
+						Elements elements = doc.select("page > revision > id");
+						if (elements != null && !elements.isEmpty()) {
+							Element idElement = elements.get(0);
+							String revId = idElement.text();
+							return tuples.newTupleNoCopy(Arrays.asList(keyId,revId));
+						}
+					}
 				}
 			}
 		} catch (Exception e) {
