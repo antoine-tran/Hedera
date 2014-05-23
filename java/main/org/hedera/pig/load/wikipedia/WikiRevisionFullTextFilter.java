@@ -22,6 +22,11 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.RECORD_READER_OPT;
 import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.REVISION_READER;
 
@@ -105,9 +110,15 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	public Tuple getNext() throws IOException {
 		try {
 			if (reader.nextKeyValue()) {
-				Text content = reader.getCurrentValue();
+				Text content = reader.getCurrentValue();				
+				Document doc = Jsoup.parse(content.toString());
+				Elements elems = doc.select("text");
+				if (elems != null && !elems.isEmpty()) {
+					Element e = elems.get(0);
+					String text = e.text();
+				}
 			}
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			throw new IOException(e);
 		}
 		return null;
