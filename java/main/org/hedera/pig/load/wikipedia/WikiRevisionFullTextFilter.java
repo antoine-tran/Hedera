@@ -18,12 +18,16 @@ import org.apache.pig.LoadMetadata;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.RECORD_READER_OPT;
+import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.REVISION_READER;
 
 /**
- * A Pig UDF loader that filters wiki revision text by keywords
+ * A Pig UDF loader that filters wiki revision text by keywords. This loader uses an
+ * instance of WikipediaInputFormat that emits individual revisions per page
  * @author tuan
  *
  */
@@ -41,8 +45,8 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	protected TupleFactory tuples;
 	protected BagFactory bags;
 	
-	public WikiRevisionFullTextFilter(String optString) {
-		input = new WikipediaRevisionInputFormat(optString);
+	public WikiRevisionFullTextFilter() {
+		input = new WikipediaRevisionInputFormat("-" + RECORD_READER_OPT + " " + REVISION_READER);
 	}
 	
 	@Override
@@ -93,13 +97,19 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	public void prepareToRead(RecordReader reader, PigSplit split)
 			throws IOException {
 		this.reader = (RecordReader<LongWritable, Text>)reader;
+		this.tuples = TupleFactory.getInstance();
+		this.bags = BagFactory.getInstance();
 	}
 
 	@Override
 	public Tuple getNext() throws IOException {
-		// TODO Auto-generated method stub
+		try {
+			if (reader.nextKeyValue()) {
+				Text content = reader.getCurrentValue();
+			}
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
 		return null;
 	}
-
-
 }

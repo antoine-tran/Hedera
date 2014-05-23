@@ -128,7 +128,7 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	// 3 - just passed the <id>
 	// 4 - just passed the </id> but outside <revision>
 	// 5 - just passed the <revision>
-	// 6 - just passed the </revision>
+	// 6 - just passed the </revision>Y
 	// 7 - just passed the </revision>
 	private byte flag;
 

@@ -65,6 +65,12 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
 public class WikipediaRevisionInputFormat extends TextInputFormat {
 	private static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
 	public static final String RECORD_READER_OPT = "recordreader";
+	
+	// constants to map to different underlying record readers
+	public static final String REVISION_READER = "Revision";
+	public static final String REVISION_SAMPLED_PAIR_READER = "RevisionDistant";
+	public static final String REVISION_CONSECUTIVE_PAIR_READER = "RevisionPair";
+	
 	public static final String TIME_SCALE_OPT = "timescale";
 	public static enum TimeScale {
 		HOUR("hour"),
@@ -135,11 +141,11 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 
 		if (options != null) {
 			String recordReader = options.getOptionValue(RECORD_READER_OPT);
-			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
+			if (recordReader == null || recordReader.equalsIgnoreCase(REVISION_CONSECUTIVE_PAIR_READER)) {
 				return new WikiRevisionAllPairReader();
-			} else if (recordReader.equalsIgnoreCase("Revision")) {
+			} else if (recordReader.equalsIgnoreCase(REVISION_READER)) {
 				return new WikiRevisionRecordReader();
-			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
+			} else if (recordReader.equalsIgnoreCase(REVISION_SAMPLED_PAIR_READER)) {
 				if (!options.hasOption(TIME_SCALE_OPT)) {
 					throw new RuntimeException("Must specify the time scale for RevisionDistant");
 				} else {
