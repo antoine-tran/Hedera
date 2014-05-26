@@ -21,7 +21,7 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.hedera.mapreduce.io.WikipediaRevisionInputFormat;
+import org.hedera.io.input.WikipediaRevisionInputFormat;
 
 /**
  * A Pig UDF loader that filters wiki revision text by keywords

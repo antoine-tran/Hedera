@@ -1,4 +1,4 @@
-package org.hedera.mapreduce.io;
+package org.hedera.io.input;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,27 +20,24 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
-import org.hedera.mapreduce.io.WikipediaRevisionInputFormat.TimeScale;
+import org.hedera.io.input.WikipediaRevisionInputFormat.TimeScale;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_ID;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_ID;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_ID;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_ID;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_TIMESTAMP;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_TIMESTAMP;
 
 public class WikiRevisionSamplePairReader extends RecordReader<LongWritable, Text> {
 	private static final Logger LOG = Logger.getLogger(WikiRevisionAllPairReader.class); 		
-
-	public static final String START_TIMESTAMP_TAG = "<timestamp>";
-	public static final String END_TIMESTAMP_TAG = "</timestamp>";
-	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
-	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
 
 	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
 			+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"

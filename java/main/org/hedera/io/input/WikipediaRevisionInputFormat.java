@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hedera.mapreduce.io;
+package org.hedera.io.input;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,6 +99,14 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	public static final byte[] START_ID = "<id>".getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_ID = "</id>".getBytes(StandardCharsets.UTF_8);
 
+	public static final byte[] START_TITLE = "<title>".getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_TITLE = "</title>".getBytes(StandardCharsets.UTF_8);
+	
+	public static final String START_TIMESTAMP_TAG = "<timestamp>";
+	public static final String END_TIMESTAMP_TAG = "</timestamp>";
+	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
+	
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	protected static long THRESHOLD = 137438953472l;
 
@@ -138,7 +146,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
 				return new WikiRevisionAllPairReader();
 			} else if (recordReader.equalsIgnoreCase("Revision")) {
-				return new WikiRevisionRecordReader();
+				return new WikiRevisionPlainTextReader();
 			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
 				if (!options.hasOption(TIME_SCALE_OPT)) {
 					throw new RuntimeException("Must specify the time scale for RevisionDistant");
@@ -153,7 +161,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 					return new WikiRevisionSamplePairReader(ts);
 				}
 			} else throw new RuntimeException("unknown recorder driver");
-		} else return new WikiRevisionAllPairReader();
+		} else return new WikiRevisionPlainTextReader();
 	}
 
 	public void configure(Configuration conf) {

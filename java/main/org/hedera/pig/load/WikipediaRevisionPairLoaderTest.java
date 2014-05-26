@@ -21,7 +21,7 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.mapreduce.io.WikipediaRevisionInputFormat;
+import org.hedera.io.input.WikipediaRevisionInputFormat;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;

@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hedera.mapreduce.io;
+package org.hedera.io.input;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,7 +134,7 @@ public class WikipediaRevisionInputFormatOld extends TextInputFormat {
 			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
 				return new WikiRevisionAllPairReader();
 			} else if (recordReader.equalsIgnoreCase("Revision")) {
-				return new WikiRevisionRecordReader();
+				return new WikiRevisionPlainTextReader();
 			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
 				if (!options.hasOption(TIME_SCALE_OPT)) {
 					throw new RuntimeException("Must specify the time scale for RevisionDistant");

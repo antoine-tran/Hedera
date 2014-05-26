@@ -1,8 +1,9 @@
-package org.hedera.mapreduce.io;
+/**
+ * 
+ */
+package org.hedera.io.input;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -19,19 +20,19 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.log4j.Logger;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.DEFAULT_MAX_BLOCK_SIZE;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_ID;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_PAGE_TAG;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_ID;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_PAGE_TAG;
+import static org.hedera.io.input.WikipediaRevisionInputFormat.START_REVISION;
 
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_ID;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_PAGE_TAG;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_ID;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_PAGE_TAG;
-import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_REVISION;
-
-/** read a meta-history xml file and output as a record every pair of consecutive revisions.
- * For example,  Given the following input containing two pages and four revisions,
+/** read a meta-history xml file, output as a record the revision together with the page info.
+ *
+ * For example,  Given the following input,
  * <pre><code>
  *  &lt;page&gt;
  *    &lt;title&gt;ABC&lt;/title&gt;
@@ -49,37 +50,15 @@ import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_REVISIO
  *      ....
  *    &lt;/revision&gt;
  *  &lt;/page&gt;
- *  &lt;page&gt;
- *    &lt;title&gt;DEF&lt;/title&gt;
- *    &lt;id&gt;456&lt;/id&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;400&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
+
  * </code></pre>
- * it will produce four keys like this:
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;ABC&lt;/title&gt;
- *    &lt;id&gt;123&lt;/id&gt;
- *    &lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
- *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
- *      &lt;id&gt;100&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre>
+ * it will produce three keys like this:
  * <pre><code>
  *  &lt;page&gt;
  *    &lt;title&gt;ABC&lt;/title&gt;
  *    &lt;id&gt;123&lt;/id&gt;
  *    &lt;revision&gt;
  *      &lt;id&gt;100&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *    &lt;revision&gt;
- *      &lt;id&gt;200&lt;/id&gt;
  *      ....
  *    &lt;/revision&gt;
  *  &lt;/page&gt;
@@ -92,51 +71,39 @@ import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_REVISIO
  *      &lt;id&gt;200&lt;/id&gt;
  *      ....
  *    &lt;/revision&gt;
+ *  &lt;/page&gt;
+ * </code></pre>
+ * <pre><code>
+ *  &lt;page&gt;
+ *    &lt;title&gt;ABC&lt;/title&gt;
+ *    &lt;id&gt;123&lt;/id&gt;
  *    &lt;revision&gt;
  *      &lt;id&gt;300&lt;/id&gt;
  *      ....
  *    &lt;/revision&gt;
  *  &lt;/page&gt;
  * </code></pre>
- * <pre><code>
- *  &lt;page&gt;
- *    &lt;title&gt;DEF&lt;/title&gt;
- *    &lt;id&gt;456&lt;/id&gt;
- *    &lt;revision&gt;&lt;revision beginningofpage="true"&gt;&lt;text xml:space="preserve"&gt;
- *    &lt;/text&gt;&lt;/revision&gt;&lt;revision&gt;
- *      &lt;id&gt;400&lt;/id&gt;
- *      ....
- *    &lt;/revision&gt;
- *  &lt;/page&gt;
- * </code></pre> 
- * 
- * @author tuan*/
-public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> {
-	private static final Logger LOG = Logger.getLogger(WikiRevisionAllPairReader.class); 		
-
-	private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
-			+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"
-			+ "</text></revision>\n")
-			.getBytes(StandardCharsets.UTF_8);
+ * @author tuan
+ */
+public class WikiRevisionPlainTextReader extends RecordReader<LongWritable, Text> {
 
 	private long start;
 	private long end;
-	
-    // -1: EOF
-	// 1 - beginning of the first <page> tag
-	// 2 - just passed the <page> tag but outside the <id> tag
-	// 3 - just passed the <id>
-	// 4 - just passed the </id> but outside <revision>
-	// 5 - just passed the <revision>
+
+	// A flag that tells in which block the cursor is:
+	// -1: EOF
+	// 1 - outside the <page> tag
+	// 2 - just passed the <page> tag but outside the <id>
+	// 3 - just passed the <id> tag
+	// 4 - just passed the </id> tag but outside the <revision>
+	// 5 - just passed the (next) <revision>
 	// 6 - just passed the </revision>
-	// 7 - just passed the </revision>
+	// 7 - just passed the </page>
+	
 	private byte flag;
 
 	// compression mode checking
 	private boolean compressed = false;
-
-	// indicating how many <revision> tags have been met, reset after every page end
-	private int revisionVisited;
 
 	// indicating the flow conditifion within [flag = 6]
 	// -1 - Unmatched
@@ -148,13 +115,16 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	// a direct buffer to improve the local IO performance
 	private byte[] buf = new byte[134217728];
 	private int[] pos = new int[2];
-	
+
 	private Seekable fsin;
 
 	private DataOutputBuffer pageHeader = new DataOutputBuffer();
+	
+	// We now convert and cache everything from pageHeader to the followin global variables
+	// NOTE: they all need to be synchronized with pageHeader !!
+	
+	private DataOutputBuffer revBuf = new DataOutputBuffer();
 	private DataOutputBuffer keyBuf = new DataOutputBuffer();
-	private DataOutputBuffer rev1Buf = new DataOutputBuffer();
-	private DataOutputBuffer rev2Buf = new DataOutputBuffer();
 
 	private final LongWritable key = new LongWritable();
 	private final Text value = new Text();
@@ -163,11 +133,11 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	public void initialize(InputSplit input, TaskAttemptContext tac)
 			throws IOException, InterruptedException {
 
+		// config xmlinput properties to support bzip2 splitting
 		Configuration conf = tac.getConfiguration();
 
 		FileSplit split = (FileSplit) input;
 		start = split.getStart();
-		end = start + split.getLength();
 		Path file = split.getPath();
 
 		CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
@@ -180,10 +150,8 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
 			CompressionInputStream cis = codec.createInputStream(fs.open(file));
 
-			// This is extremely slow because of I/O overhead
-			// while (cis.getPos() < start) cis.skip(start);read();
 			cis.skip(start - 1);
-			
+
 			fsin = cis;
 		} else { // file is uncompressed	
 			compressed = false;
@@ -192,7 +160,6 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 		}
 
 		flag = 1;
-		revisionVisited = 0;
 		pos[0] = pos[1] = 0;
 	}
 
@@ -200,38 +167,29 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (fsin.getPos() < end) {
 			while (readUntilMatch()) {  
-				if (flag == 7) {								
+				if (flag == 7) {
 					pageHeader.reset();
-					rev1Buf.reset();
-					rev2Buf.reset();
 					value.clear();
-					revisionVisited = 0;						
 				} 
 				else if (flag == 6) {					
 					value.set(pageHeader.getData(), 0, pageHeader.getLength() 
 							- START_REVISION.length);
-					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-					value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+					
+					value.append(revBuf.getData(), 0, revBuf.getLength());
 					value.append(END_PAGE, 0, END_PAGE.length);
+					revBuf.reset();
 					return true;
 				}
 				else if (flag == 4) {
 					String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
 					key.set(Long.parseLong(pageId));	
 					keyBuf.reset();
-				}				
+				}
 				else if (flag == 2) {
 					pageHeader.write(START_PAGE);
 				}
 				else if (flag == 5) {
-					rev1Buf.reset();
-					if (revisionVisited == 0) {							
-						rev1Buf.write(DUMMY_REV);
-					} else {
-						rev1Buf.write(rev2Buf.getData());
-					}
-					rev2Buf.reset();
-					rev2Buf.write(START_REVISION);
+					revBuf.write(START_REVISION);
 				}
 				else if (flag == -1) {
 					pageHeader.reset();
@@ -239,11 +197,10 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			}
 		}
 		return false;
-	}
+	}		
 
 	@Override
-	public LongWritable getCurrentKey() throws IOException,
-	InterruptedException {
+	public LongWritable getCurrentKey() throws IOException, InterruptedException {
 		return key;
 	}
 
@@ -265,9 +222,10 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			((FSDataInputStream)fsin).close();
 		}
 	}
-
+	
+	// Scan the tags in SAX manner. Return at every legit tag and inform the program via the global flag
+	// Flush into the caches if necessary
 	private boolean readUntilMatch() throws IOException {
-
 		if (buf == null && pos.length != 2)
 			throw new IOException("Internal buffer corrupted.");
 		int i = 0;
@@ -275,7 +233,6 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			if (pos[0] == pos[1]) {				
 				pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
 					((FSDataInputStream)fsin).read(buf);
-				LOG.info(pos[1] + " bytes read from the stream...");
 				pos[0] = 0;
 				if (pos[1] == -1) {
 					return false;
@@ -284,6 +241,7 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 			while (pos[0] < pos[1]) {
 				byte b = buf[pos[0]];
 				pos[0]++;
+
 				// ignore every character until reaching a new page
 				if (flag == 1 || flag == 7) {
 					if (b == START_PAGE[i]) {
@@ -337,10 +295,9 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 					if (b == END_REVISION[i]) {
 						i++;
 					} else i = 0;
-					rev2Buf.write(b);
+					revBuf.write(b);
 					if (i >= END_REVISION.length) {
 						flag = 6;
-						revisionVisited++;
 						return true;
 					}
 				}
@@ -370,7 +327,7 @@ public class WikiRevisionAllPairReader extends RecordReader<LongWritable, Text> 
 						return true;
 					}				
 				} 
-			}
+			}		
 		}
 	}
 }
