@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.mapreduce.io.wikipedia;
+package org.hedera.mapreduce.io;
 
 import java.io.IOException;
 
@@ -21,15 +21,15 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.DEFAULT_MAX_BLOCK_SIZE;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_ID;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_PAGE_TAG;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.END_REVISION;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_ID;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_PAGE_TAG;
-import static org.hedera.mapreduce.io.wikipedia.WikipediaRevisionInputFormat.START_REVISION;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.DEFAULT_MAX_BLOCK_SIZE;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_ID;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_PAGE;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_PAGE_TAG;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.END_REVISION;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_ID;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_PAGE;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_PAGE_TAG;
+import static org.hedera.mapreduce.io.WikipediaRevisionInputFormat.START_REVISION;
 
 /** read a meta-history xml file, output as a record the revision together with the page info.
  *

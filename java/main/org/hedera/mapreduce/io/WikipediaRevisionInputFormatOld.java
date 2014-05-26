@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hedera.mapreduce.io.wikipedia;
+package org.hedera.mapreduce.io;
 
 import java.io.IOException;
 import java.io.InputStream;
