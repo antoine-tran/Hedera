@@ -30,59 +30,8 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRev
 		return new RevisionReader();
 	}
 	
-	/** read a meta-history xml file, output as a record the revision together with the page info.
-	 *
-	 * For example,  Given the following input,
-	 * <pre><code>
-	 *  &lt;page&gt;
-	 *    &lt;title&gt;ABC&lt;/title&gt;
-	 *    &lt;id&gt;123&lt;/id&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;100&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;200&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;300&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *  &lt;/page&gt;
-
-	 * </code></pre>
-	 * it will produce three keys like this:
-	 * <pre><code>
-	 *  &lt;page&gt;
-	 *    &lt;title&gt;ABC&lt;/title&gt;
-	 *    &lt;id&gt;123&lt;/id&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;100&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *  &lt;/page&gt;
-	 * </code></pre>
-	 * <pre><code>
-	 *  &lt;page&gt;
-	 *    &lt;title&gt;ABC&lt;/title&gt;
-	 *    &lt;id&gt;123&lt;/id&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;200&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *  &lt;/page&gt;
-	 * </code></pre>
-	 * <pre><code>
-	 *  &lt;page&gt;
-	 *    &lt;title&gt;ABC&lt;/title&gt;
-	 *    &lt;id&gt;123&lt;/id&gt;
-	 *    &lt;revision&gt;
-	 *      &lt;id&gt;300&lt;/id&gt;
-	 *      ....
-	 *    &lt;/revision&gt;
-	 *  &lt;/page&gt;
-	 * </code></pre>
+	/**
+	 * Read each revision of Wikipedia page and transform into a WikiRevisionWritable object
 	 * @author tuan
 	 */
 	public static class RevisionReader extends RecordReader<LongWritable, WikiRevisionWritable> {

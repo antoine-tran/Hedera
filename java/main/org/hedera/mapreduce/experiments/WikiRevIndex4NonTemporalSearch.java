@@ -64,7 +64,7 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 			
 			// each line here is a performance / memory killer
 			String rawText = new String(value.getText(), "UTF-8");			
-			String text = parser.parse(rawText);
+			/*String text = parser.parse(rawText);
 			rawText = null;
 			
 			String[] tokens = SPACES_PATTERN.split(text);
@@ -72,7 +72,8 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 				String word = token.toLowerCase(Locale.ENGLISH);
 				LOG.info("processing " + word + " at revision . " + value.getRevisionId());
 				internalCounter.adjustOrPutValue(word, 1, 1);
-			}
+			}*/
+			internalCounter.adjustOrPutValue(rawText, 1, 1);
 			
 			internalCounter.forEachEntry(new TObjectIntProcedure<String>() {
 				public boolean execute(String w, int cnt) {
