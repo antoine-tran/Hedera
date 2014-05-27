@@ -70,6 +70,7 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 			String[] tokens = SPACES_PATTERN.split(text);
 			for (String token : tokens) {
 				String word = token.toLowerCase(Locale.ENGLISH);
+				LOG.info("processing " + word + " at revision . " + value.getRevisionId());
 				internalCounter.adjustOrPutValue(word, 1, 1);
 			}
 			
@@ -111,12 +112,13 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 	public int run(String[] args) throws Exception {
 		String inputDir = args[0];
 		String outputDir = args[1];
+		int reduceNo = Integer.parseInt(args[2]);
 		
-		Job job = setup("Baseline 1: Indexing revisions for by OkapiBM25", 
+		Job job = setup("Baseline 1: Indexing revisions for OkapiBM25", 
 				WikiRevIndex4NonTemporalSearch.class, inputDir, outputDir,
 				WikiRevisionPageInputFormat.class, TextOutputFormat.class, 
 				Text.class, LongTripleWritable.class, Text.class, Text.class,
-				IndexMapper.class, IndexReducer.class, 1000);
+				IndexMapper.class, IndexReducer.class, reduceNo);
 		job.waitForCompletion(true);
 		return 0;
 	}
