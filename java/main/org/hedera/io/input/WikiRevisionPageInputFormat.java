@@ -265,7 +265,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRev
 					pos[0]++;
 
 					// ignore every character until reaching a new page
-					if (flag == 1 || flag == 15) {
+					if (flag == 1 || flag == 17) {
 						if (b == START_PAGE[i]) {
 							i++;
 							if (i >= START_PAGE.length) {
