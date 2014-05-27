@@ -21,7 +21,8 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.hedera.io.input.WikipediaRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionTextInputFormat;
 
 /**
  * A Pig UDF loader that filters wiki revision text by keywords
@@ -30,7 +31,7 @@ import org.hedera.io.input.WikipediaRevisionInputFormat;
  */
 public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata {
 
-	private WikipediaRevisionInputFormat input;
+	private WikiRevisionInputFormat input;
 	
 	// a cached object that defines the output schema of a Wikipedia revision
 	// Use volatile to fix the infamous double-checked locking issue, 
@@ -43,7 +44,7 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	protected BagFactory bags;
 	
 	public WikiRevisionFullTextFilter(String optString) {
-		input = new WikipediaRevisionInputFormat(optString);
+		input = new WikiRevisionTextInputFormat();
 	}
 	
 	@Override
@@ -98,7 +99,6 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 
 	@Override
 	public Tuple getNext() throws IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

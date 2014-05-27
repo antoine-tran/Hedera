@@ -30,7 +30,7 @@ public class WikiRevisionWritable implements Writable {
 	private long parentId;
 	private long timestamp;
 	private String pageTitle;
-	private String text;
+	private byte[] text;
 		
 	public String getPageTitle() {
 		return pageTitle;
@@ -72,12 +72,13 @@ public class WikiRevisionWritable implements Writable {
 		this.timestamp = timestamp;
 	}
 
-	public String getText() {
+	public byte[] getText() {
 		return text;
 	}
-
-	public void setText(String text) {
-		this.text = text;
+	
+	public void loadText(byte[] buffer, int offset, int length) {
+		text = new byte[length];
+		System.arraycopy(buffer, offset, text, 0, length);
 	}
 
 	public void clear() {
@@ -85,6 +86,7 @@ public class WikiRevisionWritable implements Writable {
 		this.revisionId = 0;
 		this.parentId = 0;
 		this.timestamp = 0;
+		this.pageTitle = null;
 		this.text = null;
 	}
 	
@@ -95,9 +97,8 @@ public class WikiRevisionWritable implements Writable {
 		parentId = in.readLong();
 		timestamp = in.readLong();
 		int length = in.readInt();		
-		byte[] bytes = new byte[length];
-		in.readFully(bytes, 0, length);
-		text = new String(bytes, "UTF-8");
+		text = new byte[length];
+		in.readFully(text, 0, length);
 		pageTitle = in.readUTF();
 	}
 
@@ -107,9 +108,8 @@ public class WikiRevisionWritable implements Writable {
 		out.writeLong(revisionId);
 		out.writeLong(parentId);
 		out.writeLong(timestamp);
-		byte[] bytes = text.getBytes("UTF-8");
-		WritableUtils.writeVInt(out, bytes.length);		
-		out.write(bytes, 0, bytes.length);
+		WritableUtils.writeVInt(out, text.length);		
+		out.write(text, 0, text.length);
 		out.writeUTF(pageTitle);
 	}
 }

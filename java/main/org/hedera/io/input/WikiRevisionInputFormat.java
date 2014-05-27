@@ -20,25 +20,18 @@
 package org.hedera.io.input;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.SplitCompressionInputStream;
@@ -47,8 +40,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.net.NetworkTopology;
 import org.wikimedia.wikihadoop.ByteMatcher;
 import org.wikimedia.wikihadoop.SeekableInputStream;
@@ -62,30 +55,10 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
  * @since 13.04.2014
  *
  */
-public class WikipediaRevisionInputFormat extends TextInputFormat {
-	private static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
-	public static final String RECORD_READER_OPT = "recordreader";
-	public static final String TIME_SCALE_OPT = "timescale";
-	public static enum TimeScale {
-		HOUR("hour"),
-		DAY("day"),
-		WEEK("week"),
-		MONTH("month");		
-		private final String val;		
-		private TimeScale(String v) {val = v;}		
-		public String toString() {
-			return val;
-		}
-
-		public boolean equalsName(String name) {
-			return (val.equals(name));
-		}
-	}
-	private static Options opts = new Options();	
-	private static final GnuParser parser = new GnuParser();
-	private CommandLine options;
-
-	private CompressionCodecFactory compressionCodecs = null;
+public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWritable, T> {
+	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
+	
+	protected CompressionCodecFactory compressionCodecs = null;
 
 	public static final String START_PAGE_TAG = "<page>";
 	public static final String END_PAGE_TAG = "</page>";
@@ -110,60 +83,19 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	protected static long THRESHOLD = 137438953472l;
 
-	public WikipediaRevisionInputFormat() {
+	public WikiRevisionInputFormat() {
 		super();
-	}
-
-	public WikipediaRevisionInputFormat(String optString) {
-		super();
-		initOptions();
-		if (optString != null && !optString.isEmpty()) {
-			try {
-				options = parser.parse(opts, optString.split(" "));
-			} catch (org.apache.commons.cli.ParseException e) {
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("[-" + RECORD_READER_OPT + "] [-" + TIME_SCALE_OPT + "]", opts);
-				throw new RuntimeException(e);
-			}	
-		}
-	}	
-
-	private static void initOptions() {
-		opts.addOption(RECORD_READER_OPT, true, "The driver class for record reader");
-		opts.addOption(TIME_SCALE_OPT, true, "The time scale used to coalesce the timeline");
 	}
 
 	@Override
-	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
-			TaskAttemptContext context) {
-		Configuration conf = context.getConfiguration();
-
+	public abstract RecordReader<LongWritable, T> createRecordReader(InputSplit input,
+			TaskAttemptContext context) throws IOException, InterruptedException;
+	
+	protected static void setBlockSize(Configuration conf) {
 		// Tu should have done this already (??): Set maximum splitsize to be 128MB
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
-
-		if (options != null) {
-			String recordReader = options.getOptionValue(RECORD_READER_OPT);
-			if (recordReader == null || recordReader.equalsIgnoreCase("RevisionPair")) {
-				return new WikiRevisionAllPairReader();
-			} else if (recordReader.equalsIgnoreCase("Revision")) {
-				return new WikiRevisionPlainTextReader();
-			} else if (recordReader.equalsIgnoreCase("RevisionDistant")) {
-				if (!options.hasOption(TIME_SCALE_OPT)) {
-					throw new RuntimeException("Must specify the time scale for RevisionDistant");
-				} else {
-					String scale = options.getOptionValue(TIME_SCALE_OPT);
-					TimeScale ts = null;
-					for (TimeScale t : TimeScale.values()) {
-						if (t.equalsName(scale)) {
-							ts = t;
-						}
-					}
-					return new WikiRevisionSamplePairReader(ts);
-				}
-			} else throw new RuntimeException("unknown recorder driver");
-		} else return new WikiRevisionPlainTextReader();
 	}
-
+	
 	public void configure(Configuration conf) {
 		if (compressionCodecs == null)
 			compressionCodecs = new CompressionCodecFactory(conf);
@@ -191,13 +123,12 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 		List<InputSplit> splits = super.getSplits(jc);
 		List<FileStatus> files = listStatus(jc);
 		// Save the number of input files for metrics/loadgen
-
-		long totalSize = 0;                           // compute total size
-		for (FileStatus file: files) {                // check we have valid files
+		
+		// check we have valid files
+		for (FileStatus file: files) {                
 			if (file.isDirectory()) {
 				throw new IOException("Not a file: "+ file.getPath());
 			}
-			totalSize += file.getLen();
 		}
 		long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(jc));
 		long maxSize = getMaxSplitSize(jc);
@@ -263,18 +194,15 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 							break;
 						}
 						in = SeekableInputStream.getInstance(split, fs, this.compressionCodecs);
-						SplitCompressionInputStream cin = in.getSplitCompressionInputStream();
 					}
 					matcher = new ByteMatcher(in);
 
 					// read until the next page end in the look-ahead split
-					boolean reach = false;
 					while ( !matcher.readUntilMatch(END_PAGE_TAG, null, split.getStart() 
 							+ split.getLength()) ) {
 						if (matcher.getPos() >= length  ||  split.getLength() == length 
 								- split.getStart())
 							break READLOOP;
-						reach = false;
 						split = makeSplit(path,
 								split.getStart(),
 								Math.min(split.getLength() + splitSize, length - split.getStart()),
@@ -321,6 +249,7 @@ public class WikipediaRevisionInputFormat extends TextInputFormat {
 	 * recognize this method in FileInputFormat. We need to hard-code and copied the source
 	 * code over here
 	 */
+	@Override
 	protected FileSplit makeSplit(Path file, long start, long length, String[] hosts) {
 		return new FileSplit(file, start, length, hosts);
 	}

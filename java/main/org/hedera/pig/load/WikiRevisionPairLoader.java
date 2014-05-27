@@ -24,7 +24,8 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.io.input.WikipediaRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionPairInputFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -32,13 +33,14 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 /**
- * A UDF loader for WikipediaRevisionInputFormat using RevisionPairRecordReader
+ * A UDF loader for WikiRevisionPairInputFormat using RevisionPairRecordReader
  * @author tuan
  *
  */
-public class WikipediaRevisionPairLoader extends LoadFunc implements LoadMetadata {
+public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 
-	private static final WikipediaRevisionInputFormat INPUT_FORMAT = new WikipediaRevisionInputFormat();
+	private static final WikiRevisionInputFormat<Text> INPUT_FORMAT = 
+			new WikiRevisionPairInputFormat();
 
 	protected RecordReader<LongWritable, Text> reader;
 	
