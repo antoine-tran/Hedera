@@ -18,8 +18,11 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.log4j.Logger;
 
 public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
+	
+	private static final Logger LOG = Logger.getLogger(WikiRevisionTextInputFormat.class);
 	
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
@@ -246,6 +249,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 							i++;
 							if (i >= START_PAGE.length) {
 								flag = 2;
+								LOG.info("encounter <page>");
 								return true;
 							}
 						} else i = 0;
@@ -259,6 +263,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						pageHeader.write(b);
 						if (i >= START_ID.length) {
 							flag = 3;
+							LOG.info("encounter <id>");
 							return true;
 						}
 					}
@@ -272,6 +277,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						keyBuf.write(b);
 						if (i >= END_ID.length) {
 							flag = 4;
+							LOG.info("encounter </id>");
 							return true;
 						}
 					}
@@ -284,6 +290,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						pageHeader.write(b);
 						if (i >= START_REVISION.length) {
 							flag = 5;
+							LOG.info("encounter <revision>");
 							return true;
 						}
 					}
@@ -296,6 +303,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						revBuf.write(b);
 						if (i >= END_REVISION.length) {
 							flag = 6;
+							LOG.info("encounter </revision>");
 							return true;
 						}
 					}
@@ -318,10 +326,12 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
 							flag = 7;
 							lastMatchTag = -1;
+							LOG.info("encounter </page>");
 							return true;							
 						} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
 							flag = 5;
 							lastMatchTag = -1;
+							LOG.info("encounter <revision>");
 							return true;
 						}				
 					} 

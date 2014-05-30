@@ -1,7 +1,12 @@
 package org.hedera.mapreduce;
 
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.Tool;
+import org.hedera.io.LongLongStringWritable;
+import org.hedera.io.WikiRevisionWritable;
 
+import edu.umd.cloud9.io.pair.PairOfStringInt;
 import tuan.hadoop.conf.JobConfig;
 
 /**
@@ -11,10 +16,13 @@ import tuan.hadoop.conf.JobConfig;
  */
 public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
+	private static final class MyMapper extends Mapper<LongWritable, WikiRevisionWritable, 
+			PairOfStringInt, LongLongStringWritable> {}
+	
 	@Override
 	public int run(String[] arg0) throws Exception {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	
 }

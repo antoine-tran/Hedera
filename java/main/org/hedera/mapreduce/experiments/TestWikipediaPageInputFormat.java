@@ -3,6 +3,8 @@ package org.hedera.mapreduce.experiments;
 import java.io.IOException;
 import java.util.Random;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -54,6 +56,10 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 				LongWritable.class, Text.class,
 				MyMapper.class, Reducer.class,
 				20);		
+		
+		// Delete the output directory if it exists already.
+		FileSystem.get(job.getConfiguration()).delete(new Path(args[1]), true);
+				
 		boolean res = job.waitForCompletion(true);
 		return (res) ? 1 : -1;
 	}
