@@ -7,7 +7,6 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 
 import java.io.IOException;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.io.LongWritable;
