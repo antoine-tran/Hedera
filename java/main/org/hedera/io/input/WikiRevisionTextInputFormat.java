@@ -130,9 +130,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 		private final Text value = new Text();
 
 		@Override
-		public void initialize(InputSplit input, TaskAttemptContext tac)
-				throws IOException, InterruptedException {
-
+		public void initialize(InputSplit input, TaskAttemptContext tac) throws IOException, InterruptedException {
 			// config xmlinput properties to support bzip2 splitting
 			Configuration conf = tac.getConfiguration();
 			setBlockSize(conf);
@@ -239,6 +237,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						return false;
 					}
 				} 
+				LOG.info(pos[0] + " " + pos[1]);
 				while (pos[0] < pos[1]) {
 					byte b = buf[pos[0]];
 					pos[0]++;
@@ -249,7 +248,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 							i++;
 							if (i >= START_PAGE.length) {
 								flag = 2;
-								System.out.println("encounter <page>");
+								LOG.info("encounter <page>");
 								return true;
 							}
 						} else i = 0;
@@ -263,7 +262,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						pageHeader.write(b);
 						if (i >= START_ID.length) {
 							flag = 3;
-							System.out.println("encounter <id>");
+							LOG.info("encounter <id>");
 							return true;
 						}
 					}
@@ -277,7 +276,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						keyBuf.write(b);
 						if (i >= END_ID.length) {
 							flag = 4;
-							System.out.println("encounter </id>");
+							LOG.info("encounter </id>");
 							return true;
 						}
 					}
@@ -290,7 +289,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						pageHeader.write(b);
 						if (i >= START_REVISION.length) {
 							flag = 5;
-							System.out.println("encounter <revision>");
+							LOG.info("encounter <revision>");
 							return true;
 						}
 					}
@@ -303,7 +302,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						revBuf.write(b);
 						if (i >= END_REVISION.length) {
 							flag = 6;
-							System.out.println("encounter </revision>");
+							LOG.info("encounter </revision>");
 							return true;
 						}
 					}
@@ -326,12 +325,12 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						if ((lastMatchTag == 2 || lastMatchTag == 3) && i >= END_PAGE.length) {
 							flag = 7;
 							lastMatchTag = -1;
-							System.out.println("encounter </page>");
+							LOG.info("encounter </page>");
 							return true;							
 						} else if ((lastMatchTag == 1 || lastMatchTag == 3) && i >= START_REVISION.length) {
 							flag = 5;
 							lastMatchTag = -1;
-							System.out.println("encounter <revision>");
+							LOG.info("encounter <revision>");
 							return true;
 						}				
 					} 
