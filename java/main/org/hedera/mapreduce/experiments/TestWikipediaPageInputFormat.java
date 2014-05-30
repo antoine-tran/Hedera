@@ -13,6 +13,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.WikiRevisionWritable;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
+import org.hedera.io.input.WikiRevisionTextInputFormat;
 
 import tuan.hadoop.conf.JobConfig;
 
@@ -22,7 +23,7 @@ import tuan.hadoop.conf.JobConfig;
 public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 
 	private static final class MyMapper extends 
-	Mapper<LongWritable, WikiRevisionWritable, LongWritable, Text> {
+	Mapper<LongWritable, Text, LongWritable, Text> {
 
 		LongWritable key = new LongWritable();
 		Text value = new Text();
@@ -30,13 +31,13 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		private Random r = new Random();
 
 		@Override
-		protected void map(LongWritable k, WikiRevisionWritable v,
+		protected void map(LongWritable k, Text v,
 				Context context) throws IOException, InterruptedException {
 
 			double d = r.nextDouble();
 			if (d >= 0.67d) {
 				key.set(k.get());			
-				value.set(v.getText());
+				value.set(v);
 				context.write(key,value);
 			}
 		}
@@ -47,7 +48,7 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		Job job = setup("Hedera: Test WikipediaPageInputFormat",
 				TestWikipediaPageInputFormat.class, 
 				args[0], args[1],
-				WikiRevisionPageInputFormat.class, 
+				WikiRevisionTextInputFormat.class, 
 				TextOutputFormat.class, 
 				LongWritable.class, Text.class,
 				LongWritable.class, Text.class,
