@@ -4,7 +4,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.Tool;
 import org.hedera.io.LongLongStringWritable;
-import org.hedera.io.WikiRevisionWritable;
+import org.hedera.io.WikipediaRevision;
 
 import edu.umd.cloud9.io.pair.PairOfStringInt;
 import tuan.hadoop.conf.JobConfig;
@@ -16,7 +16,7 @@ import tuan.hadoop.conf.JobConfig;
  */
 public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
-	private static final class MyMapper extends Mapper<LongWritable, WikiRevisionWritable, 
+	private static final class MyMapper extends Mapper<LongWritable, WikipediaRevision, 
 			PairOfStringInt, LongLongStringWritable> {}
 	
 	@Override

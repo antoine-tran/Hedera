@@ -7,7 +7,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
-import org.hedera.io.WikiRevisionWritable;
+import org.hedera.io.WikipediaRevision;
 
 import tuan.hadoop.conf.JobConfig;
 
@@ -19,13 +19,13 @@ import tuan.hadoop.conf.JobConfig;
  */
 public class WikiRevisionSolrIndexer extends JobConfig {
 	
-	private static final class IndexMapper extends SolrMapper<LongWritable, WikiRevisionWritable> {
+	private static final class IndexMapper extends SolrMapper<LongWritable, WikipediaRevision> {
 
 		private Text keyOut = new Text();
 		private SolrInputDocumentWritable valueOut;
 		
 		@Override
-		protected void map(LongWritable key, WikiRevisionWritable value,
+		protected void map(LongWritable key, WikipediaRevision value,
 				Context context) throws IOException, InterruptedException {		
 			
 		}

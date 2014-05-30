@@ -18,7 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
-import org.hedera.io.WikiRevisionWritable;
+import org.hedera.io.WikipediaRevision;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 
 import pignlproc.markup.AnnotatingMarkupParser;
@@ -34,7 +34,7 @@ import tuan.hadoop.io.LongTripleWritable;
 public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 
 	private static final class IndexMapper extends Mapper<LongWritable, 
-			WikiRevisionWritable, Text, LongTripleWritable> {
+			WikipediaRevision, Text, LongTripleWritable> {
 
 		private Logger LOG = Logger.getLogger(WikiRevIndex4NonTemporalSearch.class);
 		
@@ -52,7 +52,7 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 		}
 
 		@Override
-		protected void map(LongWritable key, WikiRevisionWritable value,
+		protected void map(LongWritable key, WikipediaRevision value,
 				final Context context) throws IOException, InterruptedException {
 			
 			final long pageId = key.get();

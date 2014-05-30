@@ -23,7 +23,7 @@ import org.apache.hadoop.io.WritableUtils;
  * @author tuan
  *
  */
-public class WikiRevisionWritable implements Writable {
+public class WikipediaRevision implements Writable {
 
 	private long pageId;
 	private long revisionId;

@@ -13,7 +13,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.WikiRevisionWritable;
+import org.hedera.io.WikipediaRevision;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 import org.hedera.io.input.WikiRevisionTextInputFormat;
 
@@ -47,7 +47,7 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
-		Job job = setup("Hedera: Test WikipediaPageInputFormat",
+		Job job = setup("Hedera: Test WikiRevisionPageInputFormat",
 				TestWikipediaPageInputFormat.class, 
 				args[0], args[1],
 				WikiRevisionTextInputFormat.class, 

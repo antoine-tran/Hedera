@@ -18,14 +18,14 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.hedera.io.WikiRevisionWritable;
+import org.hedera.io.WikipediaRevision;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
-public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRevisionWritable> {
+public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikipediaRevision> {
 	
 	@Override
-	public RecordReader<LongWritable, WikiRevisionWritable> createRecordReader(InputSplit split, 
+	public RecordReader<LongWritable, WikipediaRevision> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
 		return new RevisionReader();
 	}
@@ -34,7 +34,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRev
 	 * Read each revision of Wikipedia page and transform into a WikiRevisionWritable object
 	 * @author tuan
 	 */
-	public static class RevisionReader extends RecordReader<LongWritable, WikiRevisionWritable> {
+	public static class RevisionReader extends RecordReader<LongWritable, WikipediaRevision> {
 
 		public static final byte[] START_TEXT = "<text xml:space=\"preserve\">"
 				.getBytes(StandardCharsets.UTF_8);
@@ -118,7 +118,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRev
 		private DataOutputBuffer contentBuf = new DataOutputBuffer();
 
 		private final LongWritable key = new LongWritable();
-		private final WikiRevisionWritable value = new WikiRevisionWritable();
+		private final WikipediaRevision value = new WikipediaRevision();
 
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
@@ -227,7 +227,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikiRev
 		}
 
 		@Override
-		public WikiRevisionWritable getCurrentValue() throws IOException, InterruptedException {
+		public WikipediaRevision getCurrentValue() throws IOException, InterruptedException {
 			return value;
 		}
 
