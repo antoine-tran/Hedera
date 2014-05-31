@@ -180,7 +180,8 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						return true;
 					}
 					else if (flag == 4) {
-						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
+						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength()
+								- END_ID.length);
 						key.set(Long.parseLong(pageId));	
 						keyBuf.reset();
 					}
@@ -233,11 +234,11 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
 						((FSDataInputStream)fsin).read(buf);
 					pos[0] = 0;
+					LOG.info(pos[0] + " " + pos[1]);
 					if (pos[1] == -1) {
 						return false;
 					}
 				} 
-				LOG.info(pos[0] + " " + pos[1]);
 				while (pos[0] < pos[1]) {
 					byte b = buf[pos[0]];
 					pos[0]++;
