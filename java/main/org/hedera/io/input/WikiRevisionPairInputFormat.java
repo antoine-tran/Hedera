@@ -214,7 +214,8 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 						return true;
 					}
 					else if (flag == 4) {
-						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
+						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength()
+								- END_ID.length);
 						key.set(Long.parseLong(pageId));	
 						keyBuf.reset();
 					}				
