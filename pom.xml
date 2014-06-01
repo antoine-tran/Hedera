@@ -55,26 +55,12 @@
 				<version>2.5.1</version>
 			</plugin>
 
-      <!-- <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.8</version>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>install</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>/home/tuan/Download/libhedera</outputDirectory>
-              <overWriteReleases>false</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin> -->
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-dependency-plugin</artifactId> 
+				<version>2.8</version> <executions> <execution> <id>copy-dependencies</id> 
+				<phase>install</phase> <goals> <goal>copy-dependencies</goal> </goals> <configuration> 
+				<outputDirectory>/home/tuan/Download/libhedera</outputDirectory> <overWriteReleases>false</overWriteReleases> 
+				<overWriteSnapshots>false</overWriteSnapshots> <overWriteIfNewer>true</overWriteIfNewer> 
+				</configuration> </execution> </executions> </plugin> -->
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -99,12 +85,31 @@
 				</executions>
 			</plugin>
 
-			<!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>build-helper-maven-plugin</artifactId> 
-				<version>1.7</version> </plugin> <plugin> <groupId>org.codehaus.mojo</groupId> 
-				<artifactId>build-helper-maven-plugin</artifactId> <version>1.7</version> 
-				<executions> <execution> <id>add-source</id> <phase>generate-sources</phase> 
-				<goals> <goal>add-source</goal> </goals> <configuration> <sources> <source>python</source> 
-				</sources> </configuration> </execution> </executions> </plugin> -->
+			<
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.7</version>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>java/test</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 
 		<sourceDirectory>java/main</sourceDirectory>
@@ -195,11 +200,11 @@
 			<artifactId>ahocorasick</artifactId>
 			<version>0.2.2</version>
 		</dependency>
-    <dependency>
-	    <groupId>net.sf.trove4j</groupId>
-	    <artifactId>trove4j</artifactId>
-	    <version>3.0.3</version>
-    </dependency>
+		<dependency>
+			<groupId>net.sf.trove4j</groupId>
+			<artifactId>trove4j</artifactId>
+			<version>3.0.3</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.solr</groupId>
 			<artifactId>solr-core</artifactId>
@@ -209,7 +214,7 @@
 			<groupId>com.cloudera.cdk</groupId>
 			<artifactId>cdk-morphlines-core</artifactId>
 			<version>0.9.1</version> <!-- or whatever the latest version is -->
-		</dependency>		
+		</dependency>
 	</dependencies>
 
 	<repositories>
