@@ -111,7 +111,7 @@
 		</plugins>
 
 		<sourceDirectory>java/main</sourceDirectory>
-		<testSourceDirectory>java/test</testSourceDirectory>
+		<!--  <testSourceDirectory>java/test</testSourceDirectory> -->
 		<outputDirectory>build</outputDirectory>
 		<finalName>${articfactId}-${project.version}-SNAPSHOT</finalName>
 	</build>
