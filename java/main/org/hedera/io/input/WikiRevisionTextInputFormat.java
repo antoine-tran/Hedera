@@ -242,7 +242,6 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 				while (pos[0] < pos[1]) {
 					byte b = buf[pos[0]];
 					pos[0]++;
-
 					// ignore every character until reaching a new page
 					if (flag == 1 || flag == 7) {
 						if (b == START_PAGE[i]) {

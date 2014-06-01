@@ -126,7 +126,7 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 		// 4 - just passed the </id> but outside <revision>
 		// 5 - just passed the <revision>
 		// 6 - just passed the </revision>
-		// 7 - just passed the </revision>
+		// 7 - just passed the </page>
 		private byte flag;
 
 		// compression mode checking
