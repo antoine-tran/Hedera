@@ -25,7 +25,7 @@ import tuan.hadoop.conf.JobConfig;
 public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 
 	private static final class MyMapper extends 
-	Mapper<LongWritable, Text, LongWritable, Text> {
+	Mapper<LongWritable, WikipediaRevision, LongWritable, Text> {
 
 		LongWritable key = new LongWritable();
 		Text value = new Text();
@@ -33,13 +33,13 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		private Random r = new Random();
 
 		@Override
-		protected void map(LongWritable k, Text v,
+		protected void map(LongWritable k, WikipediaRevision v,
 				Context context) throws IOException, InterruptedException {
 
 			double d = r.nextDouble();
 			if (d >= 0.67d) {
 				key.set(k.get());			
-				value.set(v);
+				value.set(v.getPageTitle());
 				context.write(key,value);
 			}
 		}
@@ -50,7 +50,7 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		Job job = setup("Hedera: Test WikiRevisionPageInputFormat",
 				TestWikipediaPageInputFormat.class, 
 				args[0], args[1],
-				WikiRevisionTextInputFormat.class, 
+				WikiRevisionPageInputFormat.class, 
 				TextOutputFormat.class, 
 				LongWritable.class, Text.class,
 				LongWritable.class, Text.class,
