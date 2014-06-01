@@ -23,6 +23,7 @@ import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.hedera.io.input.WikiRevisionPairInputFormat;
+import org.hedera.io.input.WikiRevisionPairInputFormat1;
 import org.hedera.io.input.WikiRevisionTextInputFormat;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -38,7 +39,7 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 
 	private static final Logger LOG = Logger.getLogger(WikiRevisionLoaderTest.class);
 	
-	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionPairInputFormat();
+	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionPairInputFormat1();
 
 	protected RecordReader<LongWritable, Text> reader;
 
