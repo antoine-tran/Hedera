@@ -21,7 +21,9 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
+import org.hedera.io.WikipediaRevision;
 import org.hedera.io.input.WikiRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionPageInputFormat1;
 import org.hedera.io.input.WikiRevisionTextInputFormat;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -37,9 +39,9 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 
 	private static final Logger LOG = Logger.getLogger(WikiRevisionLoaderTest.class);
 	
-	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionTextInputFormat();
+	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionPageInputFormat1();
 
-	protected RecordReader<LongWritable, Text> reader;
+	protected RecordReader<LongWritable, WikipediaRevision> reader;
 
 	// a cached object that defines the output schema of a Wikipedia page. Use volatile to fix
 	// the infamous double-checked locking issue, and to make access to this object thread-safe
@@ -63,7 +65,7 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 	@Override
 	public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split)
 			throws IOException {
-		this.reader = (RecordReader<LongWritable, Text>)reader;
+		this.reader = (RecordReader<LongWritable, WikipediaRevision>)reader;
 		// this.dmp = new diff_match_patch();
 		this.tuples = TupleFactory.getInstance();
 		this.bags = BagFactory.getInstance();
@@ -74,8 +76,10 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 		try {
 			if (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
-				Text content = reader.getCurrentValue();				
-				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content.toString()));	
+				//Text content = reader.getCurrentValue();
+				WikipediaRevision r = reader.getCurrentValue();
+				String content = new String(r.getText(), "UTF-8");
+				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content));	
 				/*Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("revision");				
 				DateTime dt = null;
