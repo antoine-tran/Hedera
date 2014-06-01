@@ -10,6 +10,9 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionInputStream;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Simulate and test WikiRevisionTextInputFormat in local setting
@@ -60,9 +63,11 @@ public class TestLocalWikiRevisionTextInputFormat {
 
 	private int flag;
 	private int lastMatchTag = -1;
+	
 
-	private void initialize() throws FileNotFoundException {
-		FileInputStream fis = new FileInputStream(INPUT);
+	@Before
+	public void initialize() throws FileNotFoundException {
+		fis = new FileInputStream(INPUT);
 		flag = 1;
 
 	}
@@ -216,23 +221,18 @@ public class TestLocalWikiRevisionTextInputFormat {
 		return value;
 	}
 
-	private void finish() throws IOException {
+	@After
+	public void finish() throws IOException {
 		fis.close();
 	}
 	
-	public static void main(String[] args) throws IOException {
-		TestLocalWikiRevisionTextInputFormat tlwrtif 
-				= new TestLocalWikiRevisionTextInputFormat();
-		try {
-			tlwrtif.initialize();
-			while (tlwrtif.nextKeyValue()) {
-				LongWritable k = tlwrtif.currentKey();
-				Text content = tlwrtif.currentValue();
-				System.out.println(k.get());
-				System.out.println(content.toString());
-			}
-		} catch (FileNotFoundException e) {
-			tlwrtif.finish();
+	@Test
+	public void main() throws IOException {
+		while (nextKeyValue()) {
+			LongWritable k = currentKey();
+			Text content = currentValue();
+			System.out.println(k.get());
+			System.out.println(content.toString());
 		}
 	}
 }
