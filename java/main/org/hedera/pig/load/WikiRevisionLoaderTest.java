@@ -34,11 +34,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-public class WikipediaRevisionPairLoaderTest extends LoadFunc implements LoadMetadata {
+public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 
-	private static final Logger LOG = Logger.getLogger(WikipediaRevisionPairLoaderTest.class);
+	private static final Logger LOG = Logger.getLogger(WikiRevisionLoaderTest.class);
 	
-	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionTextInputFormat();
+	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionPairInputFormat();
 
 	protected RecordReader<LongWritable, Text> reader;
 
