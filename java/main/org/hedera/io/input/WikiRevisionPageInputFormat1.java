@@ -33,7 +33,10 @@ WikiRevisionInputFormat<WikipediaRevision> {
 		return new RevisionReader();
 	}
 
-
+	/**
+	 * Read each revision of Wikipedia page and transform into a WikipediaRevision object
+	 * @author tuan
+	 */
 	public static class RevisionReader extends RecordReader<LongWritable, WikipediaRevision> {
 		private static final Logger LOG = Logger.getLogger(RevisionReader.class); 		
 		public static final byte[] START_TEXT = "<text xml:space=\"preserve\">"

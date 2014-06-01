@@ -130,6 +130,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 			
 			FileSplit split = (FileSplit) input;
 			start = split.getStart();
+			end = start + split.getLength();
 			Path file = split.getPath();
 
 			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
