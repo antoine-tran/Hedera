@@ -142,7 +142,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer keyBuf = new DataOutputBuffer();
-		private DataOutputBuffer rev2Buf = new DataOutputBuffer();
+		private DataOutputBuffer revBuf = new DataOutputBuffer();
 
 		private final LongWritable key = new LongWritable();
 		private final Text value = new Text();
@@ -190,14 +190,14 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 				while (readUntilMatch()) {  
 					if (flag == 7) {								
 						pageHeader.reset();
-						rev2Buf.reset();
+						revBuf.reset();
 						value.clear();
 					} 
 					else if (flag == 6) {					
 						value.set(pageHeader.getData(), 0, pageHeader.getLength() 
 								- START_REVISION.length);
 						//value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-						value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+						value.append(revBuf.getData(), 0, revBuf.getLength());
 						value.append(END_PAGE, 0, END_PAGE.length);
 						return true;
 					}
@@ -211,8 +211,8 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						pageHeader.write(START_PAGE);
 					}
 					else if (flag == 5) {
-						rev2Buf.reset();
-						rev2Buf.write(START_REVISION);
+						revBuf.reset();
+						revBuf.write(START_REVISION);
 					}
 					else if (flag == -1) {
 						pageHeader.reset();
@@ -318,7 +318,7 @@ public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
 						if (b == END_REVISION[i]) {
 							i++;
 						} else i = 0;
-						rev2Buf.write(b);
+						revBuf.write(b);
 						if (i >= END_REVISION.length) {
 							flag = 6;
 							return true;
