@@ -43,6 +43,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.net.NetworkTopology;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.wikimedia.wikihadoop.ByteMatcher;
 import org.wikimedia.wikihadoop.SeekableInputStream;
 
@@ -79,6 +81,16 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	public static final String END_TIMESTAMP_TAG = "</timestamp>";
 	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
+	
+	public static final byte[] START_TEXT = "<text xml:space=\"preserve\">"
+			.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_TEXT = "</text>".getBytes(StandardCharsets.UTF_8);
+	
+	public static final byte[] START_PARENT_ID = "<text xml:space=\"preserve\">"
+			.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_PARENT_ID = "</text>".getBytes(StandardCharsets.UTF_8);	
+	
+	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	protected static long THRESHOLD = 137438953472l;

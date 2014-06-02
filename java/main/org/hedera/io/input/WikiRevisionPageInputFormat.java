@@ -35,17 +35,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 	 * @author tuan
 	 */
 	public static class RevisionReader extends RecordReader<LongWritable, WikipediaRevision> {
-
-		public static final byte[] START_TEXT = "<text xml:space=\"preserve\">"
-				.getBytes(StandardCharsets.UTF_8);
-		public static final byte[] END_TEXT = "</text>".getBytes(StandardCharsets.UTF_8);
-		
-		public static final byte[] START_PARENT_ID = "<text xml:space=\"preserve\">"
-				.getBytes(StandardCharsets.UTF_8);
-		public static final byte[] END_PARENT_ID = "</text>".getBytes(StandardCharsets.UTF_8);
-		
-		private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
-		
+				
 		private long start;
 		private long end;
 
@@ -99,21 +89,22 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 		// private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer pageTitle = new DataOutputBuffer();
 		private String title;
-	    //////////////////////////////////////////////////////////////
-		// END PageHeader variables
-		//////////////////////////////////////////////////////////////
-		
-		private DataOutputBuffer revBuf = new DataOutputBuffer();
-		private long revId;
-		
-		private DataOutputBuffer parBuf = new DataOutputBuffer();
-		private long parId;
 		
 		private DataOutputBuffer keyBuf = new DataOutputBuffer();
 		private long pageId;
 		
+	    //////////////////////////////////////////////////////////////
+		// END PageHeader variables
+		//////////////////////////////////////////////////////////////
+		
+		private DataOutputBuffer revBuf = new DataOutputBuffer();	
+		private long revId;
+		
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();
 		private long timestamp;
+		
+		private DataOutputBuffer parBuf = new DataOutputBuffer();
+		private long parId;
 		
 		private DataOutputBuffer contentBuf = new DataOutputBuffer();
 
@@ -193,7 +184,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 					else if (flag == 11) {
 						String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
 								- END_TIMESTAMP.length);
-						timestamp = dtf.parseMillis(ts);
+						timestamp = TIME_FORMAT.parseMillis(ts);
 						timestampBuf.reset();
 					}
 					else if (flag == 9) {
