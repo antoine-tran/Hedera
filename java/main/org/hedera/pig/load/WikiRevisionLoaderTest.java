@@ -22,6 +22,8 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.hedera.io.WikipediaRevision;
+import org.hedera.io.WikipediaRevisionDiff;
+import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 import org.hedera.io.input.WikiRevisionPageInputFormat1;
@@ -40,9 +42,9 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 
 	private static final Logger LOG = Logger.getLogger(WikiRevisionLoaderTest.class);
 	
-	private static final WikiRevisionInputFormat INPUT_FORMAT = new WikiRevisionPageInputFormat();
+	private static final WikiRevisionDiffInputFormat INPUT_FORMAT = new WikiRevisionDiffInputFormat();
 
-	protected RecordReader<LongWritable, WikipediaRevision> reader;
+	protected RecordReader<LongWritable, WikipediaRevisionDiff> reader;
 
 	// a cached object that defines the output schema of a Wikipedia page. Use volatile to fix
 	// the infamous double-checked locking issue, and to make access to this object thread-safe
@@ -66,7 +68,7 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 	@Override
 	public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split)
 			throws IOException {
-		this.reader = (RecordReader<LongWritable, WikipediaRevision>)reader;
+		this.reader = (RecordReader<LongWritable, WikipediaRevisionDiff>)reader;
 		// this.dmp = new diff_match_patch();
 		this.tuples = TupleFactory.getInstance();
 		this.bags = BagFactory.getInstance();
@@ -78,8 +80,8 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 			if (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
 				//Text content = reader.getCurrentValue();
-				WikipediaRevision r = reader.getCurrentValue();
-				String content = new String(r.getText(), "UTF-8");
+				WikipediaRevisionDiff r = reader.getCurrentValue();
+				String content = r.getPageTitle();
 				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content));	
 				/*Document doc = Jsoup.parse(content.toString(), "");				
 				Elements elems = doc.select("revision");				
@@ -143,9 +145,4 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 	protected void defineSchema() throws FrontendException {
 		// TODO: define schema here
 	}
-
-	/*public static void main(String[] args) {
-		WikipediaRevisionPairLoaderTest wrplt = new WikipediaRevisionPairLoaderTest();
-		System.out.println(wrplt.dtf.parseDateTime("2010-01-15T04:50:27Z"));
-	}*/
 }

@@ -15,6 +15,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.WikipediaRevision;
 import org.hedera.io.WikipediaRevisionDiff;
+import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 import org.hedera.io.input.WikiRevisionTextInputFormat;
 
@@ -51,7 +52,7 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		Job job = setup("Hedera: Test WikiRevisionPageInputFormat",
 				TestWikipediaPageInputFormat.class, 
 				args[0], args[1],
-				WikiRevisionPageInputFormat.class, 
+				WikiRevisionDiffInputFormat.class, 
 				TextOutputFormat.class, 
 				LongWritable.class, Text.class,
 				LongWritable.class, Text.class,
