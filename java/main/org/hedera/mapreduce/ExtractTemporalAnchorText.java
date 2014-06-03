@@ -15,6 +15,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.WikipediaRevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
+import org.mortbay.log.Log;
 
 import com.google.common.collect.Lists;
 
@@ -91,7 +92,9 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 							sb.append("\t");
 							sb.append(link.target);
 							sb.append("\t");
-							valOut.set(sb.toString());
+							String s = sb.toString();
+							valOut.set(s);
+							Log.info(s);
 							context.write(keyOut, valOut);
 						}
 					}
