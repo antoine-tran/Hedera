@@ -218,11 +218,11 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					}
 					
 					else if (flag == 6) {
-						String nsStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
-								- END_ID.length);
+						String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
+								- END_NAMESPACE.length);
 						int ns = Integer.parseInt(nsStr);
 						value.setNamespace(ns);
-						keyBuf.reset();
+						nsBuf.reset();
 					}
 
 					else if (flag == 4) {
