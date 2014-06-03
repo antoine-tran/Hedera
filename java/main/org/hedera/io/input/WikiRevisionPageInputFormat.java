@@ -236,7 +236,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 					// this is not an article, and that the option of skipping
 					// non-article pages is on, we simply skip everything till
 					// the closing </page>
-					else if (skipped && flag >= 6) {
+					else if (skipped && flag >= 6 && flag < 19) {
 						if (b == END_PAGE[i]) {
 							i++;
 						} else i = 0;

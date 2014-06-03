@@ -12,6 +12,7 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.log4j.Logger;
 import org.hedera.io.WikipediaRevisionDiff;
 
 import difflib.Delta;
@@ -19,8 +20,8 @@ import difflib.DiffUtils;
 import difflib.Patch;
 
 public class WikiRevisionDiffInputFormat 
-extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
-
+		extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
+	
 	@Override
 	public RecordReader<LongWritable, WikipediaRevisionDiff> createRecordReader(
 			InputSplit input, TaskAttemptContext context) throws IOException,
@@ -253,6 +254,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
 						((FSDataInputStream)fsin).read(buf);
 					pos[0] = 0;
+					LOG.info(pos[1] + " bytes read from the stream...");
 					if (pos[1] == -1) {
 						return false;
 					}
@@ -319,7 +321,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					// this is not an article, and that the option of skipping
 					// non-article pages is on, we simply skip everything until
 					// the closing </page>
-					else if (skipped && flag >= 6) {
+					else if (skipped && flag >= 6 && flag < 19) {
 						if (b == END_PAGE[i]) {
 							i++;
 						} else i = 0;

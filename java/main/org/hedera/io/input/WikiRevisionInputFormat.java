@@ -43,6 +43,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.net.NetworkTopology;
+import org.apache.log4j.Logger;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.wikimedia.wikihadoop.ByteMatcher;
@@ -98,6 +99,9 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
 	protected static long THRESHOLD = 137438953472l;
+	
+	// An umbrella log for debugging
+	protected static final Logger LOG = Logger.getLogger(WikiRevisionInputFormat.class);
 	
 	public WikiRevisionInputFormat() {
 		super();
