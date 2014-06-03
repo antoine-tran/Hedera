@@ -15,9 +15,6 @@ import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.WikipediaRevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
-import org.hedera.io.input.WikiRevisionReader;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.collect.Lists;
 
