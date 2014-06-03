@@ -57,7 +57,8 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
  * @since 13.04.2014
  *
  */
-public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWritable, T> {
+public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWritable, T> 
+{
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
 	
 	protected CompressionCodecFactory compressionCodecs = null;
@@ -95,9 +96,8 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	
 	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
-	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	protected static long THRESHOLD = 137438953472l;
-
+	
 	public WikiRevisionInputFormat() {
 		super();
 	}
@@ -105,12 +105,7 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	@Override
 	public abstract RecordReader<LongWritable, T> createRecordReader(InputSplit input,
 			TaskAttemptContext context) throws IOException, InterruptedException;
-	
-	protected static void setBlockSize(Configuration conf) {
-		// Tu should have done this already (??): Set maximum splitsize to be 128MB
-		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", DEFAULT_MAX_BLOCK_SIZE);
-	}
-	
+		
 	public void configure(Configuration conf) {
 		if (compressionCodecs == null)
 			compressionCodecs = new CompressionCodecFactory(conf);

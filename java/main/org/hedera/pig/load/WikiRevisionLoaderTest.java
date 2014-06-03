@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -21,22 +20,10 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.io.WikipediaRevision;
 import org.hedera.io.WikipediaRevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
-import org.hedera.io.input.WikiRevisionInputFormat;
-import org.hedera.io.input.WikiRevisionPageInputFormat;
-import org.hedera.io.input.WikiRevisionPageInputFormat1;
-import org.hedera.io.input.WikiRevisionTextInputFormat;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
-import org.jsoup.select.Elements;
 
 public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 

@@ -2,23 +2,14 @@ package org.hedera.io.input;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.log4j.Logger;
 
 public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 
@@ -27,7 +18,7 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 			TaskAttemptContext context) {
 		return new RevisionReader();
 	}
-	
+
 	/** read a meta-history xml file and output as a record every pair of consecutive revisions.
 	 * For example,  Given the following input containing two pages and four revisions,
 	 * <pre><code>
@@ -107,30 +98,22 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 	 *    &lt;/revision&gt;
 	 *  &lt;/page&gt;
 	 * </code></pre> 
-	 */
-	public static class RevisionReader extends RecordReader<LongWritable, Text> {
-		private static final Logger LOG = Logger.getLogger(RevisionReader.class); 		
+	 */ 
+	 // State of the flag:
+	 // 1 - beginning of the first <page> tag
+	 // 2 - just passed the <page> tag but outside the <id> tag
+	 // 3 - just passed the <id>
+	 // 4 - just passed the </id> but outside <revision>
+	 // 5 - just passed the <revision>
+	 // 6 - just passed the </revision>
+	 // 7 - just passed the </page>	 
+	public static class RevisionReader extends WikiRevisionReader<Text> {
 
 		private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
 				+ "<timestamp>1970-01-01T00:00:00Z</timestamp><text xml:space=\"preserve\">"
 				+ "</text></revision>\n")
 				.getBytes(StandardCharsets.UTF_8);
 
-		private long start;
-		private long end;
-		
-	    // -1: EOF
-		// 1 - beginning of the first <page> tag
-		// 2 - just passed the <page> tag but outside the <id> tag
-		// 3 - just passed the <id>
-		// 4 - just passed the </id> but outside <revision>
-		// 5 - just passed the <revision>
-		// 6 - just passed the </revision>
-		// 7 - just passed the </page>
-		private byte flag;
-
-		// compression mode checking
-		private boolean compressed = false;
 
 		// indicating how many <revision> tags have been met, reset after every page end
 		private int revisionVisited;
@@ -142,130 +125,63 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 		//  3 - Matched both <revision> and </page> partially
 		private int lastMatchTag = -1;
 
-		// a direct buffer to improve the local IO performance
-		private byte[] buf = new byte[134217728];
-		private int[] pos = new int[2];
-		
-		private Seekable fsin;
-
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer keyBuf = new DataOutputBuffer();
 		private DataOutputBuffer rev1Buf = new DataOutputBuffer();
 		private DataOutputBuffer rev2Buf = new DataOutputBuffer();
 
-		private final LongWritable key = new LongWritable();
-		private final Text value = new Text();
-
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
-
-			Configuration conf = tac.getConfiguration();
-			setBlockSize(conf);
-			
-			FileSplit split = (FileSplit) input;
-			start = split.getStart();
-			end = start + split.getLength();
-			Path file = split.getPath();
-
-			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
-			CompressionCodec codec = compressionCodecs.getCodec(file);
-
-			FileSystem fs = file.getFileSystem(conf);
-
-			if (codec != null) { // file is compressed
-				compressed = true;
-				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-				CompressionInputStream cis = codec.createInputStream(fs.open(file));
-
-				// This is extremely slow because of I/O overhead
-				// while (cis.getPos() < start) cis.skip(start);read();
-				cis.skip(start - 1);
-				
-				fsin = cis;
-			} else { // file is uncompressed	
-				compressed = false;
-				fsin = fs.open(file);
-				fsin.seek(start);
-			}
-
-			flag = 1;
+			super.initialize(input, tac);
 			revisionVisited = 0;
-			pos[0] = pos[1] = 0;
+			value = new Text();
 		}
 
 		@Override
-		public boolean nextKeyValue() throws IOException, InterruptedException {
-			if (fsin.getPos() < end) {
-				while (readUntilMatch()) {  
-					if (flag == 7) {								
-						pageHeader.reset();
-						rev1Buf.reset();
-						rev2Buf.reset();
-						value.clear();
-						revisionVisited = 0;						
-					} 
-					else if (flag == 6) {					
-						value.set(pageHeader.getData(), 0, pageHeader.getLength() 
-								- START_REVISION.length);
-						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-						value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
-						value.append(END_PAGE, 0, END_PAGE.length);
-						return true;
-					}
-					else if (flag == 4) {
-						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength()
-								- END_ID.length);
-						key.set(Long.parseLong(pageId));	
-						keyBuf.reset();
-					}				
-					else if (flag == 2) {
-						pageHeader.write(START_PAGE);
-					}
-					else if (flag == 5) {
-						rev1Buf.reset();
-						if (revisionVisited == 0) {							
-							rev1Buf.write(DUMMY_REV);
-						} else {
-							rev1Buf.write(rev2Buf.getData());
-						}
-						rev2Buf.reset();
-						rev2Buf.write(START_REVISION);
-					}
-					else if (flag == -1) {
-						pageHeader.reset();
-					}
+		public STATE doWhenMatch() throws IOException, InterruptedException {
+			if (flag == 7) {								
+				pageHeader.reset();
+				rev1Buf.reset();
+				rev2Buf.reset();
+				value.clear();
+				revisionVisited = 0;						
+			} 
+			else if (flag == 6) {					
+				value.set(pageHeader.getData(), 0, pageHeader.getLength() 
+						- START_REVISION.length);
+				value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+				value.append(rev2Buf.getData(), 0, rev2Buf.getLength());
+				value.append(END_PAGE, 0, END_PAGE.length);
+				return STATE.STOP_TRUE;
+			}
+			else if (flag == 4) {
+				String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength()
+						- END_ID.length);
+				key.set(Long.parseLong(pageId));	
+				keyBuf.reset();
+			}				
+			else if (flag == 2) {
+				pageHeader.write(START_PAGE);
+			}
+			else if (flag == 5) {
+				rev1Buf.reset();
+				if (revisionVisited == 0) {							
+					rev1Buf.write(DUMMY_REV);
+				} else {
+					rev1Buf.write(rev2Buf.getData());
 				}
+				rev2Buf.reset();
+				rev2Buf.write(START_REVISION);
 			}
-			return false;
-		}
-
-		@Override
-		public LongWritable getCurrentKey() throws IOException,
-		InterruptedException {
-			return key;
-		}
-
-		@Override
-		public Text getCurrentValue() throws IOException, InterruptedException {
-			return value;
-		}
-
-		@Override
-		public float getProgress() throws IOException, InterruptedException {
-			return (fsin.getPos() - start) / (float) (end - start);
-		}
-
-		@Override
-		public void close() throws IOException {
-			if (compressed) {
-				((CompressionInputStream)fsin).close();
-			} else {
-				((FSDataInputStream)fsin).close();
+			else if (flag == -1) {
+				pageHeader.reset();
+				return STATE.STOP_FALSE;
 			}
+			return STATE.CONTINUE;
 		}
 
-		private boolean readUntilMatch() throws IOException {
+		protected boolean readUntilMatch() throws IOException {
 
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");
@@ -274,7 +190,6 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 				if (pos[0] == pos[1]) {				
 					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
 						((FSDataInputStream)fsin).read(buf);
-					LOG.info(pos[1] + " bytes read from the stream...");
 					pos[0] = 0;
 					if (pos[1] == -1) {
 						return false;
@@ -318,7 +233,7 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 							return true;
 						}
 					}
-					
+
 					// put everything between </id> tag and the first <revision> tag into pageHeader
 					else if (flag == 4) {
 						if (b == START_REVISION[i]) {
@@ -330,7 +245,7 @@ public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
 							return true;
 						}
 					}
-					
+
 					// inside <revision></revision> block
 					else if (flag == 5) {
 						if (b == END_REVISION[i]) {

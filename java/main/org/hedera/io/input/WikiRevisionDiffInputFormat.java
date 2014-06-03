@@ -5,20 +5,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.hedera.io.WikipediaRevisionDiff;
 
 import difflib.Delta;
@@ -35,40 +28,39 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		return new DiffReader(); 
 	}
 
-	public static class DiffReader extends RecordReader<LongWritable, WikipediaRevisionDiff> {
+	/**
+	 * Read every pairs of consecutive revisions and calculate their diffs
+	 * using Meyer's alogirthm. Return WikipediaRevisionDiff which, among other fields,
+	 * emits the list of diff between the two texts
+	 *
+	 * @author tuan
+	 */
+	// States of the flag:
+	// 				
+	// -1: EOF
+	// 1 - outside the <page> tag
+	// 2 - just passed the <page> tag but outside the <title>
+	// 3 - just passed the <title> tag		
+	// 4 - just passed the </title> tag but outside the <namespace>
+	// 5 - just passed the <namespace>
+	// 6 - just passed the </namespace> but outside the <id>
+	// 7 - just passed the (page's) <id>
+	// 8 - just passed the </id> tag but outside the <revision>	
+	// 9 - just passed the (next) <revision>
+	// 10 - just passed the inner <id> tag inside <revision>
+	// 11 - just passed the inner </id> tag inside <revision>
+	// 12 - just passed the <timestamp>
+	// 13 - just passed the </timestamp> tag
+	// 14 - just passed the <parentId>
+	// 15 - just passed the </parentId> tag
+	// 16 - just passed the <text> tag
+	// 17 - just passed the </text> tag
+	// 18 - just passed the </revision>
+	// 19 - just passed the </page>
+	public static class DiffReader extends WikiRevisionReader<WikipediaRevisionDiff> {
 
-		private LongWritable keyOut = new LongWritable();
-		private WikipediaRevisionDiff value = new WikipediaRevisionDiff();
-
-		private long start;
-		private long end;
-
-		// A flag that tells in which block the cursor is:
-		// -1: EOF
-		// 1 - outside the <page> tag
-		// 2 - just passed the <page> tag but outside the <title>
-		// 3 - just passed the <title> tag		
-		// 4 - just passed the </title> tag but outside the <namespace>
-		// 5 - just passed the <namespace>
-		// 6 - just passed the </namespace> but outside the <id>
-		// 7 - just passed the (page's) <id>
-		// 8 - just passed the </id> tag but outside the <revision>	
-		// 9 - just passed the (next) <revision>
-		// 10 - just passed the inner <id> tag inside <revision>
-		// 11 - just passed the inner </id> tag inside <revision>
-		// 12 - just passed the <timestamp>
-		// 13 - just passed the </timestamp> tag
-		// 14 - just passed the <parentId>
-		// 15 - just passed the </parentId> tag
-		// 16 - just passed the <text> tag
-		// 17 - just passed the </text> tag
-		// 18 - just passed the </revision>
-		// 19 - just passed the </page>
-		private byte flag;
-
-		// compression mode checking
-		private boolean compressed = false;
-
+		// Extra flags:
+		//
 		// indicating the flow condition within [flag = 16]
 		// -1 - Unmatched
 		//  1 - Matched <revision> tag partially
@@ -83,23 +75,14 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		//  3 - Matched both <parentId> and <timestamp> partially
 		private int parOrTs = -1;
 
-		// a direct buffer to improve the local IO performance
-		private byte[] buf = new byte[134217728];
-		private int[] pos = new int[2];
-
-		private Seekable fsin;
-
-
 		// We now convert and cache everything from pageHeader to the followin global variables
 		// NOTE: they all need to be synchronized with pageHeader !!
 		// private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer pageTitle = new DataOutputBuffer();
-		private DataOutputBuffer keyBuf = new DataOutputBuffer();
 		private DataOutputBuffer nsBuf = new DataOutputBuffer();
 		//////////////////////////////////////////////////////////////
 		// END PageHeader variables
 		//////////////////////////////////////////////////////////////
-
 
 		// buffer for handling consecutive revisions
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();		
@@ -115,128 +98,120 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
-			Configuration conf = tac.getConfiguration();
-			setBlockSize(conf);
+			super.initialize(input, tac);
+			value = new WikipediaRevisionDiff(); 
+		}
 
-			FileSplit split = (FileSplit) input;
-			start = split.getStart();
-			end = start + split.getLength();
-			Path file = split.getPath();
-
-			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
-			CompressionCodec codec = compressionCodecs.getCodec(file);
-
-			FileSystem fs = file.getFileSystem(conf);
-
-			if (codec != null) { // file is compressed
-				compressed = true;
-				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-				CompressionInputStream cis = codec.createInputStream(fs.open(file));
-
-				// This is extremely slow because of I/O overhead
-				// while (cis.getPos() < start) cis.skip(start);read();
-				cis.skip(start - 1);
-
-				fsin = cis;
-			} else { // file is uncompressed	
-				compressed = false;
-				fsin = fs.open(file);
-				fsin.seek(start);
-			}
-
-			flag = 1;
-			pos[0] = pos[1] = 0;	
+		private void resetEverything() {
+			revOrPage = -1;
+			parOrTs = -1;
+			nsBuf.reset();
+			timestampBuf.reset();
+			revIdBuf.reset();
+			parBuf.reset();
+			contentBuf.reset();
+			keyBuf.reset();
+			pageTitle.reset();
+			value.clear();	
+			lastRevText.clear();
+			skipped = false;
 		}
 
 		@Override
-		public boolean nextKeyValue() throws IOException, InterruptedException {
-			if (fsin.getPos() < end) {
-				while (readUntilMatch()) {
-					if (flag == 19) {
-						keyBuf.reset();
-						pageTitle.reset();
-						value.clear();	
-						lastRevText.clear();
-					}
-
-					// emit the object when reaching </revision>
-					else if (flag == 18) {
-						return true;
-					}
-
-					// calculating the diff and shift the revision text when seeing </text>
-					// inside the <revision> block
-					else if (flag == 17) {
-
-						// create a mass number of strings
-						List<String> content = extractParagraph(contentBuf.getData(), 0,
-								contentBuf.getLength() - END_TEXT.length);
-
-						Patch patch = DiffUtils.diff(lastRevText, content);						
-						for (Delta d : patch.getDeltas()) {
-							value.add(d);
-						}						
-
-						lastRevText = content;						
-
-						// release big chunk of bytes here
-						contentBuf.reset();
-					}
-
-					else if (flag == 15) {
-						String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
-								- END_PARENT_ID.length);
-						long parId = Long.parseLong(parIdStr);
-						value.setParentId(parId);						
-						parBuf.reset();
-					}
-
-					else if (flag == 13) {
-						String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
-								- END_TIMESTAMP.length);
-						long timestamp = TIME_FORMAT.parseMillis(ts);
-						value.setTimestamp(timestamp);
-						timestampBuf.reset();
-					}
-
-					else if (flag == 11) {
-						String idStr = new String(revIdBuf.getData(), 0, revIdBuf.getLength()
-								- END_ID.length);
-						long revId = Long.parseLong(idStr);
-						value.setRevisionId(revId);
-						revIdBuf.reset();
-					}
-
-					else if (flag == 8) {
-						String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
-								- END_ID.length);
-						long pageId = Long.parseLong(idStr);
-						keyOut.set(pageId);
-						value.setPageId(pageId);
-						keyBuf.reset();
-					}
-					
-					else if (flag == 6) {
-						String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
-								- END_NAMESPACE.length);
-						int ns = Integer.parseInt(nsStr);
-						value.setNamespace(ns);
-						nsBuf.reset();
-					}
-
-					else if (flag == 4) {
-						String title = new String(pageTitle.getData(), 0, pageTitle.getLength()
-								- END_TITLE.length);
-						value.setPageTitle(title);
-						pageTitle.reset();
-					}
-
-					else if (flag == -1) {
-						return false;
-					}
-				}
+		protected STATE doWhenMatch() throws IOException, InterruptedException {
+			if (flag == 19) {
+				resetEverything();
 			}
-			return false;
+
+			// emit the object when reaching </revision>
+			else if (flag == 18) {
+				if (!skipped)
+					return STATE.STOP_TRUE;
+			}
+
+			// calculating the diff and shift the revision text when seeing </text>
+			// inside the <revision> block
+			else if (flag == 17) {
+				if (!skipped) {
+					// create a mass number of strings
+					List<String> content = extractParagraph(contentBuf.getData(), 0,
+							contentBuf.getLength() - END_TEXT.length);
+
+					Patch patch = DiffUtils.diff(lastRevText, content);						
+					for (Delta d : patch.getDeltas()) {
+						value.add(d);
+					}						
+
+					lastRevText = content;						
+				}
+				// release big chunk of bytes here
+				contentBuf.reset();
+			}
+
+			else if (flag == 15) {
+				if (!skipped) {
+					String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
+							- END_PARENT_ID.length);
+					long parId = Long.parseLong(parIdStr);
+					value.setParentId(parId);
+				}
+				parBuf.reset();
+			}
+
+			else if (flag == 13) {
+				if (!skipped) {
+					String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
+							- END_TIMESTAMP.length);
+					long timestamp = TIME_FORMAT.parseMillis(ts);
+					value.setTimestamp(timestamp);
+				}
+				timestampBuf.reset();
+			}
+
+			else if (flag == 11) {
+				if (!skipped) {
+					String idStr = new String(revIdBuf.getData(), 0, revIdBuf.getLength()
+							- END_ID.length);
+					long revId = Long.parseLong(idStr);
+					value.setRevisionId(revId);
+				}
+				revIdBuf.reset();
+			}
+
+			else if (flag == 8) {
+				if (!skipped) {
+					String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
+							- END_ID.length);
+					long pageId = Long.parseLong(idStr);
+					key.set(pageId);
+					value.setPageId(pageId);
+				}
+				keyBuf.reset();
+			}
+
+			else if (flag == 6) {
+				String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
+						- END_NAMESPACE.length);
+				int ns = Integer.parseInt(nsStr);
+				if (ns == 0) {
+					skipped = skipNonArticles;					
+				}
+				value.setNamespace(ns);
+				nsBuf.reset();
+			}
+
+			else if (flag == 4) {
+				String title = new String(pageTitle.getData(), 0, pageTitle.getLength()
+						- END_TITLE.length);
+				value.setPageTitle(title);
+				pageTitle.reset();
+			}
+
+			else if (flag == -1) {
+				return STATE.STOP_FALSE;
+			}
+			return STATE.CONTINUE;
+
 		}
 
 		public static List<String> extractParagraph(byte[] b, int offset, int len) 
@@ -250,7 +225,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					if (c == '\n') {
 						String s = new String(b,start,i,"UTF-8");
 						res.add(s);
-						
+
 						while (Character.isWhitespace(c)) {
 							i += 2;
 							c = (char) (((b[i] & 0xFF) << 8) + (b[i+1] & 0xFF));							
@@ -269,9 +244,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 			return res;
 		}
 
-		// Scan the tags in SAX manner. Return at every legit tag and inform the program via 
-		// the global flag. Flush into the caches if necessary
-		private boolean readUntilMatch() throws IOException {
+		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");
 			int i = 0;
@@ -330,7 +303,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 							return true;
 						}
 					}
-					
+
 					else if (flag == 5) {
 						if (b == END_NAMESPACE[i]) {
 							i++;
@@ -342,6 +315,20 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						}
 					}
 					
+					// when passing the namespace and we realize that 
+					// this is not an article, and that the option of skipping
+					// non-article pages is on, we simply skip everything until
+					// the closing </page>
+					else if (skipped && flag >= 6) {
+						if (b == END_PAGE[i]) {
+							i++;
+						} else i = 0;
+						if (i >= END_PAGE.length) {
+							flag = 19;
+							return true;
+						}
+					}
+
 					else if (flag == 6) {
 						if (b == START_ID[i]) {
 							i++;
@@ -518,32 +505,6 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						}				
 					} 
 				}		
-			}
-		}
-
-		@Override
-		public LongWritable getCurrentKey() throws IOException,
-		InterruptedException {
-			return keyOut;
-		}
-
-		@Override
-		public WikipediaRevisionDiff getCurrentValue() throws IOException,
-		InterruptedException {
-			return value;
-		}
-
-		@Override
-		public float getProgress() throws IOException, InterruptedException {
-			return (fsin.getPos() - start) / (float) (end - start);
-		}
-
-		@Override
-		public void close() throws IOException {
-			if (compressed) {
-				((CompressionInputStream)fsin).close();
-			} else {
-				((FSDataInputStream)fsin).close();
 			}
 		}
 	}

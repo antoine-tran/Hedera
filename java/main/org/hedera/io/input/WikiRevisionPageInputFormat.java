@@ -2,241 +2,165 @@ package org.hedera.io.input;
 
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.hedera.io.WikipediaRevision;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikipediaRevision> {
-	
+
 	@Override
 	public RecordReader<LongWritable, WikipediaRevision> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
 		return new RevisionReader();
 	}
-	
+
 	/**
-	 * Read each revision of Wikipedia page and transform into a WikiRevisionWritable object
+	 * Read each revision of Wikipedia page and transform into a WikipediaRevision object
 	 * @author tuan
-	 */
-	public static class RevisionReader extends RecordReader<LongWritable, WikipediaRevision> {
-				
-		private long start;
-		private long end;
+	 * 
+	 */ 
+	public static class RevisionReader extends WikiRevisionReader<WikipediaRevision> {
 
-		// A flag that tells in which block the cursor is:
-		// -1: EOF
-		// 1 - outside the <page> tag
-		// 2 - just passed the <page> tag but outside the <title>
-		// 3 - just passed the <title> tag		
-		// 4 - just passed the </title> tag but outside the <namespace>
-		// 5 - just passed the <namespace>
-		// 6 - just passed the </namespace> but outside the <id>
-		// 7 - just passed the (page's) <id>
-		// 8 - just passed the </id> tag but outside the <revision>	
-		// 9 - just passed the (next) <revision>
-		// 10 - just passed the inner <id> tag inside <revision>
-		// 11 - just passed the inner </id> tag inside <revision>
-		// 12 - just passed the <timestamp>
-		// 13 - just passed the </timestamp> tag
-		// 14 - just passed the <parentId>
-		// 15 - just passed the </parentId> tag
-		// 16 - just passed the <text> tag
-		// 17 - just passed the </text> tag
-		// 18 - just passed the </revision>
-		// 19 - just passed the </page>
-		private byte flag;
-
-		// compression mode checking
-		private boolean compressed = false;
-
+		// Extra flags: 
+		// 
 		// indicating the flow condition within [flag = 18]
 		// -1 - Unmatched
 		//  1 - Matched <revision> tag partially
 		//  2 - Matched </page> tag partially
 		//  3 - Matched both <revision> and </page> partially
 		private int revOrPage = -1;
-		
+
 		// indicating the flow condition within [flag = 11]
 		// -1 - Unmatched
 		//  1 - Matched <parentId> tag partially
 		//  2 - Matched <timestamp> tag partially
 		//  3 - Matched both <parentId> and <timestamp> partially
 		private int parOrTs = -1;
-		
-		// a direct buffer to improve the local IO performance
-		private byte[] buf = new byte[134217728];
-		private int[] pos = new int[2];
 
-		private Seekable fsin;
-
-		
 		// We now convert and cache everything from pageHeader to the followin global variables
 		// NOTE: they all need to be synchronized with pageHeader !!
 		// private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer pageTitle = new DataOutputBuffer();		
-		private DataOutputBuffer keyBuf = new DataOutputBuffer();		
 		private DataOutputBuffer nsBuf = new DataOutputBuffer();
-		
-	    //////////////////////////////////////////////////////////////
+
+		//////////////////////////////////////////////////////////////
 		// END PageHeader variables
 		//////////////////////////////////////////////////////////////
-		
+
 		private DataOutputBuffer revBuf = new DataOutputBuffer();			
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();		
 		private DataOutputBuffer parBuf = new DataOutputBuffer();		
 		private DataOutputBuffer contentBuf = new DataOutputBuffer();
 
-		private final LongWritable key = new LongWritable();
-		private final WikipediaRevision value = new WikipediaRevision();
-
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
+			super.initialize(input, tac);
+			value = new WikipediaRevision(); 
+		}
 
-			// config xmlinput properties to support bzip2 splitting
-			Configuration conf = tac.getConfiguration();
-			setBlockSize(conf);
-			
-			FileSplit split = (FileSplit) input;
-			start = split.getStart();
-			end = start + split.getLength();
-			Path file = split.getPath();
-
-			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
-			CompressionCodec codec = compressionCodecs.getCodec(file);
-
-			FileSystem fs = file.getFileSystem(conf);
-
-			if (codec != null) { // file is compressed
-				compressed = true;
-				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-				CompressionInputStream cis = codec.createInputStream(fs.open(file));
-
-				cis.skip(start - 1);
-
-				fsin = cis;
-			} else { // file is uncompressed	
-				compressed = false;
-				fsin = fs.open(file);
-				fsin.seek(start);
-			}
-
-			flag = 1;
-			pos[0] = pos[1] = 0;
+		private void resetEverything() {			
+			keyBuf.reset();
+			pageTitle.reset();
+			value.clear();
+			contentBuf.reset();
+			parBuf.reset();
+			timestampBuf.reset();
+			revBuf.reset();
+			nsBuf.reset();
+			pageTitle.reset();
+			skipped = false;
+			revOrPage = -1;
+			parOrTs = -1;
 		}
 
 		@Override
-		public boolean nextKeyValue() throws IOException, InterruptedException {
-			if (fsin.getPos() < end) {
-				while (readUntilMatch()) {  
-					if (flag == 19) {
-						keyBuf.reset();
-						pageTitle.reset();
-						value.clear();
-					} 
-					else if (flag == 18) {
-						return true;
-					}
-					else if (flag == 17) {	
-						value.loadText(contentBuf.getData(), 0, contentBuf.getLength() 
-								- END_TEXT.length);
-						
-						// reset written values
-						contentBuf.reset();
-					}
-					else if (flag == 15) {
-						String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
-								- END_PARENT_ID.length);
-						long parId = Long.parseLong(parIdStr);
-						value.setParentId(parId);
-						parBuf.reset();
-					}
-					else if (flag == 13) {
-						String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
-								- END_TIMESTAMP.length);
-						long timestamp = TIME_FORMAT.parseMillis(ts);
-						value.setTimestamp(timestamp);
-						timestampBuf.reset();
-					}
-					else if (flag == 11) {
-						String idStr = new String(revBuf.getData(), 0, revBuf.getLength()
-								- END_ID.length);
-						long revId = Long.parseLong(idStr);
-						value.setRevisionId(revId);
-						revBuf.reset();
-					}
-					else if (flag == 8) {
-						String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
-								- END_ID.length);
-						long pageId = Long.parseLong(idStr);
-						key.set(pageId);
-						value.setPageId(pageId);
-						keyBuf.reset();
-					}
-					else if (flag == 6) {
-						String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
-								- END_NAMESPACE.length);
-						int namespace = Integer.parseInt(nsStr);						
-						value.setNamespace(namespace);
-						nsBuf.reset();
-					}
-					else if (flag == 4) {
-						String title = new String(pageTitle.getData(), 0, pageTitle.getLength()
-								- END_TITLE.length);
-						value.setPageTitle(title);
-						pageTitle.reset();
-					}
-					else if (flag == -1) {
-						return false;
-					}
+		public STATE doWhenMatch() throws IOException, InterruptedException {
+			if (flag == 19) {
+				resetEverything();
+			} 
+			else if (flag == 18) {
+				if (!skipped)
+					return STATE.STOP_TRUE;
+			}
+			else if (flag == 17) {
+				if (!skipped) {
+					value.loadText(contentBuf.getData(), 0, contentBuf.getLength() 
+							- END_TEXT.length);
 				}
+
+				// reset big chunk of data right away to save memory
+				contentBuf.reset();
+
 			}
-			return false;
-		}		
-
-		@Override
-		public LongWritable getCurrentKey() throws IOException, InterruptedException {
-			return key;
-		}
-
-		@Override
-		public WikipediaRevision getCurrentValue() throws IOException, InterruptedException {
-			return value;
-		}
-
-		@Override
-		public float getProgress() throws IOException, InterruptedException {
-			return (fsin.getPos() - start) / (float) (end - start);
-		}
-
-		@Override
-		public void close() throws IOException {
-			if (compressed) {
-				((CompressionInputStream)fsin).close();
-			} else {
-				((FSDataInputStream)fsin).close();
+			else if (flag == 15) {
+				if (!skipped) {
+					String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
+							- END_PARENT_ID.length);
+					long parId = Long.parseLong(parIdStr);
+					value.setParentId(parId);
+				}
+				parBuf.reset();
 			}
+			else if (flag == 13) {
+				if (!skipped) {
+					String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
+							- END_TIMESTAMP.length);
+					long timestamp = TIME_FORMAT.parseMillis(ts);
+					value.setTimestamp(timestamp);
+				}
+				timestampBuf.reset();
+			}
+			else if (flag == 11) {
+				if (!skipped) {
+					String idStr = new String(revBuf.getData(), 0, revBuf.getLength()
+							- END_ID.length);
+					long revId = Long.parseLong(idStr);
+					value.setRevisionId(revId);
+				}
+				revBuf.reset();
+			}
+			else if (flag == 8) {
+				if (!skipped) {
+					String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
+							- END_ID.length);
+					long pageId = Long.parseLong(idStr);
+					key.set(pageId);
+					value.setPageId(pageId);
+				}
+				keyBuf.reset();
+			}
+			else if (flag == 6) {
+				String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
+						- END_NAMESPACE.length);
+				int namespace = Integer.parseInt(nsStr);
+				if (namespace == 0) {
+					skipped = skipNonArticles;					
+				}
+				value.setNamespace(namespace);
+			}
+			else if (flag == 4) {
+				String title = new String(pageTitle.getData(), 0, pageTitle.getLength()
+						- END_TITLE.length);
+				value.setPageTitle(title);
+
+				pageTitle.reset();
+			}
+			else if (flag == -1) {
+				return STATE.STOP_FALSE;
+			} 
+			return STATE.CONTINUE;
 		}
-		
+
 		// Scan the tags in SAX manner. Return at every legit tag and inform the program via 
 		// the global flag. Flush into the caches if necessary
-		private boolean readUntilMatch() throws IOException {
+		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");
 			int i = 0;
@@ -263,7 +187,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							}
 						} else i = 0;
 					}
-					
+
 					else if (flag == 2) {
 						if (b == START_TITLE[i]) {
 							i++;
@@ -273,7 +197,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// put everything between <title></title> block into title
 					else if (flag == 3) {
 						if (b == END_TITLE[i]) {
@@ -285,7 +209,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					else if (flag == 4) {
 						if (b == START_NAMESPACE[i]) {
 							i++;
@@ -295,7 +219,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// everything within <ns></ns> block goes into nsBuf
 					else if (flag == 5) {
 						if (b == END_NAMESPACE[i]) {
@@ -308,6 +232,20 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 						}
 					}
 					
+					// when passing the namespace and we realize that 
+					// this is not an article, and that the option of skipping
+					// non-article pages is on, we simply skip everything till
+					// the closing </page>
+					else if (skipped && flag >= 6) {
+						if (b == END_PAGE[i]) {
+							i++;
+						} else i = 0;
+						if (i >= END_PAGE.length) {
+							flag = 19;
+							return true;
+						}
+					}
+
 					else if (flag == 6) {
 						if (b == START_ID[i]) {
 							i++;
@@ -329,7 +267,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					else if (flag == 8) {
 						if (b == START_REVISION[i]) {
 							i++;
@@ -339,7 +277,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// inside <revision></revision> block, first check for id
 					else if (flag == 9) {
 						if (b == START_ID[i]) {
@@ -350,7 +288,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// everything inside the inner <id></id> block goes to revision buffer
 					else if (flag == 10) {
 						if (b == END_ID[i]) {
@@ -362,7 +300,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// after the inner <id>, check for either <timestamp> or <parentId>
 					else if (flag == 11) {
 						int curMatch = 0;				
@@ -388,7 +326,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}		
 					}
-					
+
 					// inside <timestamp></timestamp> block everything goes to timestamp buffer
 					else if (flag == 12) {
 						if (b == END_TIMESTAMP[i]) {
@@ -400,7 +338,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// inside <parentId></parentId> block everything goes to parentId buffer
 					else if (flag == 14) {
 						if (b == END_PARENT_ID[i]) {
@@ -412,7 +350,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// after the </parentId>, search for <timestamp>
 					else if (flag == 15) {
 						if (b == START_TIMESTAMP[i]) {
@@ -423,7 +361,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// after the </timestamp>, check for <text>
 					else if (flag == 13) {
 						if (b == START_TEXT[i]) {
@@ -434,7 +372,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// inside <text></text> block everything goes to content buffer
 					else if (flag == 16) {
 						if (b == END_TEXT[i]) {
@@ -446,7 +384,7 @@ public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<Wikiped
 							return true;
 						}
 					}
-					
+
 					// look for the closing </revision>
 					else if (flag == 17) {
 						if (b == END_REVISION[i]) {

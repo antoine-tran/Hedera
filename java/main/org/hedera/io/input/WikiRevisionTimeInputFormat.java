@@ -7,30 +7,23 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
+
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.MutableDateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+
 
 public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
-	
+
 	public static final String TIME_SCALE_OPT = "timescale";
 	public static enum TimeScale {
 		HOUR("hour"),
@@ -47,11 +40,11 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 			return (val.equals(name));
 		}
 	}
-	
+
 	private static Options opts = new Options();	
 	private static final GnuParser parser = new GnuParser();
 	private CommandLine options;
-	
+
 	private static void initOptions() {
 		opts.addOption(TIME_SCALE_OPT, true, "The time scale used to coalesce the timeline");
 	}
@@ -59,7 +52,7 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 	public WikiRevisionTimeInputFormat() {
 		super();
 	}
-	
+
 	public WikiRevisionTimeInputFormat(String optString) {
 		super();
 		initOptions();
@@ -73,7 +66,7 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 			}	
 		}
 	}
-	
+
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
@@ -92,8 +85,19 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 			}
 		} else throw new RuntimeException("Must specify the time scale for RevisionDistant");
 	}
-	
-	public static class RevisionReader extends RecordReader<LongWritable, Text> {
+
+	// A flag that tells in which block the cursor is:
+	// -1: EOF
+	// 1 - outside the <page> tag
+	// 2 - just passed the <page> tag but outside the <id> tag
+	// 3 - just passed the <id> tag
+	// 4 - just passed the </id> tag but outside the <revision> tag
+	// 5 - just passed the (next) <revision>
+	// 6 - just passed the <timestamp> inside the <revision>
+	// 7 - just passed the </timestamp> but still inside the <revision></revision> block
+	// 8 - just passed the </revision>
+	// 9 - just passed the </page>
+	public static class RevisionReader extends WikiRevisionReader<Text> {
 		private static final Logger LOG = Logger.getLogger(RevisionReader.class); 		
 
 		private static final byte[] DUMMY_REV = ("<revision beginningofpage=\"true\">"
@@ -101,37 +105,12 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 				+ "</text></revision>\n")
 				.getBytes(StandardCharsets.UTF_8);
 
-		private long start;
-		private long end;
-
-		// A flag that tells in which block the cursor is:
-		// -1: EOF
-		// 1 - outside the <page> tag
-		// 2 - just passed the <page> tag but outside the <id> tag
-		// 3 - just passed the <id> tag
-		// 4 - just passed the </id> tag but outside the <revision> tag
-		// 5 - just passed the (next) <revision>
-		// 6 - just passed the <timestamp> inside the <revision>
-		// 7 - just passed the </timestamp> but still inside the <revision></revision> block
-		// 8 - just passed the </revision>
-		// 9 - just passed the </page>
-		private byte flag;
-
-		// compression mode checking
-		private boolean compressed = false;
-
 		// indicating the flow condition within [flag = 8]
 		// -1 - Unmatched
 		//  1 - Matched <revision> tag partially
 		//  2 - Matched </page> tag partially
 		//  3 - Matched both <revision> and </page> partially
 		private int lastMatchTag = -1;
-
-		// a direct buffer to improve the local IO performance
-		private byte[] buf = new byte[134217728];
-		private int[] pos = new int[2];
-
-		private Seekable fsin;
 
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer rev1Buf = new DataOutputBuffer();
@@ -146,11 +125,6 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 		// remember the time scale constant
 		private TimeScale timeScale;
 
-		private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
-
-		private final LongWritable key = new LongWritable();
-		private final Text value = new Text();
-
 		public RevisionReader() {
 			super();
 		}
@@ -163,118 +137,86 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
-
-			Configuration conf = tac.getConfiguration();
-			setBlockSize(conf);
-
-			FileSplit split = (FileSplit) input;
-			start = split.getStart();
-			end = start + split.getLength();
-			Path file = split.getPath();
-
-			CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
-			CompressionCodec codec = compressionCodecs.getCodec(file);
-
-			FileSystem fs = file.getFileSystem(conf);
-
-			if (codec != null) { // file is compressed
-				compressed = true;
-				// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-				CompressionInputStream cis = codec.createInputStream(fs.open(file));
-
-				cis.skip(start - 1);
-				
-				fsin = cis;
-			} else { // file is uncompressed	
-				compressed = false;
-				fsin = fs.open(file);
-				fsin.seek(start);
-			}
-
-			flag = 1;
-			pos[0] = pos[1] = 0;
+			super.initialize(input, tac);
+			value = new Text();
 		}
 
 		@Override
-		public boolean nextKeyValue() throws IOException, InterruptedException {
-			if (fsin.getPos() < end) {
-				while (readUntilMatch()) {  
-					if (flag == 9) {
-						key.set(fsin.getPos() - rev2Buf.getLength() - END_PAGE.length);						
-						value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
-						value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-						value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
-						value.append(END_PAGE, 0, END_PAGE.length);
-						// flush the last pair
+		public STATE doWhenMatch() throws IOException, InterruptedException {
+			if (flag == 9) {
+				key.set(fsin.getPos() - rev2Buf.getLength() - END_PAGE.length);						
+				value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+				value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+				value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
+				value.append(END_PAGE, 0, END_PAGE.length);
+				// flush the last pair
 
-						pageHeader.reset();	
-						rev1Buf.reset();
-						rev2Buf.reset();
-						tmpBuf.reset();
-						curTs = null;
-						return true;
-					} 
-					else if (flag == 7) {
-						String ts = new String(tsBuf.getData(),0, tsBuf.getLength() - END_TIMESTAMP.length);
-						tsBuf.reset();
-						DateTime dt = roundup(ts);
+				pageHeader.reset();	
+				rev1Buf.reset();
+				rev2Buf.reset();
+				tmpBuf.reset();
+				curTs = null;
+				return STATE.STOP_TRUE;
+			} 
+			else if (flag == 7) {
+				String ts = new String(tsBuf.getData(),0, tsBuf.getLength() - END_TIMESTAMP.length);
+				tsBuf.reset();
+				DateTime dt = roundup(ts);
 
-						if (curTs != null && dt.isAfter(curTs)) {
-							key.set(fsin.getPos() - tmpBuf.getLength() - rev2Buf.getLength());						
-							value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
-							value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
-							value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
-							value.append(END_PAGE, 0, END_PAGE.length);
+				if (curTs != null && dt.isAfter(curTs)) {
+					key.set(fsin.getPos() - tmpBuf.getLength() - rev2Buf.getLength());						
+					value.set(pageHeader.getData(), 0, pageHeader.getLength() - START_REVISION.length);
+					value.append(rev1Buf.getData(), 0, rev1Buf.getLength());
+					value.append(rev2Buf.getData(), 0, rev1Buf.getLength());
+					value.append(END_PAGE, 0, END_PAGE.length);
 
-							rev1Buf.reset();
-							rev1Buf.write(rev2Buf.getData());
+					rev1Buf.reset();
+					rev1Buf.write(rev2Buf.getData());
 
-							rev2Buf.reset();
-							rev2Buf.write(tmpBuf.getData());		
-							tmpBuf.reset();
-							curTs = dt;	
+					rev2Buf.reset();
+					rev2Buf.write(tmpBuf.getData());		
+					tmpBuf.reset();
+					curTs = dt;	
 
-							return true;
-							
-						} else {
-							rev2Buf.reset();
-							rev2Buf.write(tmpBuf.getData());		
-							tmpBuf.reset();
-							curTs = dt;
-						}
-					}
-					else if (flag == 4) {
-						String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
-						key.set(Long.parseLong(pageId));	
-						keyBuf.reset();
-					}
-					else if (flag == 2) {
-						pageHeader.write(START_PAGE);
-					}
-					else if (flag == 5) {
-						if (curTs == null) {							
-							rev1Buf.write(DUMMY_REV);
-						} 
-						tmpBuf.write(START_REVISION);
-					}
-					else if (flag == 6) {
-						tsBuf.reset();
-					}
-					else if (flag == -1) {
-						pageHeader.reset();
-						rev1Buf.reset();
-						rev2Buf.reset();
-						tmpBuf.reset();
-						value.clear();
-						return false;
-					}
+					return STATE.STOP_TRUE;
+
+				} else {
+					rev2Buf.reset();
+					rev2Buf.write(tmpBuf.getData());		
+					tmpBuf.reset();
+					curTs = dt;
 				}
 			}
-			return false;
+			else if (flag == 4) {
+				String pageId = new String(keyBuf.getData(), 0, keyBuf.getLength() - END_ID.length);
+				key.set(Long.parseLong(pageId));	
+				keyBuf.reset();
+			}
+			else if (flag == 2) {
+				pageHeader.write(START_PAGE);
+			}
+			else if (flag == 5) {
+				if (curTs == null) {							
+					rev1Buf.write(DUMMY_REV);
+				} 
+				tmpBuf.write(START_REVISION);
+			}
+			else if (flag == 6) {
+				tsBuf.reset();
+			}
+			else if (flag == -1) {
+				pageHeader.reset();
+				rev1Buf.reset();
+				rev2Buf.reset();
+				tmpBuf.reset();
+				value.clear();
+				return STATE.STOP_FALSE;
+			}
+			return STATE.CONTINUE;
 		}
 
 		private DateTime roundup(String timestamp) {
-			MutableDateTime mdt = dtf.parseMutableDateTime(timestamp);
+			MutableDateTime mdt = TIME_FORMAT.parseMutableDateTime(timestamp);
 
 			if (timeScale == TimeScale.HOUR) {
 				if (mdt.getMinuteOfHour() > 0 || mdt.getSecondOfMinute() > 0 || mdt.getMillisOfSecond() > 0) {
@@ -319,33 +261,7 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 			return mdt.toDateTimeISO();
 		}
 
-		@Override
-		public LongWritable getCurrentKey() throws IOException,
-		InterruptedException {
-			return key;
-		}
-
-		@Override
-		public Text getCurrentValue() throws IOException, InterruptedException {
-			return value;
-		}
-
-		@Override
-		public float getProgress() throws IOException, InterruptedException {
-			return (fsin.getPos() - start) / (float) (end - start);
-		}
-
-		@Override
-		public void close() throws IOException {
-			if (compressed) {
-				((CompressionInputStream)fsin).close();
-			} else {
-				((FSDataInputStream)fsin).close();
-			}
-		}
-
-		private boolean readUntilMatch() throws IOException {
-
+		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");
 			int i = 0;
@@ -372,7 +288,7 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 							}
 						} else i = 0;
 					}
-					
+
 					// put everything between <page> tag and the first <id> tag into pageHeader
 					else if (flag == 2) {
 						if (b == START_ID[i]) {
@@ -397,7 +313,7 @@ public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
 							return true;
 						}
 					}
-					
+
 					// put everything between </id> tag and the first <revision> tag into pageHeader
 					else if (flag == 4) {
 						if (b == START_REVISION[i]) {
