@@ -68,36 +68,38 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
 			keyOut.set(revId, timestamp);
 
-			for (Delta diff : diffs) {
-				Chunk revi = diff.getRevised();
-				List<?> texts = revi.getLines();
-				for (Object obj : texts) {
-					String text = (String)obj;
-					List<Link> links = extractLinks(text);
-					for (Link link : links) {
-						StringBuilder sb = new StringBuilder();
-						String ts = TIME_FORMAT.print(timestamp);
-						sb.append(ts);
-						sb.append("\t");
-						sb.append(pageId);
-						sb.append("\t");
-						sb.append(revId);
-						sb.append("\t");
-						sb.append(parId);
-						sb.append("\t");
-						sb.append(opt2byte(diff.getType()));
-						sb.append("\t");
-						sb.append(title);
-						sb.append("\t");
-						sb.append(link.anchor);
-						sb.append("\t");
-						sb.append(link.target);
-						sb.append("\t");
-						valOut.set(sb.toString());
-						context.write(keyOut, valOut);
+			if (diffs != null) {
+				for (Delta diff : diffs) {
+					Chunk revi = diff.getRevised();
+					List<?> texts = revi.getLines();
+					for (Object obj : texts) {
+						String text = (String)obj;
+						List<Link> links = extractLinks(text);
+						for (Link link : links) {
+							StringBuilder sb = new StringBuilder();
+							String ts = TIME_FORMAT.print(timestamp);
+							sb.append(ts);
+							sb.append("\t");
+							sb.append(pageId);
+							sb.append("\t");
+							sb.append(revId);
+							sb.append("\t");
+							sb.append(parId);
+							sb.append("\t");
+							sb.append(opt2byte(diff.getType()));
+							sb.append("\t");
+							sb.append(title);
+							sb.append("\t");
+							sb.append(link.anchor);
+							sb.append("\t");
+							sb.append(link.target);
+							sb.append("\t");
+							valOut.set(sb.toString());
+							context.write(keyOut, valOut);
+						}
 					}
 				}
-			}
+			}	
 		}
 
 		private List<Link> extractLinks(String page) {
