@@ -257,8 +257,14 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						}	
 						start = i;
 					}
-					i += 2;
-				}				
+					else {
+						i += 2;
+					}
+				}
+				if (start < i) {
+					String s = new String(b,start,i,"UTF-8");
+					res.add(s);
+				}
 			}
 			return res;
 		}
