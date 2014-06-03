@@ -23,11 +23,11 @@ public class TestDiffPatch {
 		//original.add("This will be the same.");
 		
         List<String> revised  = new ArrayList<>();
-        revised.add("And this has been added.");
-        revised.add("That quick brown fox jumped over a lazy dog.");
-        revised.add("This sentence stays the same");
-        revised.add("And this has been newly added.");
-        revised.add("This will be the same.");
+        //revised.add("And this has been added.");
+        //revised.add("That quick brown fox jumped over a lazy dog.");
+        //revised.add("This sentence stays the same");
+        //revised.add("And this has been newly added.");
+        //revised.add("This will be the same.");
         
         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
         difflib.Patch patch = DiffUtils.diff(original, revised);

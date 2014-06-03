@@ -190,6 +190,10 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		String inputDir = args[0];
 		String outputDir = args[1];
 		int reduceNo = Integer.parseInt(args[2]);
+		
+		// this job sucks big memory
+		setMapperSize("-Xmx5120m");
+		
 		Job job = setup("For Avishek: Extracting temporal anchor text from "
 				+ "Wikipedia revision",
 				ExtractTemporalAnchorText.class, inputDir, outputDir,
