@@ -35,8 +35,6 @@ import static org.hedera.io.WikipediaRevisionDiff.opt2byte;
  */
 public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
-	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTimeNoMillis();
-
 	// Algorithm:
 	// emit (title, 0) --> (doc id, timestamp, timfor structure message (
 	private static final class MyMapper extends Mapper<LongWritable, WikipediaRevisionDiff, 
