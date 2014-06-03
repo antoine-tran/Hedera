@@ -146,7 +146,6 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 
 			flag = 1;
 			pos[0] = pos[1] = 0;	
-			lastRevText = null;
 		}
 
 		@Override
