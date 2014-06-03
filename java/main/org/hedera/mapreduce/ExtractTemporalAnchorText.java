@@ -34,7 +34,7 @@ import static org.hedera.io.WikipediaRevisionDiff.opt2byte;
 public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
 	// Algorithm:
-	// emit (title, 0) --> (doc id, timestamp, timfor structure message (
+	// emit (id, rev diff) --> ((rev id, timestamp), text)
 	private static final class MyMapper extends Mapper<LongWritable, WikipediaRevisionDiff, 
 	PairOfLongs, Text> {
 
@@ -75,6 +75,9 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 						List<Link> links = extractLinks(text);
 						for (Link link : links) {
 							StringBuilder sb = new StringBuilder();
+							
+							// Output anchor in format:
+							// [timestamp] TAB [source page ID] TAB [revision ID] TAB [ID of previous revision] TAB [type of modification: CHANGE /DELETE / INSERT] TAB [source page title] TAB [anchor text] TAB [destination title] TAB []
 							String ts = TIME_FORMAT.print(timestamp);
 							sb.append(ts);
 							sb.append("\t");
@@ -91,7 +94,6 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 							sb.append(link.anchor);
 							sb.append("\t");
 							sb.append(link.target);
-							sb.append("\t");
 							String s = sb.toString();
 							valOut.set(s);
 							Log.info(s);
