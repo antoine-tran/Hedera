@@ -28,9 +28,10 @@ public class WikipediaRevision implements Writable {
 	private long pageId;
 	private long revisionId;
 	private long parentId;
-	private long timestamp;
+	private long timestamp;	
 	private String pageTitle;
 	private byte[] text;
+	private int namespace;
 		
 	public String getPageTitle() {
 		return pageTitle;
@@ -76,6 +77,14 @@ public class WikipediaRevision implements Writable {
 		return text;
 	}
 	
+	public int getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(int namespace) {
+		this.namespace = namespace;
+	}
+
 	public void loadText(byte[] buffer, int offset, int length) {
 		text = new byte[length];
 		System.arraycopy(buffer, offset, text, 0, length);

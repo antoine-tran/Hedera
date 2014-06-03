@@ -77,6 +77,9 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	public static final byte[] START_TITLE = "<title>".getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_TITLE = "</title>".getBytes(StandardCharsets.UTF_8);
 	
+	public static final byte[] START_NAMESPACE = "<ns>".getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_NAMESPACE = "</ns>".getBytes(StandardCharsets.UTF_8);
+	
 	public static final String START_TIMESTAMP_TAG = "<timestamp>";
 	public static final String END_TIMESTAMP_TAG = "</timestamp>";
 	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);

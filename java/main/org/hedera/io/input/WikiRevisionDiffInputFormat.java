@@ -47,21 +47,23 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		// -1: EOF
 		// 1 - outside the <page> tag
 		// 2 - just passed the <page> tag but outside the <title>
-		// 3 - just passed the <title> tag
-		// 4 - just passed the </title> tag but outside the <id>
-		// 5 - just passed the (page's) <id>
-		// 6 - just passed the </id> tag but outside the <revision>	
-		// 7 - just passed the (next) <revision>
-		// 8 - just passed the inner <id> tag inside <revision>
-		// 9 - just passed the inner </id> tag inside <revision>
-		// 10 - just passed the <timestamp>
-		// 11 - just passed the </timestamp> tag
-		// 12 - just passed the <parentId>
-		// 13 - just passed the </parentId> tag
-		// 14 - just passed the <text> tag
-		// 15 - just passed the </text> tag
-		// 16 - just passed the </revision>
-		// 17 - just passed the </page>
+		// 3 - just passed the <title> tag		
+		// 4 - just passed the </title> tag but outside the <namespace>
+		// 5 - just passed the <namespace>
+		// 6 - just passed the </namespace> but outside the <id>
+		// 7 - just passed the (page's) <id>
+		// 8 - just passed the </id> tag but outside the <revision>	
+		// 9 - just passed the (next) <revision>
+		// 10 - just passed the inner <id> tag inside <revision>
+		// 11 - just passed the inner </id> tag inside <revision>
+		// 12 - just passed the <timestamp>
+		// 13 - just passed the </timestamp> tag
+		// 14 - just passed the <parentId>
+		// 15 - just passed the </parentId> tag
+		// 16 - just passed the <text> tag
+		// 17 - just passed the </text> tag
+		// 18 - just passed the </revision>
+		// 19 - just passed the </page>
 		private byte flag;
 
 		// compression mode checking
@@ -92,9 +94,8 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		// NOTE: they all need to be synchronized with pageHeader !!
 		// private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer pageTitle = new DataOutputBuffer();
-
 		private DataOutputBuffer keyBuf = new DataOutputBuffer();
-
+		private DataOutputBuffer nsBuf = new DataOutputBuffer();
 		//////////////////////////////////////////////////////////////
 		// END PageHeader variables
 		//////////////////////////////////////////////////////////////
@@ -152,7 +153,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 		public boolean nextKeyValue() throws IOException, InterruptedException {
 			if (fsin.getPos() < end) {
 				while (readUntilMatch()) {
-					if (flag == 17) {
+					if (flag == 19) {
 						keyBuf.reset();
 						pageTitle.reset();
 						value.clear();	
@@ -160,13 +161,13 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					}
 
 					// emit the object when reaching </revision>
-					else if (flag == 16) {
+					else if (flag == 18) {
 						return true;
 					}
 
 					// calculating the diff and shift the revision text when seeing </text>
 					// inside the <revision> block
-					else if (flag == 15) {
+					else if (flag == 17) {
 
 						// create a mass number of strings
 						List<String> content = extractParagraph(contentBuf.getData(), 0,
@@ -183,7 +184,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						contentBuf.reset();
 					}
 
-					else if (flag == 13) {
+					else if (flag == 15) {
 						String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
 								- END_PARENT_ID.length);
 						long parId = Long.parseLong(parIdStr);
@@ -191,7 +192,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						parBuf.reset();
 					}
 
-					else if (flag == 11) {
+					else if (flag == 13) {
 						String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
 								- END_TIMESTAMP.length);
 						long timestamp = TIME_FORMAT.parseMillis(ts);
@@ -199,7 +200,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						timestampBuf.reset();
 					}
 
-					else if (flag == 9) {
+					else if (flag == 11) {
 						String idStr = new String(revIdBuf.getData(), 0, revIdBuf.getLength()
 								- END_ID.length);
 						long revId = Long.parseLong(idStr);
@@ -207,12 +208,20 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 						revIdBuf.reset();
 					}
 
-					else if (flag == 6) {
+					else if (flag == 8) {
 						String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
 								- END_ID.length);
 						long pageId = Long.parseLong(idStr);
 						keyOut.set(pageId);
 						value.setPageId(pageId);
+						keyBuf.reset();
+					}
+					
+					else if (flag == 6) {
+						String nsStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
+								- END_ID.length);
+						int ns = Integer.parseInt(nsStr);
+						value.setNamespace(ns);
 						keyBuf.reset();
 					}
 
@@ -275,7 +284,7 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					pos[0]++;
 
 					// ignore every character until reaching a new page
-					if (flag == 1 || flag == 17) {
+					if (flag == 1 || flag == 19) {
 						if (b == START_PAGE[i]) {
 							i++;
 							if (i >= START_PAGE.length) {
@@ -308,62 +317,83 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 					}
 
 					else if (flag == 4) {
-						if (b == START_ID[i]) {
+						if (b == START_NAMESPACE[i]) {
 							i++;
 						} else i = 0;
-						if (i >= START_ID.length) {
+						if (i >= START_NAMESPACE.length) {
 							flag = 5;
 							return true;
 						}
 					}
-
-					// put everything in outer <id></id> block into keyBuf
+					
 					else if (flag == 5) {
-						if (b == END_ID[i]) {
+						if (b == END_NAMESPACE[i]) {
 							i++;
 						} else i = 0;
-						keyBuf.write(b);
-						if (i >= END_ID.length) {
+						nsBuf.write(b);
+						if (i >= END_NAMESPACE.length) {
 							flag = 6;
 							return true;
 						}
 					}
-
+					
 					else if (flag == 6) {
-						if (b == START_REVISION[i]) {
+						if (b == START_ID[i]) {
 							i++;
 						} else i = 0;
-						if (i >= START_REVISION.length) {
+						if (i >= START_ID.length) {
 							flag = 7;
 							return true;
 						}
 					}
 
-					// inside <revision></revision> block, first check for id
+					// put everything in outer <id></id> block into keyBuf
 					else if (flag == 7) {
-						if (b == START_ID[i]) {
+						if (b == END_ID[i]) {
 							i++;
 						} else i = 0;
-						if (i >= START_ID.length) {
+						keyBuf.write(b);
+						if (i >= END_ID.length) {
 							flag = 8;
 							return true;
 						}
 					}
 
-					// everything inside the inner <id></id> block goes to revision buffer
 					else if (flag == 8) {
-						if (b == END_ID[i]) {
+						if (b == START_REVISION[i]) {
 							i++;
 						} else i = 0;
-						revIdBuf.write(b);
-						if (i >= END_ID.length) {
+						if (i >= START_REVISION.length) {
 							flag = 9;
 							return true;
 						}
 					}
 
-					// after the inner <id>, check for either <timestamp> or <parentId>
+					// inside <revision></revision> block, first check for id
 					else if (flag == 9) {
+						if (b == START_ID[i]) {
+							i++;
+						} else i = 0;
+						if (i >= START_ID.length) {
+							flag = 10;
+							return true;
+						}
+					}
+
+					// everything inside the inner <id></id> block goes to revision buffer
+					else if (flag == 10) {
+						if (b == END_ID[i]) {
+							i++;
+						} else i = 0;
+						revIdBuf.write(b);
+						if (i >= END_ID.length) {
+							flag = 11;
+							return true;
+						}
+					}
+
+					// after the inner <id>, check for either <timestamp> or <parentId>
+					else if (flag == 11) {
 						int curMatch = 0;				
 						if ((i < START_PARENT_ID.length && b == START_PARENT_ID[i]) 
 								&& (i < START_TIMESTAMP.length && b == START_TIMESTAMP[i])) {
@@ -378,87 +408,87 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 							parOrTs = curMatch;
 						} else i = 0;
 						if ((parOrTs == 2 || parOrTs == 3) && i >= START_TIMESTAMP.length) {
-							flag = 10;
+							flag = 12;
 							parOrTs = -1;
 							return true;							
 						} else if ((parOrTs == 1 || parOrTs == 3) && i >= START_PARENT_ID.length) {
-							flag = 12;
+							flag = 14;
 							parOrTs = -1;
 							return true;
 						}		
 					}
 
 					// inside <timestamp></timestamp> block everything goes to timestamp buffer
-					else if (flag == 10) {
+					else if (flag == 12) {
 						if (b == END_TIMESTAMP[i]) {
 							i++;
 						} else i = 0;
 						timestampBuf.write(b);
 						if (i >= END_TIMESTAMP.length) {
-							flag = 11;
-							return true;
-						}
-					}
-
-					// inside <parentId></parentId> block everything goes to parentId buffer
-					else if (flag == 12) {
-						if (b == END_PARENT_ID[i]) {
-							i++;
-						} else i = 0;
-						parBuf.write(b);
-						if (i >= END_PARENT_ID.length) {
 							flag = 13;
 							return true;
 						}
 					}
 
-					// after the </parentId>, search for <timestamp>
-					else if (flag == 13) {
-						if (b == START_TIMESTAMP[i]) {
-							i++;
-						} else i = 0;
-						if (i >= START_TIMESTAMP.length) {
-							flag = 10;
-							return true;
-						}
-					}
-
-					// after the </timestamp>, check for <text>
-					else if (flag == 11) {
-						if (b == START_TEXT[i]) {
-							i++;
-						} else i = 0;
-						if (i >= START_TEXT.length) {
-							flag = 14;
-							return true;
-						}
-					}
-
-					// inside <text></text> block everything goes to content buffer
+					// inside <parentId></parentId> block everything goes to parentId buffer
 					else if (flag == 14) {
-						if (b == END_TEXT[i]) {
+						if (b == END_PARENT_ID[i]) {
 							i++;
 						} else i = 0;
-						contentBuf.write(b);
-						if (i >= END_TEXT.length) {
+						parBuf.write(b);
+						if (i >= END_PARENT_ID.length) {
 							flag = 15;
 							return true;
 						}
 					}
 
-					// look for the closing </revision>
+					// after the </parentId>, search for <timestamp>
 					else if (flag == 15) {
-						if (b == END_REVISION[i]) {
+						if (b == START_TIMESTAMP[i]) {
 							i++;
 						} else i = 0;
-						if (i >= END_REVISION.length) {
+						if (i >= START_TIMESTAMP.length) {
+							flag = 12;
+							return true;
+						}
+					}
+
+					// after the </timestamp>, check for <text>
+					else if (flag == 13) {
+						if (b == START_TEXT[i]) {
+							i++;
+						} else i = 0;
+						if (i >= START_TEXT.length) {
 							flag = 16;
 							return true;
 						}
 					}
 
-					// Flag 16 can be the signal of a new record inside one old page
+					// inside <text></text> block everything goes to content buffer
 					else if (flag == 16) {
+						if (b == END_TEXT[i]) {
+							i++;
+						} else i = 0;
+						contentBuf.write(b);
+						if (i >= END_TEXT.length) {
+							flag = 17;
+							return true;
+						}
+					}
+
+					// look for the closing </revision>
+					else if (flag == 17) {
+						if (b == END_REVISION[i]) {
+							i++;
+						} else i = 0;
+						if (i >= END_REVISION.length) {
+							flag = 18;
+							return true;
+						}
+					}
+
+					// Flag 16 can be the signal of a new record inside one old page
+					else if (flag == 18) {
 						int curMatch = 0;				
 						if ((i < END_PAGE.length && b == END_PAGE[i]) 
 								&& (i < START_REVISION.length && b == START_REVISION[i])) {
@@ -473,11 +503,11 @@ extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
 							revOrPage = curMatch;
 						} else i = 0;
 						if ((revOrPage == 2 || revOrPage == 3) && i >= END_PAGE.length) {
-							flag = 17;
+							flag = 19;
 							revOrPage = -1;
 							return true;							
 						} else if ((revOrPage == 1 || revOrPage == 3) && i >= START_REVISION.length) {
-							flag = 7;
+							flag = 9;
 							revOrPage = -1;
 							return true;
 						}				

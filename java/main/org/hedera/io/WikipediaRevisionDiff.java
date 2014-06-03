@@ -29,6 +29,7 @@ public class WikipediaRevisionDiff implements Writable {
 	private long revisionId;
 	private long parentId;
 	private long timestamp;
+	private int namespace;
 	private String pageTitle;
 	private LinkedList<Delta> diffs;
 	
@@ -101,6 +102,14 @@ public class WikipediaRevisionDiff implements Writable {
 	public void setPageTitle(String pageTitle) {
 		this.pageTitle = pageTitle;
 	}
+	
+	public int getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(int namespace) {
+		this.namespace = namespace;
+	}
 
 	/**
 	 * @return the diffs
@@ -129,7 +138,7 @@ public class WikipediaRevisionDiff implements Writable {
 		this.timestamp = 0;
 	}
 	
-	private TYPE byte2opt(byte sig) {
+	public static TYPE byte2opt(byte sig) {
 		if (sig == 0) {
 			return TYPE.DELETE;
 		} else if (sig == 1) {
@@ -140,7 +149,7 @@ public class WikipediaRevisionDiff implements Writable {
 				"Uknown TYPE signature: " + sig);
 	}
 	
-	private byte opt2byte(TYPE opt) {
+	public static byte opt2byte(TYPE opt) {
 		if (opt == TYPE.DELETE) {
 			return 0;
 		} else if (opt == TYPE.INSERT) {
