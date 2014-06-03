@@ -41,10 +41,14 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		private PairOfLongs keyOut = new PairOfLongs();
 		private Text valOut = new Text();
 
+		// simple counter to sparse the debug printout
+		private long cnt;
+		
 		@Override
 		protected void setup(Context context) throws IOException,
 		InterruptedException {
 			super.setup(context);
+			cnt = 0;
 		}
 
 		@Override
@@ -73,7 +77,7 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 					for (Object obj : texts) {
 						String text = (String)obj;
 						List<Link> links = extractLinks(text);
-						for (Link link : links) {
+						for (Link link : links) {							
 							StringBuilder sb = new StringBuilder();
 							
 							// Output anchor in format:
@@ -96,7 +100,12 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 							sb.append(link.target);
 							String s = sb.toString();
 							valOut.set(s);
-							Log.info(s);
+							
+							// debug hook
+							cnt++;
+							if (cnt % 1000000l == 0)
+								Log.info(s);
+							
 							context.write(keyOut, valOut);
 						}
 					}
