@@ -17,10 +17,10 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
+import static org.hedera.io.input.WikiRevisionInputFormat.SKIP_NON_ARTICLES;
+
 public abstract class WikiRevisionReader<VALUEIN> extends 
 		RecordReader<LongWritable, VALUEIN> {
-
-	protected static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
 	
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 	

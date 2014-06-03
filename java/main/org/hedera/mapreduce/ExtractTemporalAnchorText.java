@@ -14,6 +14,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.WikipediaRevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
+import org.hedera.io.input.WikiRevisionInputFormat;
+import org.hedera.io.input.WikiRevisionReader;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -200,6 +202,10 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 				WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);
+		
+		// skip non-article
+		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+		
 		job.waitForCompletion(true);
 		return 0;
 	}

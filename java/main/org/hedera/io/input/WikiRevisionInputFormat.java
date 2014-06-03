@@ -60,6 +60,7 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
 public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWritable, T> 
 {
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
+	public static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
 	
 	protected CompressionCodecFactory compressionCodecs = null;
 
