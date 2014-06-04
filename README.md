@@ -16,5 +16,4 @@ supports both Hadoop YARN and non-YARN models. Free for research and educational
 
 ### Why Hedea ?##
 
-
-fdsfds
+While there are several frameworks which have been built to support 
