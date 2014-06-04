@@ -62,7 +62,8 @@ models, and to this extent it tries to rely less on heavy
 general-purpose frameworks built for enterprise environments (such as
 ElasticSearch, etc.). The philosophy of Hedera is 
 
-> Get dirty things done fast
+>* Get dirty things done, and get them done quick, bro !! *
+
 
 - *Two-level Load Balancing*: As a typical Hadoop setting
 
