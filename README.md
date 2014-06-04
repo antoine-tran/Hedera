@@ -65,11 +65,14 @@ ElasticSearch, etc.). The philosophy of Hedera is
 >Get dirty things done, and get them done quick, bro !! 
 
 
-##### Approaches #####
-
-Below is the (draf) sketch of Hedera architecture.
+### Approach ##
 
 ![Hedera architecture](files/hedera-arch-v0.0.1.png)
+
+Above is the (draf) sketch of Hedera architecture. Hedera inherits the
+Hadoop architecture and provides several customization to address its
+mentioned research questions. Some of features (established and
+desired) of Hedera includes:
 
 - *Two-level Load Balancing*: As a typical Hadoop setting
 
