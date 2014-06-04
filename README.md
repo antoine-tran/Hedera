@@ -109,7 +109,9 @@ desired) of Hedera includes:
      is pushed down to the very first phase of the inputting cycle in
      Hadoop, thereby to avoid passing irrelevant text to the next
      layer.
-   - dsfsd 
+   - It extracts lightweight meta-data for each snapshots it reads
+     (e.g. snapshot length, the length of title, timestamps,...). This
+     is done by overwritting the method <code>dds</code> in
 
   
   
