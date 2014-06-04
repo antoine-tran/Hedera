@@ -27,9 +27,8 @@ document collections such as Web archives, revisions of collaborated documents
 (news articles or encyclopedia pages such as Wikipedia). Versioned documents
 have some following special features: 
 
-<ol>
-<li>One documents have several snapshots, each typically associated with
-one specific timestamps indicating the publication time</li>
-</ol>
+    - One documents have several snapshots, each typically associated with
+    one specific timestamps indicating the publication time
+
   
   
