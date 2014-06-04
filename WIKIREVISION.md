@@ -14,6 +14,37 @@ wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.LiteWikipediaLoader
 ewiki = FOREACH wiki GENERATE page_id, org.hedera.pig.ExtractTemplate(page_id,page_title,text);`
 </pre>
 
+
+Transformation
+=============
+
+For the moment, Hedera supports the following InputFormat types to transform and split snapshots into Mapper-ready inputs:
+
+1. `WikiRevisionInputTextFormat`: It reads and emits, for every single snapshot of a Wikipedia page, the page header, text of the snapshots in wikimedia markup syntax.
+
+2. `WikiRevisionPageInputFormat`: It reads and emits, for every single snapshot of a Wikipedia page, the WikiRevision object which contains:
+   - Ids of page
+   - Id of current revision and the immediate preceding ones.
+   - Timestamp of the revision
+   - Text of the revision content (with or without markups)
+   - Namespace
+   - Title of revision
+
+3. `WikiRevisionPairInputFormat`: It works the same as `WikiRevisionTextInputFormat`, except that it emits every pair of consecutive snapshots instead on each individually.
+
+4. `WikiRevisionDiffInputFormat`: It reads and compares two revisions of Wikipedia (consecutive or time-sampled, based on configuration), and emits the differentials between the two, each with the following format:
+   - Type of differential (INSERT, DELETE, CHANGE)
+   - Chunks of original and revised text
+ds
+
+
+
+Fast Checking and Extracting:
+=============
+to be added soon...
+
+
+
 Copyright
 =============
 Hedera uses the following library for working with Wikipedia
