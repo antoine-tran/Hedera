@@ -77,7 +77,8 @@ desired) of Hedera includes:
 1. *Two-level Load Balancing*: As a typical Hadoop setting, Hedera
   feeds the Mapper with InputSplits. Each InputSplit object contain a
   self-described piece of text and will be processed in
-  parallel. Hedera splits versioned documents via two levels:
+  parallel. The sizes of the InputSplit is calculated based on the
+  size of the documents, snapshots and system-defined max split size. Hedera splits versioned documents via two levels:
 	- Level 1: Each InputSplit contains a set of full snapshots of
       documents.
 	- Level 2: Each InputSplit is read using an ETLReader
