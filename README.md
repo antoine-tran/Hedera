@@ -147,5 +147,5 @@ Archives* .warc files.
 
 #### Wikipedia Revision ####
 
-see documentation on working with Wikipedia Revision [here](WIKIREVISION.md)
+see documentation on working with Wikipedia Revision [here](WIKIREVISION.md).
   
