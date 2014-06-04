@@ -51,5 +51,20 @@ connected to one document identity.
   support better load balancing without sacrifying the
   inter-dependences of snapshots within one document.
 
+
+Hedera was built with those questions in mind. It uses Hadoop
+frameworks to support the scalable and parallel processing of data in
+high level programming languages. It optimizes
+the operations and APIs to address the above challenges, while still
+conforms to the MapReduce standards and support traditional
+workflows. Hedera aims to support rapid development of experimental
+models, and to this extent it tries to rely less on heavy
+general-purpose frameworks built for enterprise environments (such as
+ElasticSearch, etc.). The philosophy of Hedera is 
+
+> Get dirty things done fast
+
+- *Two-level Load Balancing*: As a typical Hadoop setting
+
   
   
