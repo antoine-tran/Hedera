@@ -97,8 +97,16 @@ desired) of Hedera includes:
    sent around the network, and in many cases it is sufficient to
    look only the changes in the job. When original text is needed, a
    Reconstructor can be called to communicate with related objects
-   (via the ids stored in the header of the messages), and it will
-   re-build the content in reducer phase.
+   (via the ids stored in the header of the messages), and it 
+   re-builds the content in reducer phase at will.
+
+3. *Fast Approximated Reader and Extractor on the go*: In many cases,
+   versions of one documents can differ
+   by only a few minor tokens, and those differences are irrelevant
+   for many information extraction jobs. Hedera provides a fast way to
+   skip redundant snapshots and only triggers the extraction when
+   detecting the big changes in semantics of the documents. A typical
+   workflow for a fast extraction
 
   
   
