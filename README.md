@@ -85,7 +85,20 @@ desired) of Hedera includes:
 	- Level 2: Each InputSplit is read using an ETLReader
       implementation to output several Mapper input. Each Mapper input
       contains document header, a set of related snapshots or their
-      differentials, depending on one particular job. Here the ``relatedness''
+      differentials, depending on one particular job. Here the
+      "relatedness'' is defined using a factory of Hedera methods, and
+      is extensible to faciliate new processing requirements.
+
+2. *Incremental Processing*: When used for indexing or information
+   extraction jobs, Hedera provides the option to work with 
+   differentials instead of many duplicated texts. A Hedera reader
+   checks for two snapshots and outputs only their changes to the next
+   step of the workflow. This helps reducing a huge amount of text
+   sent around the network, and in many cases it is sufficient to
+   look only the changes in the job. When original text is needed, a
+   Reconstructor can be called to communicate with related objects
+   (via the ids stored in the header of the messages), and it will
+   re-build the content in reducer phase.
 
   
   
