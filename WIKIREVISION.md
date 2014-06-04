@@ -7,10 +7,12 @@ Working with Wikipedia in Hedera is fairly easy. To load the datasets in Pig, si
 
 ###### Example code in Pig######
 
+<pre>
 `REGISTER '$LIBDIR/hedera-0.1-SNAPSHOT.jar'
 %DECLARE BASEDIR 'hdfs://master.ib:8020'
 wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.LiteWikipediaLoader
 ewiki = FOREACH wiki GENERATE page_id, org.hedera.pig.ExtractTemplate(page_id,page_title,text);`
+</pre>
 
 Copyright
 =============
