@@ -35,7 +35,24 @@ For the moment, Hedera supports the following InputFormat types to transform and
 4. `WikiRevisionDiffInputFormat`: It reads and compares two revisions of Wikipedia (consecutive or time-sampled, based on configuration), and emits the differentials between the two, each with the following format:
    - Type of differential (INSERT, DELETE, CHANGE)
    - Chunks of original and revised text
-ds
+
+
+###### Example in Java######
+Here is the example for registering a job to a specific InputSplit:
+
+<pre>
+<code>
+  String inputDir = Wikipedia_revision_files_path;
+  String outputDir = output_path;
+  int reduceNo = some_number;
+  Job job = setup("For Avishek: Extracting temporal anchor text from "
+  + "Wikipedia revision", YOURJOB.class, inputDir, outputDir,
+  WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
+  MAPPEROUTPUTKEY.class, MAPPEROUTPUTVAL.class,
+  Text.class, Text.class,
+  MyMapper.class, Reducer.class, reduceNo);
+</code>
+</pre>
 
 
 
