@@ -23,4 +23,12 @@ educational purpose under GNU and Common Creative License.
 While there are several frameworks built to support
 processing big textual data (both in MapReduce and non-MapReduce
 fashion), little has been focused on efficient processing of versioned
-documents 
+document collections such as Web archives, revisions of collaborated documents
+(news articles or encyclopedia pages such as Wikipedia). Versioned documents
+have some following special features: 
+
+    * One documents have several snapshots, each typically associated with
+      one specific timestamps indicating the publication time
+    * 
+  
+  
