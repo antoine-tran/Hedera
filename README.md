@@ -67,6 +67,10 @@ ElasticSearch, etc.). The philosophy of Hedera is
 
 ##### Approaches #####
 
+Below is the (draf) sketch of Hedera architecture.
+
+![Hedera architecture](files/hedera-arch-v0.0.1.png)
+
 - *Two-level Load Balancing*: As a typical Hadoop setting
 
   
