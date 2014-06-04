@@ -12,7 +12,7 @@ used in Hadoop Streaming to enable rapid development using different
 languages (Java, Python, C, etc.) , and it also supports Pig with
 a number of User-defined functions (UDFs). Free for research and educational purpose
 
-.Why Hedera ?
+### Why Hedea ?##
 
 
 fdsfds
