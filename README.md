@@ -1,7 +1,7 @@
 Hedera
 ======
 
-###### Efficient Processing Tool for Versioned Textual Documents ######
+##### Efficient Processing Tool for Versioned Textual Documents ###
 
 Hedera is a framework to facilitate the rapid development of
 processing methods on big versioned
