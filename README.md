@@ -1,8 +1,11 @@
 Hedera
 ======
 
-Hedera is a framework to facilitate the processing of big versioned
-document collections  using Hadoop framework. It provides
+###### Efficient Processing Tool for Versioned Textual Documents ######
+
+Hedera is a framework to facilitate the rapid development of
+processing methods on big versioned
+document collections  using the Hadoop framework. It provides
 customized InputFormat for accessing data in parallel in standard
 MapReduce workflows. It also has new mechanism of extracting and
 transforming while loading (versus the traditional Extraction,
@@ -17,4 +20,7 @@ educational purpose under GNU and Common Creative License.
 
 ### Why Hedea ?##
 
-While there are several frameworks which have been built to support 
+While there are several frameworks built to support
+processing big textual data (both in MapReduce and non-MapReduce
+fashion), little has been focused on efficient processing of versioned
+documents 
