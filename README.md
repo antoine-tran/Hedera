@@ -74,14 +74,12 @@ Hadoop architecture and provides several customization to address its
 mentioned research questions. Some of features (established and
 desired) of Hedera includes:
 
-* *Two-level Load Balancing*: As a typical Hadoop setting, Hedera
+1. *Two-level Load Balancing*: As a typical Hadoop setting, Hedera
   feeds the Mapper with InputSplits. Each InputSplit object contain a
   self-described piece of text and will be processed in
   parallel. Hedera splits versioned documents via two levels:
-
 	- Level 1: Each InputSplit contains a set of full snapshots of
       documents.
-
 	- Level 2: Each InputSplit is read using an ETLReader
       implementation to output several Mapper input. Each Mapper input
       contains document header, a set of related snapshots or their
@@ -89,7 +87,7 @@ desired) of Hedera includes:
       "relatedness'' is defined using a factory of Hedera methods, and
       is extensible to faciliate new processing requirements.
 	  
-* *Incremental Processing*: When used for indexing or information
+2. *Incremental Processing*: When used for indexing or information
    extraction jobs, Hedera provides the option to work with 
    differentials instead of many duplicated texts. A Hedera reader
    checks for two snapshots and outputs only their changes to the next
@@ -100,7 +98,7 @@ desired) of Hedera includes:
    (via the ids stored in the header of the messages), and it 
    re-builds the content in reducer phase at will.
 
-* *Fast Approximated Reader and Extractor on the go*: In many cases,
+3. *Fast Approximated Reader and Extractor on the go*: In many cases,
    versions of one documents can differ
    by only a few minor tokens, and those differences are irrelevant
    for many information extraction jobs. Hedera provides a fast way to
