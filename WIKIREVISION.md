@@ -46,11 +46,11 @@ Here is the example for registering a job to a specific InputSplit:
   String outputDir = output_path;
   int reduceNo = some_number;
   Job job = setup("For Avishek: Extracting temporal anchor text from "
-  + "Wikipedia revision", YOURJOB.class, inputDir, outputDir,
-  WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
-  MAPPEROUTPUTKEY.class, MAPPEROUTPUTVAL.class,
-  Text.class, Text.class,
-  MyMapper.class, Reducer.class, reduceNo);
+	+ "Wikipedia revision", YOURJOB.class, inputDir, outputDir,
+	WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
+	MAPPEROUTPUTKEY.class, MAPPEROUTPUTVAL.class,
+	Text.class, Text.class,
+	MyMapper.class, Reducer.class, reduceNo);
 </code>
 </pre>
 
