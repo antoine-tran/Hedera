@@ -12,7 +12,8 @@ used in Hadoop Streaming to enable rapid development using different
 languages (Java, Python, C, etc.) , and it also supports Pig with
 a number of User-defined functions (UDFs). At the moment, the
 framework has been tested in Hadoop CDH 4.x and Pig 0.11.x. It
-supports both Hadoop YARN and non-YARN models. Free for research and educational purpose
+supports both Hadoop YARN and non-YARN models. Free for research and
+educational purpose under GNU and Common Creative License.
 
 ### Why Hedea ?##
 
