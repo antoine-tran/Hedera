@@ -24,11 +24,17 @@ While there are several frameworks built to support
 processing big textual data (both in MapReduce and non-MapReduce
 fashion), little has been focused on efficient processing of versioned
 document collections such as Web archives, revisions of collaborated documents
-(news articles or encyclopedia pages such as Wikipedia). Versioned documents
-have some following special features: 
+(news articles or encyclopedia pages such as Wikipedia). As compared
+to traditional corpora, versioned documents have some following special features: 
 
-    - One documents have several snapshots, each typically associated with
-    one specific timestamps indicating the publication time
+- One documents have several snapshots, each typically associated with
+one specific timestamps indicating the publication time. Snapshots
+should not be considered independent documents, but rather children of
+a single document identity.
+
+- Document snapshots' contents are highly redundant. In practice, most
+  of consecutive snapshots are generated to fix meticulous
+  details, typos, etc. from the previous ones. 
 
   
   
