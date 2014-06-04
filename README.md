@@ -104,7 +104,12 @@ desired) of Hedera includes:
    for many information extraction jobs. Hedera provides a fast way to
    skip redundant snapshots and only triggers the extraction when
    detecting the big changes in semantics of the documents. A typical
-   workflow for a fast extraction
+   workflow for a fast reading and extraction is as follows:
+   - An ETLReader object is implemented and instantiated. The reader
+     is pushed down to the very first phase of the inputting cycle in
+     Hadoop, thereby to avoid passing irrelevant text to the next
+     layer.
+   - dsfsd 
 
   
   
