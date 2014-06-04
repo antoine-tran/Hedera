@@ -79,7 +79,13 @@ desired) of Hedera includes:
   self-described piece of text and will be processed in
   parallel. Hedera splits versioned documents via two levels:
 
-	- fdfds
+	- Level 1: Each InputSplit contains a set of full snapshots of
+      documents.
+
+	- Level 2: Each InputSplit is read using an ETLReader
+      implementation to output several Mapper input. Each Mapper input
+      contains document header, a set of related snapshots or their
+      differentials, depending on one particular job. Here the ``relatedness''
 
   
   
