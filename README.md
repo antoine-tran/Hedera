@@ -111,7 +111,41 @@ desired) of Hedera includes:
      layer.
    - It extracts lightweight meta-data for each snapshots it reads
      (e.g. snapshot length, the length of title, timestamps,...). This
-     is done by overwritting the method <code>dds</code> in
+     is done by overwritting the method <code>extractMetadata()</code>
+     in ETLReader.
+   - For each new snapshot obtained, the reader examines its meta-data
+     with ones from previous snapshots.
+   - If a substantial change is detected, the previous snapshot is
+     thrown away and replaced by the new one.
+   - If there are no big changes in the content, the reader then
+     invokes the method <code>inspectEdits()</code> to see whether the
+     currently visited snapshots is  the improvement of syntax,
+     typos, etc. of the previous one and can replace it. Note that both methods
+     <code>extractMetadata()</code>
+	  and <code>inspectEdits()</code> work only on the meta-data of
+     the snapshots and not the actual contents. They are based on
+     heuristics to enable fast checking.
+   - After these two fast checking, the actual (and often expensive)
+     information extraction operation is called. After that, all
+     previous snapshots are thrown away.
 
-  
+4. *Compressed file handling*: Many big corpora bundles the documents
+   in one or several compressed file chunks. Hedera supports the
+   ability to detect snapshots and splits virtually the document
+   snapshots inside each chunk, without performing physical
+   decompression on the files. The decompressing and reading is
+   deferred till the last phase of the information extraction.
+
+
+### Datasets ##
+
+While Hedera provides a universal framework to work with versioned
+document collections in general, it also provides tools for handling
+particular data sets. For the moment, Hedera aims to support two most
+popular big text archive formats, *Wikipedia Revision*  XML dumps and *Internet
+Archives* .warc files.
+
+#### Wikipedia Revision ####
+
+see documentation on working with Wikipedia Revision [here](WIKIREVISION.md)
   
