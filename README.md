@@ -74,7 +74,12 @@ Hadoop architecture and provides several customization to address its
 mentioned research questions. Some of features (established and
 desired) of Hedera includes:
 
-- *Two-level Load Balancing*: As a typical Hadoop setting
+1. *Two-level Load Balancing*: As a typical Hadoop setting, Hedera
+  feeds the Mapper with InputSplits. Each InputSplit object contain a
+  self-described piece of text and will be processed in
+  parallel. Hedera splits versioned documents via two levels:
+
+		- dds
 
   
   
