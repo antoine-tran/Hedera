@@ -104,22 +104,9 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 
 		// compress output
-		if (args.length >= 4) {
-			String codec = args[3];
-			if ("bz2".equals(codec)) {
-				getConf().set("mapreduce.output.fileoutputformat.compress.codec", 
-						"org.apache.hadoop.io.compress.BZip2Codec");
-			}
-			else if ("gz".equals(codec)) {
-				getConf().set("mapreduce.output.fileoutputformat.compress.codec", 
-						"org.apache.hadoop.io.compress.GzipCodec");
-			}
-			else if ("lz4".equals(codec)) {
-				getConf().set("mapreduce.output.fileoutputformat.compress.codec", 
-						"org.apache.hadoop.io.compress.Lz4Codec");
-			}
+		if (args.length >= 4) {			
+			setCompress(args[3]);
 		}
-		
 		
 		job.waitForCompletion(true);
 		return 0;
