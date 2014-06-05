@@ -92,7 +92,12 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
-
+		
+		// compress output
+		if (args.length >= 4) {	
+			setCompress(args[3]);
+		}
+		
 		Job job = setup("For Avishek: Fast extracting temporal anchor text from "
 				+ "Wikipedia revision",
 				TestFastExtractTemporalAnchorText.class, inputDir, outputDir,
@@ -103,12 +108,7 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 
-		// compress output
-		if (args.length >= 4) {	
-			System.out.println(args[3]);
-			setCompress(args[3]);
-		}
-		
+
 		job.waitForCompletion(true);
 		return 0;
 	}
