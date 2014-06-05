@@ -19,7 +19,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_REVISION;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 

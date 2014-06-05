@@ -70,12 +70,13 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 				for (Link link : value.getLinks()) {
 					String anchor = link.getAnchorText();
 					String target = link.getTarget();
-					valOut.set(s + "\t" + anchor + "\t" + target);
+					String output = s + "\t" + anchor + "\t" + target;
+					valOut.set(output);
 
 					// debug hook
 					cnt++;
 					if (cnt % 1000000l == 0)
-						Log.info(s);
+						Log.info(output);
 
 					context.write(keyOut, valOut);
 				}

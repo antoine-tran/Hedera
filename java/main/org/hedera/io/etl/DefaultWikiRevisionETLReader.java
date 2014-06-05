@@ -1,7 +1,6 @@
 package org.hedera.io.etl;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.SKIP_NON_ARTICLES;
-import static org.hedera.io.input.WikiRevisionInputFormat.START_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_TITLE;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TITLE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_NAMESPACE;
