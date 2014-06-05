@@ -153,4 +153,11 @@ public class WikipediaLinkSnapshot implements Writable {
 		}
 		out.writeUTF(pageTitle);
 	}
+	
+	public void clear() {
+		this.pageId = this.revisionId = this.parentId = this.timestamp = 0;
+		this.namespace = 0;
+		this.pageTitle = null;
+		this.links = null;
+	}
 }

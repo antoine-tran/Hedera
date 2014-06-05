@@ -53,7 +53,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 	protected Ack readToPageHeader(WikipediaRevisionHeader meta) 
 			throws IOException {
 		int i = 0;
-		int flag = 1;		
+		int flag = 2;		
 		boolean skipped = false;
 		try (DataOutputBuffer pageTitle = new DataOutputBuffer(); 
 				DataOutputBuffer nsBuf = new DataOutputBuffer(); 
@@ -63,21 +63,13 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 				if (!fetchMore()) return Ack.EOF;
 				while (hasData()) {
 					byte b = nextByte();				
-					if (flag == 1) {
-						if (b == START_PAGE[i]) {
-							i++;
-							if (i >= START_PAGE.length) {
-								flag = 2;
-							}
-						} else i = 0;
-					}
-
-					else if (flag == 2) {
+					if (flag == 2) {
 						if (b == START_TITLE[i]) {
 							i++;
 						} else i = 0;
 						if (i >= START_TITLE.length) {
 							flag = 3;
+							i = 0;
 						}
 					}
 
@@ -93,6 +85,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 									pageTitle.getLength() - END_TITLE.length);
 							meta.setPageTitle(title);
 							pageTitle.reset();
+							i = 0;
 						}
 					}
 
@@ -102,6 +95,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 						} else i = 0;
 						if (i >= START_NAMESPACE.length) {
 							flag = 5;
+							i = 0;
 						}
 					}
 
@@ -124,6 +118,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 								}
 							}
 							meta.setNamespace(ns);
+							i = 0;
 						}
 					}
 
@@ -148,6 +143,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 						} else i = 0;
 						if (i >= START_ID.length) {
 							flag = 7;
+							i = 0;
 						}
 					}
 
@@ -163,6 +159,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 									keyBuf.getLength() - END_ID.length);
 							long pageId = Long.parseLong(idStr);
 							meta.setPageId(pageId);
+							i = 0;
 						}
 					}
 

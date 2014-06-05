@@ -23,7 +23,8 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
  * @author tuan
  *
  */
-public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWritable, 
+public class WikiRevisionLinkReader 
+		extends DefaultWikiRevisionETLReader<LongWritable, 
 		WikipediaLinkSnapshot> {
 
 	@Override
@@ -32,8 +33,23 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 	}
 	
 	@Override
+	protected void freeKey(LongWritable key) {		
+	}
+	
+	@Override
+	protected void freeValue(WikipediaLinkSnapshot value) {
+		value.clear();
+	}
+	
+	@Override
 	protected WikipediaLinkSnapshot initializeValue() {		
 		return new WikipediaLinkSnapshot();		
+	}
+	
+	@Override
+	protected ETLExtractor<LongWritable, WikipediaLinkSnapshot,
+			WikipediaRevisionHeader> initializeExtractor() {		
+		return new WikipediaLinkExtractor();		
 	}
 	
 	@Override
@@ -68,6 +84,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						} else i = 0;
 						if (i >= START_ID.length) {
 							flag = 10;
+							i = 0;
 						}
 					}
 					
@@ -85,6 +102,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 							long revId = Long.parseLong(idStr);
 							meta.setRevisionId(revId);
 							revIdBuf.reset();
+							i = 0;
 						}
 					}
 					
@@ -105,10 +123,12 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						} else i = 0;
 						if ((parOrTs == 2 || parOrTs == 3) && i >= START_TIMESTAMP.length) {
 							flag = 12;
-							parOrTs = -1;							
+							parOrTs = -1;		
+							i = 0;
 						} else if ((parOrTs == 1 || parOrTs == 3) && i >= START_PARENT_ID.length) {
 							flag = 14;
-							parOrTs = -1;							
+							parOrTs = -1;
+							i = 0;
 						}		
 					}
 					
@@ -126,6 +146,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 							long timestamp = TIME_FORMAT.parseMillis(ts);
 							meta.setTimestamp(timestamp);
 							timestampBuf.reset();
+							i = 0;
 						}
 					}
 					
@@ -142,6 +163,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 							long parId = Long.parseLong(parIdStr);
 							meta.setParentId(parId);
 							parBuf.reset();
+							i = 0;
 						}
 					}
 					
@@ -152,6 +174,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						} else i = 0;
 						if (i >= START_TIMESTAMP.length) {
 							flag = 12;
+							i = 0;
 						}
 					}
 					
@@ -165,6 +188,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						} else i = 0;
 						if (i >= START_TEXT.length) {
 							flag = 16;
+							i = 0;
 						}
 					}
 					
@@ -176,7 +200,8 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
 							flag = 17;
-							meta.setLength(buffer.getLength()	);
+							meta.setLength(buffer.getLength());
+							i = 0;
 						}
 					}
 

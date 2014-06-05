@@ -21,6 +21,8 @@ import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_REVISION;
 
+import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
+
 public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META> 
 extends RecordReader<KEYIN, VALUEIN> {
 
@@ -51,6 +53,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 
 	// A flag that tells in which block the cursor is.
 	// Generic setting:
+	// -1: EOF
 	// 1: Before the first page
 	// 2: Inside the page, does not reach the end revision yet
 	// 3: outside the page block
@@ -82,17 +85,23 @@ extends RecordReader<KEYIN, VALUEIN> {
 	
 	protected abstract META initializeMeta();
 
+	protected abstract ETLExtractor<KEYIN, VALUEIN, META> initializeExtractor();
+	
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
 	}	
 	protected abstract KEYIN initializeKey();
+	
+	protected abstract void freeKey(KEYIN key);
 
 	@Override
 	public VALUEIN getCurrentValue() throws IOException, InterruptedException {
 		return value;
 	}
 	protected abstract VALUEIN initializeValue();
+	
+	protected abstract void freeValue(VALUEIN value);
 
 	@Override
 	public float getProgress() throws IOException, InterruptedException {
@@ -136,13 +145,14 @@ extends RecordReader<KEYIN, VALUEIN> {
 		flag = 1;
 		pos[0] = pos[1] = 0;
 		meta = null;
-		initializeOutput();
+		initializeObjects();
 	}
 	
-	private void initializeOutput() {
+	private void initializeObjects() {
 		key = initializeKey();
 		value = initializeValue();
 		curMeta = initializeMeta();
+		extractor = initializeExtractor();
 	}	
 
 	protected static void setBlockSize(Configuration conf) {
@@ -154,7 +164,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 		meta = curMeta;
 		prevBuf.reset();
 		prevBuf.write(curBuf.getData(), 0, curBuf.getLength() 
-				- END_REVISION.length);
+				- END_TEXT.length);
 		curBuf.reset();
 	}
 	
@@ -162,6 +172,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 		meta = null;
 		prevBuf.reset();
 		curBuf.reset();
+		freeKey(key);
+		freeValue(value);
 	}
 
 	@Override
@@ -171,6 +183,10 @@ extends RecordReader<KEYIN, VALUEIN> {
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		while (fsin.getPos() < end) {
 			
+			if (flag == -1) {
+				return false;
+			}
+			
 			// the rare case: One last revision from last page still needs
 			// to be processed
 			if (flag == 4) {
@@ -178,7 +194,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 				flag = 3;
 				return true;
 			}
-			else if (flag == 1 && flag == 3) {
+			else if (flag == 1 || flag == 3) {
+				
 				while (hasNextPage()) {
 					
 					// before we start, let's clean all buffers
@@ -362,6 +379,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 				((FSDataInputStream)fsin).read(buf);
 			pos[0] = 0;
 			if (pos[1] == -1) {
+				flag = -1;
 				return false;
 			}
 		} return true; 

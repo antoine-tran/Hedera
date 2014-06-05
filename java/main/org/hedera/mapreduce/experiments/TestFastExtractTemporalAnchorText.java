@@ -23,23 +23,23 @@ import tuan.hadoop.conf.JobConfig;
 
 public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool {
 
-	
+
 	private static final class MyMapper extends Mapper<LongWritable,
-			WikipediaLinkSnapshot, PairOfLongs, Text> {
-				
+	WikipediaLinkSnapshot, PairOfLongs, Text> {
+
 		private PairOfLongs keyOut = new PairOfLongs();
 		private Text valOut = new Text();
-		
+
 		// simple counter to sparse the debug printout
 		private long cnt;
-		
+
 		@Override
 		protected void setup(Context context) throws IOException,
 		InterruptedException {
 			super.setup(context);
 			cnt = 0;
 		}
-		
+
 		@Override
 		// Output anchor in format (separated by TAB)
 		// [timestamp] [source ID] [revision ID] [previous revision ID] [source title] [anchor text] [target title]
@@ -50,9 +50,9 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 			long pageId = value.getPageId();
 			long revId = value.getRevisionId();
 			long parId = value.getParentId();
-			
+
 			keyOut.set(revId, timestamp);
-			
+
 			String title = value.getPageTitle();			
 			StringBuilder prefix = new StringBuilder();
 			prefix.append(ts);
@@ -66,44 +66,46 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 			prefix.append(title);
 			prefix.append("\t");
 			String s = prefix.toString();
-			for (Link link : value.getLinks()) {
-				String anchor = link.getAnchorText();
-				String target = link.getTarget();
-				valOut.set(s + "\t" + anchor + "\t" + target);
-				
-				// debug hook
-				cnt++;
-				if (cnt % 1000000l == 0)
-					Log.info(s);
-				
-				context.write(keyOut, valOut);
+			if (value.getLinks() != null) {
+				for (Link link : value.getLinks()) {
+					String anchor = link.getAnchorText();
+					String target = link.getTarget();
+					valOut.set(s + "\t" + anchor + "\t" + target);
+
+					// debug hook
+					cnt++;
+					if (cnt % 1000000l == 0)
+						Log.info(s);
+
+					context.write(keyOut, valOut);
+				}
 			}
 		}		
 	}
-	
+
 	@Override
 	public int run(String[] args) throws Exception {
 		String inputDir = args[0];
 		String outputDir = args[1];
 		int reduceNo = Integer.parseInt(args[2]);
-		
+
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
-		
+
 		Job job = setup("For Avishek: Fast extracting temporal anchor text from "
 				+ "Wikipedia revision",
 				TestFastExtractTemporalAnchorText.class, inputDir, outputDir,
 				WikiRevisionLinkInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);
-		
+
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
-		
+
 		job.waitForCompletion(true);
 		return 0;
 	}
-	
+
 	public static void main(String[] args) {
 		try {
 			ToolRunner.run(new TestFastExtractTemporalAnchorText(), args);

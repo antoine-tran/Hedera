@@ -60,4 +60,12 @@ public class WikipediaRevisionHeader {
 		this.namespace = 0;
 		this.pageTitle = null;
 	}
+	
+	@Override
+	public String toString() {
+		return "[page: " + pageId + ", rev: " + revisionId + ", par: "
+				+ parentId + ", timestamp: " + timestamp + ", namespace: "
+				+ namespace + ", length: " + length + ", title: "
+				+ (pageTitle == null ? "null" : pageTitle) + "]";
+	}
 }
