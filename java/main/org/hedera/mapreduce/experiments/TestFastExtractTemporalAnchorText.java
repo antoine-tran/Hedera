@@ -104,7 +104,8 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 
 		// compress output
-		if (args.length >= 4) {			
+		if (args.length >= 4) {	
+			System.out.println(args[3]);
 			setCompress(args[3]);
 		}
 		
