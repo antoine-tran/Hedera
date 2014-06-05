@@ -205,9 +205,8 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
 		
-		Job job = setup("For Avishek: Extracting temporal anchor text from "
-				+ "Wikipedia revision",
-				ExtractTemporalAnchorText.class, inputDir, outputDir,
+		Job job = setup(args[2],ExtractTemporalAnchorText.class, 
+				inputDir, outputDir,
 				WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);

@@ -12,9 +12,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.hedera.io.WikipediaLinkSnapshot;
+import org.hedera.io.WikipediaLinkSnapshot.Link;
 import org.hedera.io.etl.WikiRevisionLinkInputFormat;
-import org.hedera.io.etl.WikipediaLinkSnapshot;
-import org.hedera.io.etl.WikipediaLinkSnapshot.Link;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.mortbay.log.Log;
 

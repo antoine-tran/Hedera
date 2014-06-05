@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.hedera.WikipediaRevisionHeader;
+import org.hedera.io.WikipediaLinkSnapshot;
+import org.hedera.io.WikipediaRevisionHeader;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.START_TEXT;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_ID;
@@ -175,6 +176,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
 							flag = 17;
+							meta.setLength(buffer.getLength());
 						}
 					}
 

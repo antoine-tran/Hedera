@@ -1,4 +1,4 @@
-package org.hedera;
+package org.hedera.io;
 
 /** Encode the header of a page */
 public class WikipediaRevisionHeader {

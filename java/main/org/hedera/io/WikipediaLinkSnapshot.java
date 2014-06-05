@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.io.etl;
+package org.hedera.io;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -30,7 +30,7 @@ public class WikipediaLinkSnapshot implements Writable {
 		private String anchor;
 		private String target;
 
-		Link(String anchor, String target) {
+		public Link(String anchor, String target) {
 			this.anchor = anchor;
 			this.target = target;
 		}

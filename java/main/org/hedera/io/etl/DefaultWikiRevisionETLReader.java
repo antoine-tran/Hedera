@@ -15,7 +15,7 @@ import java.io.IOException;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.hedera.WikipediaRevisionHeader;
+import org.hedera.io.WikipediaRevisionHeader;
 import org.mortbay.log.Log;
 
 

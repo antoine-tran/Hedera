@@ -2,8 +2,9 @@ package org.hedera.io.etl;
 
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.hedera.WikipediaRevisionHeader;
-import org.hedera.io.etl.WikipediaLinkSnapshot.Link;
+import org.hedera.io.WikipediaLinkSnapshot;
+import org.hedera.io.WikipediaRevisionHeader;
+import org.hedera.io.WikipediaLinkSnapshot.Link;
 import org.mortbay.log.Log;
 
 public class WikipediaLinkExtractor implements
