@@ -176,7 +176,7 @@ public class WikiRevisionLinkReader extends DefaultWikiRevisionETLReader<LongWri
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
 							flag = 17;
-							meta.setLength(buffer.getLength());
+							meta.setLength(buffer.getLength()	);
 						}
 					}
 
