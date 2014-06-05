@@ -1,4 +1,4 @@
-package org.hedera.io.input;
+package org.hedera.io.etl;
 
 import java.io.IOException;
 
@@ -38,7 +38,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 	 * it will skip to the end of the page
 	 * - FAILED: The consumer fails due to internal errors 
 	 */
-	protected static enum Ack {
+	public static enum Ack {
 		PASSED_TO_NEXT_TAG,
 		EOF,
 		SKIPPED,
@@ -67,8 +67,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 
 	private Seekable fsin;
 
-	protected KEYIN key;
-	protected VALUEIN value;
+	private KEYIN key;
+	private VALUEIN value;
 
 	// caches for the last established revision
 	private META meta;
@@ -78,17 +78,21 @@ extends RecordReader<KEYIN, VALUEIN> {
 	private DataOutputBuffer curBuf = new DataOutputBuffer();
 	private META curMeta;
 
-	protected WikiRevisionExtractor<KEYIN, VALUEIN, META> extractor;
+	protected ETLExtractor<KEYIN, VALUEIN, META> extractor;
+	
+	protected abstract META initializeMeta();
 
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
-	}
+	}	
+	protected abstract KEYIN initializeKey();
 
 	@Override
 	public VALUEIN getCurrentValue() throws IOException, InterruptedException {
 		return value;
 	}
+	protected abstract VALUEIN initializeValue();
 
 	@Override
 	public float getProgress() throws IOException, InterruptedException {
@@ -132,7 +136,14 @@ extends RecordReader<KEYIN, VALUEIN> {
 		flag = 1;
 		pos[0] = pos[1] = 0;
 		meta = null;
+		initializeOutput();
 	}
+	
+	private void initializeOutput() {
+		key = initializeKey();
+		value = initializeValue();
+		curMeta = initializeMeta();
+	}	
 
 	protected static void setBlockSize(Configuration conf) {
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", 
@@ -241,14 +252,28 @@ extends RecordReader<KEYIN, VALUEIN> {
 							// TODO: Tricky scenario: The very last revision just has
 							// a big change. 
 							if (!hasNextRevision()) {
-								// TODO: implement here, cant ignore !!!!!
+								// By turning a special flag value, we hope it will not
+								// be forgotten the next read
 								flag = 4;
 							}
 							updateRevision();
 							return true;
 						}						
 					}
-				}				
+				}
+				
+				else if (r == Ack.SKIPPED) {
+					if (hasNextRevision()) {
+						continue;
+					} 
+					
+					// the last revision, extract and stop
+					else {
+						flag = 3;
+						extractor.extract(prevBuf,meta,key,value);
+						return true;
+					}
+				}
 			}			
 		}
 		return false;

@@ -1,10 +1,10 @@
-package org.hedera.io.input;
+package org.hedera.io.etl;
 
 import org.apache.hadoop.io.DataOutputBuffer;
 
 
 /** API to provide algorithms for extracting information right in readers */
-public interface WikiRevisionExtractor<KEY, VALUE, META> {
+public interface ETLExtractor<KEY, VALUE, META> {
 
 	/** compare two revisions based on their meta-data */
 	public float check(META meta1, META meta2);
