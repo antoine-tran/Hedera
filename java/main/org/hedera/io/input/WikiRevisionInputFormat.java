@@ -171,6 +171,9 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 		NetworkTopology clusterMap = new NetworkTopology();
 		List<InputSplit> splits = new ArrayList<InputSplit>();
 		Path path = file.getPath();
+		
+		LOG.info("Splitting file " + path.getName());
+		
 		Configuration conf = jc.getConfiguration();
 		configure(conf);
 

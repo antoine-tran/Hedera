@@ -30,6 +30,40 @@ public class WikipediaLinkSnapshot implements Writable {
 		private String anchor;
 		private String target;
 
+		// Convert raw text of form "[anchor |] target" to link object
+		public static Link convert(String text, boolean keepSpecial) {
+
+			if (!keepSpecial) {
+				String anchor = null;
+
+				// skip empty links, special links
+				if (text.length() > 0 && text.indexOf(":") == -1) {
+
+					// if there is anchor text, get only article title
+					int a;
+					if ((a = text.indexOf("|")) != -1) {
+						anchor = text.substring(a + 1, text.length());
+						text = text.substring(0, a);
+					}
+					if ((a = text.indexOf("#")) != -1) {
+						text = text.substring(0, a);
+					}
+
+					// ignore article-internal links, e.g., [[#section|here]]
+					if (text.length() == 0) {
+						return null;
+					}
+					if (anchor == null) {
+						anchor = text;
+					}					
+					return new Link(anchor, text);
+				}
+				return null;
+			}
+			else throw new UnsupportedOperationException(
+					"Not yet implement this bro !");
+		}
+
 		public Link(String anchor, String target) {
 			this.anchor = anchor;
 			this.target = target;
@@ -47,7 +81,7 @@ public class WikipediaLinkSnapshot implements Writable {
 			return String.format("[target: %s, anchor: %s]", target, anchor);
 		}
 	}
-	
+
 	public String getPageTitle() {
 		return pageTitle;
 	}
@@ -95,11 +129,11 @@ public class WikipediaLinkSnapshot implements Writable {
 	public void setNamespace(int namespace) {
 		this.namespace = namespace;
 	}
-	
+
 	public List<Link> getLinks() {
 		return links;
 	}
-	
+
 	public void addLink(Link l) {
 		if (links == null) {
 			links = new LinkedList<>();
@@ -120,18 +154,18 @@ public class WikipediaLinkSnapshot implements Writable {
 			byte[] anchorBytes = new byte[anchorLen];
 			in.readFully(anchorBytes, 0, anchorLen);
 			String anchor = new String(anchorBytes, "UTF-8");
-			
+
 			int textLen = in.readInt();
 			byte[] textBytes = new byte[textLen];
 			in.readFully(textBytes, 0, textLen);
 			String text = new String(textBytes, "UTF-8");
-			
+
 			Link l = new Link(anchor, text);
 			addLink(l);
 		}
 		pageTitle = in.readUTF();
 	}
-	
+
 	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeLong(pageId);
@@ -153,7 +187,7 @@ public class WikipediaLinkSnapshot implements Writable {
 		}
 		out.writeUTF(pageTitle);
 	}
-	
+
 	public void clear() {
 		this.pageId = this.revisionId = this.parentId = this.timestamp = 0;
 		this.namespace = 0;
