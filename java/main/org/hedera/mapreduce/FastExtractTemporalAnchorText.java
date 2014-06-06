@@ -1,4 +1,4 @@
-package org.hedera.mapreduce.experiments;
+package org.hedera.mapreduce;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
@@ -21,7 +21,7 @@ import org.mortbay.log.Log;
 import edu.umd.cloud9.io.pair.PairOfLongs;
 import tuan.hadoop.conf.JobConfig;
 
-public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool {
+public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 
 	private static final class MyMapper extends Mapper<LongWritable,
@@ -86,21 +86,16 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 
 	@Override
 	public int run(String[] args) throws Exception {
-		String inputDir = args[0];
-		String outputDir = args[1];
-		int reduceNo = Integer.parseInt(args[2]);
+		String inputDir = args[1];
+		String outputDir = args[2];
+		String name = args[0];
+		int reduceNo = Integer.parseInt(args[3]);
 
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
-		
-		// compress output
-		if (args.length >= 4) {	
-			setCompress(args[3]);
-		}
-		
-		Job job = setup("For Avishek: Fast extracting temporal anchor text from "
-				+ "Wikipedia revision",
-				TestFastExtractTemporalAnchorText.class, inputDir, outputDir,
+				
+		Job job = setup("Hedera: " + name,
+				FastExtractTemporalAnchorText.class, inputDir, outputDir,
 				WikiRevisionLinkInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);
@@ -108,14 +103,13 @@ public class TestFastExtractTemporalAnchorText extends JobConfig implements Tool
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 
-
 		job.waitForCompletion(true);
 		return 0;
 	}
 
 	public static void main(String[] args) {
 		try {
-			ToolRunner.run(new TestFastExtractTemporalAnchorText(), args);
+			ToolRunner.run(new FastExtractTemporalAnchorText(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -1,6 +1,7 @@
 package org.hedera.io.etl;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -16,10 +17,11 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
+
 import static org.hedera.io.input.WikiRevisionInputFormat.START_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
-
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
 public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META> 
@@ -86,6 +88,10 @@ extends RecordReader<KEYIN, VALUEIN> {
 
 	protected abstract ETLExtractor<KEYIN, VALUEIN, META> initializeExtractor();
 	
+	// We use a thread that pings back to the cluster every 590 seconds to avoid
+	// getting killed for slow progress
+	private TaskHeartbeatThread heartbeat;
+	
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
@@ -101,7 +107,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 	protected abstract VALUEIN initializeValue();
 	
 	protected abstract void freeValue(VALUEIN value);
-
+	
 	@Override
 	public float getProgress() throws IOException, InterruptedException {
 		return (fsin.getPos() - start) / (float) (end - start);
@@ -114,7 +120,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 	 */
 	public void initialize(InputSplit input, TaskAttemptContext tac)
 			throws IOException, InterruptedException {		
-
+		
 		Configuration conf = tac.getConfiguration();
 		setBlockSize(conf);
 
@@ -145,6 +151,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 		pos[0] = pos[1] = 0;
 		meta = null;
 		initializeObjects();
+		heartbeat = new TaskHeartbeatThread(tac, 1000 * 59 * 60);
+		heartbeat.start();
 	}
 	
 	private void initializeObjects() {
@@ -373,8 +381,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 	protected final boolean fetchMore() throws IOException {
 		if (buf == null && pos.length != 2)
 			throw new IOException("Internal buffer corrupted.");
-		if (pos[0] == pos[1]) {				
-			pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
+		if (pos[0] == pos[1]) {						
+			pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
 				((FSDataInputStream)fsin).read(buf);
 			pos[0] = 0;
 			if (pos[1] == -1) {
@@ -403,5 +411,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 		} else {
 			((FSDataInputStream)fsin).close();
 		}
+		heartbeat.stop();
+		heartbeat = null;
 	}
 }
