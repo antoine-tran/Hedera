@@ -19,7 +19,7 @@ import difflib.DiffUtils;
 import difflib.Patch;
 
 public class WikiRevisionDiffInputFormat 
-		extends WikiRevisionInputFormat<WikipediaRevisionDiff> {
+		extends WikiRevisionInputFormat<LongWritable, WikipediaRevisionDiff> {
 	
 	@Override
 	public RecordReader<LongWritable, WikipediaRevisionDiff> createRecordReader(

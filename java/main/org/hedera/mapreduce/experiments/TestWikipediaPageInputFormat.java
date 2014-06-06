@@ -13,11 +13,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.WikipediaRevision;
 import org.hedera.io.WikipediaRevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
-import org.hedera.io.input.WikiRevisionPageInputFormat;
-import org.hedera.io.input.WikiRevisionTextInputFormat;
+
 
 import tuan.hadoop.conf.JobConfig;
 

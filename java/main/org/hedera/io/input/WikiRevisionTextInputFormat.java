@@ -11,7 +11,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
 
-public class WikiRevisionTextInputFormat extends WikiRevisionInputFormat<Text> {
+public class WikiRevisionTextInputFormat extends 
+		WikiRevisionInputFormat<LongWritable, Text> {
 
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 

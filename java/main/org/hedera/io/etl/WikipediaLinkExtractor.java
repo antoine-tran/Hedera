@@ -29,15 +29,18 @@ ETLExtractor<LongWritable, WikipediaLinkSnapshot, WikipediaRevisionHeader> {
 	public void extract(DataOutputBuffer content, WikipediaRevisionHeader meta,
 			LongWritable key, WikipediaLinkSnapshot value) {
 
-		// add meta-data
+		// add meta-data		
 		key.set(meta.getPageId());
+		
+		value.clear();
+		
 		value.setNamespace(meta.getNamespace());
 		value.setPageId(meta.getPageId());
 		value.setPageTitle(meta.getPageTitle());
 		value.setParentId(meta.getParentId());
 		value.setRevisionId(meta.getRevisionId());
 		value.setTimestamp(meta.getRevisionId());
-
+				
 		// add content (here the list of links)	
 		DataOutputBuffer linkBuffer = new DataOutputBuffer();
 		byte[] bytes = content.getData();

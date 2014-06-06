@@ -54,7 +54,7 @@ public class WikiRevisionLinkReader
 	
 	@Override
 	// -1: EOF
-	// 9 - just passed the (next) <revision>
+	// 9 - default
 	// 10 - just passed the inner <id> tag inside <revision>
 	// 11 - just passed the inner </id> tag inside <revision>
 	// 12 - just passed the <timestamp>
@@ -64,7 +64,6 @@ public class WikiRevisionLinkReader
 	// 16 - just passed the <text> tag
 	// 17 - just passed the </text> tag
 	// 18 - just passed the </revision>
-	// 19 - just passed the </page>
 	protected Ack readToNextRevision(DataOutputBuffer buffer, 
 			WikipediaRevisionHeader meta) throws IOException {
 		int i = 0;
@@ -211,6 +210,7 @@ public class WikiRevisionLinkReader
 							i++;
 						} else i = 0;
 						if (i >= END_REVISION.length) {
+							// the flag is not anymore useful
 							flag = 18;
 							return Ack.PASSED_TO_NEXT_TAG;
 						}

@@ -1,7 +1,15 @@
 package org.hedera.io;
 
-/** Encode the header of a page */
-public class WikipediaRevisionHeader {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+import org.apache.hadoop.io.Writable;
+
+/** 
+ * Encode the header of a page into the revision meta-data
+ * to build the revision header */
+public class WikipediaRevisionHeader implements Writable {
 	
 	private long pageId;
 	private long revisionId;
@@ -61,11 +69,55 @@ public class WikipediaRevisionHeader {
 		this.pageTitle = null;
 	}
 	
+	public void clone(WikipediaRevisionHeader obj) {
+		this.pageId = obj.pageId;
+		this.namespace = obj.namespace;
+		this.length = obj.length;
+		this.pageTitle = obj.pageTitle;
+		this.parentId = obj.parentId;
+		this.revisionId = obj.revisionId;
+		this.timestamp = obj.timestamp;
+	}
+	
 	@Override
 	public String toString() {
 		return "[page: " + pageId + ", rev: " + revisionId + ", par: "
 				+ parentId + ", timestamp: " + timestamp + ", namespace: "
 				+ namespace + ", length: " + length + ", title: "
 				+ (pageTitle == null ? "null" : pageTitle) + "]";
+	}
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		pageId = in.readLong();
+		revisionId = in.readLong();
+		parentId = in.readLong();
+		timestamp = in.readLong();
+		namespace = in.readInt();
+		length = in.readLong();
+		pageTitle = in.readUTF();
+	}
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeLong(pageId);
+		out.writeLong(revisionId);
+		out.writeLong(parentId);
+		out.writeLong(timestamp);
+		out.writeInt(namespace);
+		out.writeLong(length);
+		out.writeUTF(pageTitle);		
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (!(obj instanceof WikipediaRevisionHeader)) return false;
+		WikipediaRevisionHeader wrh = (WikipediaRevisionHeader)obj;
+		return (wrh.pageId == pageId && wrh.revisionId == revisionId
+				&& wrh.namespace == namespace);
+	}
+	
+	@Override
+	public int hashCode() {
+		return (int) (pageId + revisionId + namespace);
 	}
 }

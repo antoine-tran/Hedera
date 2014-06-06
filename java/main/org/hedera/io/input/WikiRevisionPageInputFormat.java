@@ -12,7 +12,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.hedera.io.WikipediaRevision;
 
-public class WikiRevisionPageInputFormat extends WikiRevisionInputFormat<WikipediaRevision> {
+public class WikiRevisionPageInputFormat extends 
+		WikiRevisionInputFormat<LongWritable, WikipediaRevision> {
 
 	@Override
 	public RecordReader<LongWritable, WikipediaRevision> createRecordReader(InputSplit split, 

@@ -15,7 +15,7 @@ import org.hedera.io.input.WikiRevisionInputFormat;
  * The input format that supports ETL reading and extract link structures on the go 
  */
 public class WikiRevisionLinkInputFormat extends 
-		WikiRevisionInputFormat<WikipediaLinkSnapshot> {
+		WikiRevisionInputFormat<LongWritable, WikipediaLinkSnapshot> {
 	
 	@Override
 	public RecordReader<LongWritable, WikipediaLinkSnapshot> createRecordReader(

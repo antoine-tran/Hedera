@@ -14,13 +14,20 @@ import java.io.IOException;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.log4j.Logger;
 import org.hedera.io.WikipediaRevisionHeader;
 import org.mortbay.log.Log;
 
-
+/**
+ * A default WikiRevisionETLReader that extracts title, page id, namespace
+ * from the page header
+ */
 public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 
+	private static final Logger LOG = 
+			Logger.getLogger(DefaultWikiRevisionETLReader.class);
+	
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
 
@@ -30,6 +37,8 @@ WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 		super.initialize(input, tac);
 		skipNonArticles = tac.getConfiguration()
 				.getBoolean(SKIP_NON_ARTICLES, false);
+		
+		LOG.info("Splitting option: " + skipNonArticles);
 	}
 
 	@Override

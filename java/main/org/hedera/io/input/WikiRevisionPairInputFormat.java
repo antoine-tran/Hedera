@@ -11,7 +11,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-public class WikiRevisionPairInputFormat extends WikiRevisionInputFormat<Text> {
+public class WikiRevisionPairInputFormat 
+		extends WikiRevisionInputFormat<LongWritable, Text> {
 
 	@Override
 	public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, 

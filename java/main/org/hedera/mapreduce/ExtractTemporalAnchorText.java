@@ -205,15 +205,15 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
 		
+		// skip non-article
+		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+		
 		Job job = setup(args[2],ExtractTemporalAnchorText.class, 
 				inputDir, outputDir,
 				WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);
-		
-		// skip non-article
-		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
-		
+				
 		job.waitForCompletion(true);
 		return 0;
 	}

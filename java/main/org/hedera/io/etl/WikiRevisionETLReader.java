@@ -28,7 +28,7 @@ public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META>
 extends RecordReader<KEYIN, VALUEIN> {
 
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
-	
+
 	private static final float DEFAULT_LOWER_THRESHOLD = 0.01f;
 	private static final float DEFAULT_UPPER_THRESHOLD = 0.1f;
 
@@ -83,21 +83,21 @@ extends RecordReader<KEYIN, VALUEIN> {
 	private META curMeta;
 
 	protected ETLExtractor<KEYIN, VALUEIN, META> extractor;
-	
+
 	protected abstract META initializeMeta();
 
 	protected abstract ETLExtractor<KEYIN, VALUEIN, META> initializeExtractor();
-	
+
 	// We use a thread that pings back to the cluster every 590 seconds to avoid
 	// getting killed for slow progress
 	private TaskHeartbeatThread heartbeat;
-	
+
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
 	}	
 	protected abstract KEYIN initializeKey();
-	
+
 	protected abstract void freeKey(KEYIN key);
 
 	@Override
@@ -105,9 +105,9 @@ extends RecordReader<KEYIN, VALUEIN> {
 		return value;
 	}
 	protected abstract VALUEIN initializeValue();
-	
+
 	protected abstract void freeValue(VALUEIN value);
-	
+
 	@Override
 	public float getProgress() throws IOException, InterruptedException {
 		return (fsin.getPos() - start) / (float) (end - start);
@@ -120,7 +120,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 	 */
 	public void initialize(InputSplit input, TaskAttemptContext tac)
 			throws IOException, InterruptedException {		
-		
+
 		Configuration conf = tac.getConfiguration();
 		setBlockSize(conf);
 
@@ -154,7 +154,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 		heartbeat = new TaskHeartbeatThread(tac, 1000 * 59 * 60);
 		heartbeat.start();
 	}
-	
+
 	private void initializeObjects() {
 		key = initializeKey();
 		value = initializeValue();
@@ -166,15 +166,19 @@ extends RecordReader<KEYIN, VALUEIN> {
 		conf.setLong("mapreduce.input.fileinputformat.split.maxsize", 
 				DEFAULT_MAX_BLOCK_SIZE);
 	}
-	
+
 	private void updateRevision() throws IOException {
 		meta = curMeta;
 		prevBuf.reset();
-		prevBuf.write(curBuf.getData(), 0, curBuf.getLength() 
-				- END_TEXT.length);
-		curBuf.reset();
+
+		// some ETL Reader dont read the content at all !!
+		if (curBuf.getLength() > 0) {
+			prevBuf.write(curBuf.getData(), 0, curBuf.getLength() 
+					- END_TEXT.length);
+			curBuf.reset();
+		}
 	}
-	
+
 	private void clearRevisions() {
 		meta = null;
 		prevBuf.reset();
@@ -189,25 +193,27 @@ extends RecordReader<KEYIN, VALUEIN> {
 	//
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		while (fsin.getPos() < end) {
-			
+
 			if (flag == -1) {
 				return false;
 			}
-			
+
 			// the rare case: One last revision from last page still needs
 			// to be processed
 			if (flag == 4) {
+				freeKey(key);
+				freeValue(value);
 				extractor.extract(prevBuf, meta, key, value);
 				flag = 3;
 				return true;
 			}
 			else if (flag == 1 || flag == 3) {
-				
+
 				while (hasNextPage()) {
-					
+
 					// before we start, let's clean all buffers
 					clearRevisions();
-					
+
 					Ack r = readToPageHeader(curMeta);
 					if (r == Ack.EOF) 
 						return false;
@@ -229,32 +235,37 @@ extends RecordReader<KEYIN, VALUEIN> {
 				else if (r == Ack.FAILED)
 					throw new IOException("error when reading the next "
 							+ "</revision");
-				
+
 				// We never have skipped inside the revision block
-				
+
 				else if (r == Ack.PASSED_TO_NEXT_TAG) {
-					
+
 					// The first revision always replace the previous (empty) one
 					if (meta == null) {						
 						updateRevision();
 						if (hasNextRevision()) {
 							continue;
 						} 
-						
+
 						// the last revision, extract and stop
 						else {
 							flag = 3;
+							freeKey(key);
+							freeValue(value);
 							extractor.extract(prevBuf,meta,key,value);
 							return true;
 						}
 					}
-					
+
 					// heuristics: 
-					// - If the two revisions are too similar (< 0.01), throw away
-					// the previous revision and get the new one and continue.
-					// - If the two revisions are different enough (> 0.1), perform
-					// the extraction on the previous revision, then throw it away 
-					// and get the new one and stop.
+					// - If the two revisions are too similar (< 0.01), throw 
+					// away the previous revision and get the new one and 
+					// continue.
+					// - If the two revisions are different enough (> 0.1), 
+					// perform the extraction on the previous revision, making
+					// sure the value is clean when seeing the revisions 
+					// independently. Then throw it away, get the new rev and
+					// stop.
 					else {
 						float score = extractor.check(curMeta, meta);
 						if (score < DEFAULT_LOWER_THRESHOLD) {
@@ -262,17 +273,21 @@ extends RecordReader<KEYIN, VALUEIN> {
 							if (hasNextRevision()) {
 								continue;
 							} 
-							
+
 							// the last revision, extract and stop
 							else {
 								flag = 3;
+								freeKey(key);
+								freeValue(value);
 								extractor.extract(prevBuf,meta,key,value);
 								return true;
 							}
 						}
 						else if (score > DEFAULT_UPPER_THRESHOLD) {
+							freeKey(key);
+							freeValue(value);
 							extractor.extract(prevBuf,meta,key,value);
-							
+
 							// TODO: Tricky scenario: The very last revision just has
 							// a big change. 
 							if (!hasNextRevision()) {
@@ -285,15 +300,17 @@ extends RecordReader<KEYIN, VALUEIN> {
 						}						
 					}
 				}
-				
+
 				else if (r == Ack.SKIPPED) {
 					if (hasNextRevision()) {
 						continue;
 					} 
-					
+
 					// the last revision, extract and stop
 					else {
 						flag = 3;
+						freeKey(key);
+						freeValue(value);
 						extractor.extract(prevBuf,meta,key,value);
 						return true;
 					}

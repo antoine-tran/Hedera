@@ -9,6 +9,9 @@ public interface ETLExtractor<KEY, VALUE, META> {
 	/** compare two revisions based on their meta-data */
 	public float check(META meta1, META meta2);
 	
-	/** extract the revision content and populate the OUTPUT */
+	/** extract the revision content and populate the OUTPUT .
+	 * 
+	 * NOTE: Make sure all the time and value is clean before, when
+	 * the revisions are treated independently */
 	public void extract(DataOutputBuffer content, META meta, KEY key, VALUE value);	
 }

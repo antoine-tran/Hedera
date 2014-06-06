@@ -31,7 +31,6 @@ import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.SplitCompressionInputStream;
@@ -58,8 +57,9 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
  * @since 13.04.2014
  *
  */
-public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWritable, T> 
-{
+public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
+		extends FileInputFormat<KEYIN, VALUEIN> {
+	
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
 	public static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
 	
@@ -108,7 +108,7 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 	}
 
 	@Override
-	public abstract RecordReader<LongWritable, T> createRecordReader(InputSplit input,
+	public abstract RecordReader<KEYIN, VALUEIN> createRecordReader(InputSplit input,
 			TaskAttemptContext context) throws IOException, InterruptedException;
 		
 	public void configure(Configuration conf) {
@@ -152,7 +152,11 @@ public abstract class WikiRevisionInputFormat<T> extends FileInputFormat<LongWri
 				throw new IOException("Not a file: "+ file.getPath());
 			}
 			long blockSize = file.getBlockSize();
-			long splitSize = computeSplitSize(blockSize, minSize, maxSize);
+			
+			// 2014-06-06: Tuan _ I have to manually increase the file split size
+			// here to cope with Wikipedia Revision .bz2 file - the decompressor
+			// takes too long to run
+			long splitSize = computeSplitSize(blockSize, minSize, maxSize) * 3;
 			for (InputSplit x: getSplits(jc, file, START_PAGE_TAG, splitSize)) 
 				splits.add(x);
 		}

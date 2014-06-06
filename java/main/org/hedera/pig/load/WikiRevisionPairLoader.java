@@ -39,7 +39,7 @@ import org.jsoup.select.Elements;
  */
 public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 
-	private static final WikiRevisionInputFormat<Text> INPUT_FORMAT = 
+	private static final WikiRevisionInputFormat<LongWritable, Text> INPUT_FORMAT = 
 			new WikiRevisionPairInputFormat();
 
 	protected RecordReader<LongWritable, Text> reader;

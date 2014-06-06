@@ -9,6 +9,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -45,6 +46,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		// [timestamp] [source ID] [revision ID] [previous revision ID] [source title] [anchor text] [target title]
 		protected void map(LongWritable key, WikipediaLinkSnapshot value,
 				Context context) throws IOException, InterruptedException {
+
 			long timestamp = value.getTimestamp();
 			String ts = TIME_FORMAT.print(timestamp);
 			long pageId = value.getPageId();
@@ -81,7 +83,8 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 					context.write(keyOut, valOut);
 				}
 			}
-		}		
+		}
+
 	}
 
 	@Override
@@ -93,15 +96,16 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
-				
-		Job job = setup("Hedera: " + name,
-				FastExtractTemporalAnchorText.class, inputDir, outputDir,
-				WikiRevisionLinkInputFormat.class, TextOutputFormat.class,
-				PairOfLongs.class, Text.class, PairOfLongs.class, Text.class,
-				MyMapper.class, Reducer.class, reduceNo);
 
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+
+		Job job = setup("Hedera: " + name,
+				FastExtractTemporalAnchorText.class, inputDir, outputDir,
+				WikiRevisionLinkInputFormat.class, TextOutputFormat.class,
+				PairOfLongs.class, Text.class,
+				PairOfLongs.class, Text.class,
+				MyMapper.class, Reducer.class, reduceNo);
 
 		job.waitForCompletion(true);
 		return 0;

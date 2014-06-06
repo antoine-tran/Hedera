@@ -22,7 +22,8 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.MutableDateTime;
 
 
-public class WikiRevisionTimeInputFormat extends WikiRevisionInputFormat<Text> {
+public class WikiRevisionTimeInputFormat extends 
+		WikiRevisionInputFormat<LongWritable, Text> {
 
 	public static final String TIME_SCALE_OPT = "timescale";
 	public static enum TimeScale {
