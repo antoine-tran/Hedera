@@ -13,12 +13,6 @@ public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 	protected boolean skipNonArticles = false;
 	
 	@Override
-	public void initialize() throws IOException {
-		super.initialize();
-		skipNonArticles = false;
-	}
-	
-	@Override
 	protected WikipediaRevisionHeader initializeMeta() {		
 		return new WikipediaRevisionHeader();		
 	}
