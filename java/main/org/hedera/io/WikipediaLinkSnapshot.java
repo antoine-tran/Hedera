@@ -77,6 +77,7 @@ public class WikipediaLinkSnapshot implements Writable {
 			return target;
 		}
 
+		@Override
 		public String toString() {
 			return String.format("[target: %s, anchor: %s]", target, anchor);
 		}

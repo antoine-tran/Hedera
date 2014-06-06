@@ -191,6 +191,7 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 			return target;
 		}
 
+		@Override
 		public String toString() {
 			return String.format("[target: %s, anchor: %s]", target, anchor);
 		}

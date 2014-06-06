@@ -1,7 +1,5 @@
 package org.hedera.mapreduce.experiments;
 
-import java.io.IOException;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;

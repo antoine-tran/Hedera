@@ -286,7 +286,8 @@ public class AnnotatingMarkupParser implements ITextConverter {
         }
     }
 
-    public void nodesToText(List<? extends Object> nodes, Appendable buffer,
+    @Override
+	public void nodesToText(List<? extends Object> nodes, Appendable buffer,
                             IWikiModel model) throws IOException {
         CountingAppendable countingBuffer;
         if (buffer instanceof CountingAppendable) {
@@ -310,9 +311,9 @@ public class AnnotatingMarkupParser implements ITextConverter {
                     if (node instanceof WPATag) {
                         // extract wikilink annotations
                         WPATag tag = (WPATag) node;
-                        String wikilinkLabel = (String) tag.getAttributes().get(
+                        String wikilinkLabel = tag.getAttributes().get(
                                 WIKILINK_TITLE_ATTR_KEY);
-                        String wikilinkTarget = (String) tag.getAttributes().get(
+                        String wikilinkTarget = tag.getAttributes().get(
                                 WIKILINK_TARGET_ATTR_KEY);
                         if (wikilinkLabel != null) {
                             int colonIdx = wikilinkLabel.indexOf(':');
@@ -392,12 +393,14 @@ public class AnnotatingMarkupParser implements ITextConverter {
         }
     }
 
-    public void imageNodeToText(TagNode tagNode, ImageFormat imageFormat,
+    @Override
+	public void imageNodeToText(TagNode tagNode, ImageFormat imageFormat,
                                 Appendable buffer, IWikiModel model) throws IOException {
         nodesToText(tagNode.getChildren(), buffer, model);
     }
 
-    public boolean noLinks() {
+    @Override
+	public boolean noLinks() {
         return true;
     }
 
@@ -443,17 +446,20 @@ public class AnnotatingMarkupParser implements ITextConverter {
             this.wrappedBuffer = wrappedBuffer;
         }
 
-        public Appendable append(CharSequence charSeq) throws IOException {
+        @Override
+		public Appendable append(CharSequence charSeq) throws IOException {
             currentPosition += charSeq.length();
             return wrappedBuffer.append(charSeq);
         }
 
-        public Appendable append(char aChar) throws IOException {
+        @Override
+		public Appendable append(char aChar) throws IOException {
             currentPosition += 1;
             return wrappedBuffer.append(aChar);
         }
 
-        public Appendable append(CharSequence charSeq, int start, int end)
+        @Override
+		public Appendable append(CharSequence charSeq, int start, int end)
                 throws IOException {
             currentPosition += end - start;
             return wrappedBuffer.append(charSeq, start, end);

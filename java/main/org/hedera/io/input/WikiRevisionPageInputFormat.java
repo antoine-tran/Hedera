@@ -161,6 +161,7 @@ public class WikiRevisionPageInputFormat extends
 
 		// Scan the tags in SAX manner. Return at every legit tag and inform the program via 
 		// the global flag. Flush into the caches if necessary
+		@Override
 		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");

@@ -33,6 +33,7 @@ public class WikiRevisionTimeInputFormat extends
 		MONTH("month");		
 		private final String val;		
 		private TimeScale(String v) {val = v;}		
+		@Override
 		public String toString() {
 			return val;
 		}
@@ -262,6 +263,7 @@ public class WikiRevisionTimeInputFormat extends
 			return mdt.toDateTimeISO();
 		}
 
+		@Override
 		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");

@@ -61,7 +61,7 @@ public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 	@Override
 	public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split)
 			throws IOException {
-		this.reader = (RecordReader<LongWritable, Text>)reader;
+		this.reader = reader;
 		// this.dmp = new diff_match_patch();
 		this.tuples = TupleFactory.getInstance();
 		this.bags = BagFactory.getInstance();

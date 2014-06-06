@@ -182,6 +182,7 @@ public class WikiRevisionPairInputFormat
 			return STATE.CONTINUE;
 		}
 
+		@Override
 		protected boolean readUntilMatch() throws IOException {
 
 			if (buf == null && pos.length != 2)

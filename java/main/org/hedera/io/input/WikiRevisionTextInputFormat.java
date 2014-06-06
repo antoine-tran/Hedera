@@ -164,6 +164,7 @@ public class WikiRevisionTextInputFormat extends
 			return STATE.CONTINUE;
 		}
 
+		@Override
 		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");

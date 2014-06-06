@@ -83,13 +83,16 @@ public class SeekableInputStream extends FilterInputStream implements Seekable {
   public SplitCompressionInputStream getSplitCompressionInputStream() { 
 	  return this.sin; 
 	  }
-  public long getPos() throws IOException { 
+  @Override
+public long getPos() throws IOException { 
 	  return this.seek.getPos(); 
 	  }
-  public void seek(long pos) throws IOException { 
+  @Override
+public void seek(long pos) throws IOException { 
 	  this.seek.seek(pos); 
 	  } 
-  public boolean seekToNewSource(long targetPos) throws IOException { 
+  @Override
+public boolean seekToNewSource(long targetPos) throws IOException { 
 	  return this.seek.seekToNewSource(targetPos); 
   }
   @Override public String toString() {

@@ -94,7 +94,7 @@ public class WikiRevisionFullTextFilter extends LoadFunc implements LoadMetadata
 	@Override
 	public void prepareToRead(RecordReader reader, PigSplit split)
 			throws IOException {
-		this.reader = (RecordReader<LongWritable, Text>)reader;
+		this.reader = reader;
 	}
 
 	@Override

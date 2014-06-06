@@ -244,6 +244,7 @@ public class WikiRevisionDiffInputFormat
 			return res;
 		}
 
+		@Override
 		protected boolean readUntilMatch() throws IOException {
 			if (buf == null && pos.length != 2)
 				throw new IOException("Internal buffer corrupted.");

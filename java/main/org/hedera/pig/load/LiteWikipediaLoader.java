@@ -56,7 +56,7 @@ public class LiteWikipediaLoader extends LoadFunc implements LoadMetadata {
 	@Override
 	public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split)
 			throws IOException {
-		this.reader = (RecordReader<LongWritable, WikipediaPage>)reader;	
+		this.reader = reader;	
 		this.tuples = TupleFactory.getInstance();
 		this.bags = BagFactory.getInstance();
 	}

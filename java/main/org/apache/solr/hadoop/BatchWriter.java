@@ -83,7 +83,8 @@ class BatchWriter {
       documents = new ArrayList<SolrInputDocument>(batch);
     }
 
-    public void run() {
+    @Override
+	public void run() {
       try {
         executingBatches.getAndIncrement();
         result = runUpdate(documents);

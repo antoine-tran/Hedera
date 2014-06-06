@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.hedera.io.WikipediaRevision;

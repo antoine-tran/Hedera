@@ -76,6 +76,7 @@ public class WikiRevIndex4NonTemporalSearch extends JobConfig implements Tool {
 			// internalCounter.adjustOrPutValue(rawText, 1, 1);
 			
 			internalCounter.forEachEntry(new TObjectIntProcedure<String>() {
+				@Override
 				public boolean execute(String w, int cnt) {
 					keyOut.set(w);
 					valOut.set(pageId, timestamp, cnt);

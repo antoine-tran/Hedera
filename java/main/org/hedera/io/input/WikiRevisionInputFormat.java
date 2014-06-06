@@ -135,7 +135,8 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	 */
 	@Override
 	public List<InputSplit> getSplits(JobContext jc) throws IOException {
-		List<InputSplit> splits = super.getSplits(jc);
+		// List<InputSplit> old = super.getSplits(jc);
+		List<InputSplit> splits = new ArrayList<InputSplit>();
 		List<FileStatus> files = listStatus(jc);
 		// Save the number of input files for metrics/loadgen
 		
