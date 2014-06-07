@@ -13,6 +13,7 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 import java.io.IOException;
 
 import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.io.LongWritable;
 import org.hedera.io.WikipediaRevisionHeader;
 
 import edu.umd.cloud9.io.pair.PairOfLongString;
@@ -25,22 +26,22 @@ import edu.umd.cloud9.io.pair.PairOfLongs;
  *
  */
 public class WikiRevisionIdsReader extends
-DefaultWikiRevisionETLReader<PairOfLongString, PairOfLongs> {
+DefaultWikiRevisionETLReader<LongWritable, PairOfLongs> {
 
 	@Override
-	protected ETLExtractor<PairOfLongString, PairOfLongs, 
+	protected ETLExtractor<LongWritable, PairOfLongs, 
 	WikipediaRevisionHeader> initializeExtractor() {
 		return new WikiRevisionHeaderExtractor();
 	}
 
 	@Override
-	protected PairOfLongString initializeKey() {
-		return new PairOfLongString();
+	protected LongWritable initializeKey() {
+		return new LongWritable();
 	}
 
 	@Override
-	protected void freeKey(PairOfLongString key) {
-		key.set(0, null);
+	protected void freeKey(LongWritable key) {
+		key.set(0);
 	}
 
 	@Override

@@ -1,13 +1,14 @@
 package org.hedera.io.etl;
 
 import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.io.LongWritable;
 import org.hedera.io.WikipediaRevisionHeader;
 
 import edu.umd.cloud9.io.pair.PairOfLongString;
 import edu.umd.cloud9.io.pair.PairOfLongs;
 
 public class WikiRevisionHeaderExtractor implements
-		ETLExtractor<PairOfLongString, PairOfLongs, 
+		ETLExtractor<LongWritable, PairOfLongs, 
 		WikipediaRevisionHeader> {
 
 	@Override
@@ -19,11 +20,11 @@ public class WikiRevisionHeaderExtractor implements
 
 	@Override
 	public void extract(DataOutputBuffer content, WikipediaRevisionHeader meta,
-			PairOfLongString key, PairOfLongs value) {
+			LongWritable key, PairOfLongs value) {
 		long revId = meta.getRevisionId();
 		long ts = meta.getTimestamp();
 		
-		key.set(meta.getPageId(), meta.getPageTitle());
+		key.set(meta.getPageId());
 		value.set(revId, ts);
 	}
 }
