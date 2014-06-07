@@ -18,6 +18,8 @@ import static org.hedera.io.input.WikiRevisionInputFormat.END_TIMESTAMP;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
+import static org.hedera.io.input.WikiRevisionInputFormat.MINOR_TAG;
+
 /**
  * This ETLReader reads and extracts the links from wiki revision
  * @author tuan
@@ -61,14 +63,16 @@ public class WikiRevisionLinkReader
 	// 13 - just passed the </timestamp> tag
 	// 14 - just passed the <parentId>
 	// 15 - just passed the </parentId> tag
-	// 16 - just passed the <text> tag
-	// 17 - just passed the </text> tag
-	// 18 - just passed the </revision>
+	// 16 - just passed the <minor/> (or not)
+	// 17 - just passed the <text> tag
+	// 18 - just passed the </text> tag
+	// 19 - just passed the </revision>
 	protected Ack readToNextRevision(DataOutputBuffer buffer, 
 			WikipediaRevisionHeader meta) throws IOException {
 		int i = 0;
 		int flag = 9;	
 		int parOrTs = -1;
+		int minorOrText = -1;
 		try (DataOutputBuffer revIdBuf = new DataOutputBuffer(); 
 				DataOutputBuffer timestampBuf = new DataOutputBuffer(); 
 				DataOutputBuffer parBuf = new DataOutputBuffer()) {
@@ -180,38 +184,66 @@ public class WikiRevisionLinkReader
 					// After the timestamp, sometimes we can make a quick check to see
 					// whether we should  skip this revision
 					
-					// after the </timestamp>, check for <text>
+					// after the </timestamp>, check for <minor/>, if they exist
 					else if (flag == 13) {
+						int curMatch = 0;				
+						if ((i < START_TEXT.length && b == START_TEXT[i]) 
+								&& (i < MINOR_TAG.length && b == MINOR_TAG[i])) {
+							curMatch = 3;
+						} else if (i < START_TEXT.length && b == START_TEXT[i]) {
+							curMatch = 1;
+						} else if (i < MINOR_TAG.length && b == MINOR_TAG[i]) {
+							curMatch = 2;
+						}				
+						if (curMatch > 0 && (i == 0 || minorOrText == 3 || curMatch == minorOrText)) {					
+							i++;			
+							minorOrText = curMatch;
+						} else i = 0;
+						if ((minorOrText == 2 || minorOrText == 3) && i >= MINOR_TAG.length) {
+							// update the meta
+							meta.setMinor(true);
+							flag = 16;
+							minorOrText = -1;		
+							i = 0;
+						} else if ((minorOrText == 1 || minorOrText == 3) && i >= START_TEXT.length) {
+							flag = 17;
+							minorOrText = -1;
+							i = 0;
+						}	
+					}
+					
+					// after the <minor/>, and search for <text>
+					else if (flag == 16) {
 						if (b == START_TEXT[i]) {
 							i++;
 						} else i = 0;
 						if (i >= START_TEXT.length) {
-							flag = 16;
+							flag = 17;
 							i = 0;
 						}
 					}
 					
 					// inside <text></text> block everything goes to content buffer
-					else if (flag == 16) {
+					else if (flag == 17) {
 						if (b == END_TEXT[i]) {
 							i++;
 						} else i = 0;
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
-							flag = 17;
+							flag = 18;
 							meta.setLength(buffer.getLength());
 							i = 0;
 						}
 					}
 
 					// look for the closing </revision>
-					else if (flag == 17) {
+					else if (flag == 18) {
 						if (b == END_REVISION[i]) {
 							i++;
 						} else i = 0;
 						if (i >= END_REVISION.length) {
 							// the flag is not anymore useful
-							flag = 18;
+							flag = 19;
 							return Ack.PASSED_TO_NEXT_TAG;
 						}
 					}

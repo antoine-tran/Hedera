@@ -18,7 +18,14 @@ public class WikipediaRevisionHeader implements Writable {
 	private String pageTitle;
 	private int namespace;
 	private long length;
-	
+	private boolean minor = false;
+		
+	public boolean isMinor() {
+		return minor;
+	}
+	public void setMinor(boolean minor) {
+		this.minor = minor;
+	}
 	public long getPageId() {
 		return pageId;
 	}

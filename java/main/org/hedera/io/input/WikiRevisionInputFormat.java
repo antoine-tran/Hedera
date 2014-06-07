@@ -96,6 +96,8 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 			.getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_PARENT_ID = "</text>".getBytes(StandardCharsets.UTF_8);	
 	
+	public static final byte[] MINOR_TAG = "<minor/>".getBytes(StandardCharsets.UTF_8);
+	
 	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
 	protected static long THRESHOLD = 137438953472l;

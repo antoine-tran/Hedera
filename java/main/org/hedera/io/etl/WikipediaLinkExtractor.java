@@ -21,7 +21,8 @@ ETLExtractor<LongWritable, WikipediaLinkSnapshot, WikipediaRevisionHeader> {
 	@Override
 	public float check(WikipediaRevisionHeader curMeta,
 			WikipediaRevisionHeader prevMeta) {		
-		if (prevMeta == null || prevMeta.getLength() == 0) return 1f;		
+		if (prevMeta == null || prevMeta.getLength() == 0) return 1f;
+		if (curMeta.isMinor()) return 0.0005f;
 		return (curMeta.getLength() - prevMeta.getLength()) / prevMeta.getLength();
 	}
 
