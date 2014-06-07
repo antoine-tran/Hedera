@@ -23,7 +23,7 @@ import org.mortbay.log.Log;
  * from the page header
  */
 public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
-WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
+		WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
 
 	private static final Logger LOG = 
 			Logger.getLogger(DefaultWikiRevisionETLReader.class);

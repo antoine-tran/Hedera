@@ -33,7 +33,6 @@ public class ExtractRevisionIds extends JobConfig implements Tool {
 				context.write(keyOut, valOut);
 			}				
 		}
-		
 	}
 	
 	@Override

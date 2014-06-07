@@ -26,7 +26,7 @@ import edu.umd.cloud9.io.pair.PairOfLongs;
  *
  */
 public class WikiRevisionIdsReader extends
-DefaultWikiRevisionETLReader<LongWritable, PairOfLongs> {
+		DefaultWikiRevisionETLReader<LongWritable, PairOfLongs> {
 
 	@Override
 	protected ETLExtractor<LongWritable, PairOfLongs, 

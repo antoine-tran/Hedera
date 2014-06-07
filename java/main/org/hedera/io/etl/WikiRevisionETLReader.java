@@ -190,6 +190,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 	@Override
 	//
 	// Tuan: This is one of the most error-prone, tedious code I've ever written :(
+	// I feel like I have to write the documentation for this method somewhere. Otherwise
+	// I will lose understanding it next few months
 	//
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		while (fsin.getPos() < end) {
