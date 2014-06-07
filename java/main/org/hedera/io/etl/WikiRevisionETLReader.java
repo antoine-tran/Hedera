@@ -16,6 +16,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.log4j.Logger;
 
 import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
@@ -25,8 +26,10 @@ import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
 public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META> 
-extends RecordReader<KEYIN, VALUEIN> {
+		extends RecordReader<KEYIN, VALUEIN> {
 
+	private static final Logger LOG = Logger.getLogger(WikiRevisionETLReader.class);
+	
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 
 	private static final float DEFAULT_LOWER_THRESHOLD = 0.01f;
@@ -88,10 +91,8 @@ extends RecordReader<KEYIN, VALUEIN> {
 
 	protected abstract ETLExtractor<KEYIN, VALUEIN, META> initializeExtractor();
 
-	// We use a thread that pings back to the cluster every 590 seconds to avoid
-	// getting killed for slow progress
-	private TaskHeartbeatThread heartbeat;
-
+	private TaskAttemptContext context;
+	
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
@@ -111,6 +112,10 @@ extends RecordReader<KEYIN, VALUEIN> {
 	@Override
 	public float getProgress() throws IOException, InterruptedException {
 		return (fsin.getPos() - start) / (float) (end - start);
+	}
+	
+	protected TaskAttemptContext getTaskAttemptContext() {
+		return context;
 	}
 
 	@Override
@@ -151,8 +156,7 @@ extends RecordReader<KEYIN, VALUEIN> {
 		pos[0] = pos[1] = 0;
 		meta = null;
 		initializeObjects();
-		heartbeat = new TaskHeartbeatThread(tac, 1000 * 59 * 60);
-		heartbeat.start();
+		this.context = tac;
 	}
 
 	private void initializeObjects() {
@@ -400,10 +404,27 @@ extends RecordReader<KEYIN, VALUEIN> {
 	protected final boolean fetchMore() throws IOException {
 		if (buf == null && pos.length != 2)
 			throw new IOException("Internal buffer corrupted.");
-		if (pos[0] == pos[1]) {						
-			pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
-				((FSDataInputStream)fsin).read(buf);
-			pos[0] = 0;
+		if (pos[0] == pos[1]) {	
+			
+			// We use a thread that pings back to the cluster every 5 minutes
+			// to avoid getting killed for slow read
+			TaskHeartbeatThread hearbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+				@Override
+				protected void progress() {
+					LOG.info("Task " + context.getTaskAttemptID() 
+							+ " pings back...");
+				}
+			};
+			
+			try {
+				hearbeat.start();
+				pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
+					((FSDataInputStream)fsin).read(buf);
+				pos[0] = 0;
+			} finally {
+				hearbeat.stop();
+			}
+			
 			if (pos[1] == -1) {
 				flag = -1;
 				return false;
@@ -430,7 +451,5 @@ extends RecordReader<KEYIN, VALUEIN> {
 		} else {
 			((FSDataInputStream)fsin).close();
 		}
-		heartbeat.stop();
-		heartbeat = null;
 	}
 }
