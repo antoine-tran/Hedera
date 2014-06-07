@@ -3,6 +3,7 @@ package com.twitter.elephantbird.util;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.log4j.Logger;
 
 /**
  * Keeps a task alive during any slow operations
@@ -12,6 +13,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 public class TaskHeartbeatThread {
   private final AtomicInteger latch = new AtomicInteger();
   private final Thread beat;
+  
+  private static final Logger LOG = Logger.getLogger(TaskHeartbeatThread.class);
 
   /**
    * Creates a new thread to keep a task alive
@@ -74,5 +77,7 @@ public class TaskHeartbeatThread {
    * Override to report progress of the slow
    * close() method
    */
-  protected void progress() {}
+  protected void progress() {
+	  LOG.info("Hearbeat thread pings the cluster.");
+  }
 }
