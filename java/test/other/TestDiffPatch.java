@@ -58,4 +58,21 @@ public class TestDiffPatch {
 			System.out.println(delta.getRevised().getLines() + "\t" + delta.getType());
 		}
 	}
+	
+	@Test
+	public void testWholeInsert() {
+		String s1 = "";
+		String s2 = "And this has been added. That quick brown fox jumped over a lazy dog. " +
+				"This sentence stays the same. " +
+				"And this has been newly added. This will be the same.";
+
+		String[] l1 = s1.split("\\s");
+		String[] l2 = s2.split("\\s");
+		difflib.Patch patch = DiffUtils.diff(Arrays.asList(l1), Arrays.asList(l2));
+		System.out.println(patch.getDeltas().size());
+
+		for (Delta delta: patch.getDeltas()) {
+			System.out.println(delta.getRevised().getLines() + "\t" + delta.getType());
+		}
+	}
 }

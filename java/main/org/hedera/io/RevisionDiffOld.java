@@ -18,9 +18,9 @@ import difflib.InsertDelta;
 /**
  * A writable object that represents diff between two Wikipedia revisions
  * @author tuan
- *
+ * @deprecated this object is too cumbersome. Use RevisionDiff instead
  */
-public class RevisionDiff extends RevisionHeader {
+public class RevisionDiffOld extends RevisionHeader {
 
 	private LinkedList<Delta> diffs;
 

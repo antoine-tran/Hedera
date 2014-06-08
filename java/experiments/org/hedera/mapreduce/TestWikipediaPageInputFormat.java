@@ -13,7 +13,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.RevisionDiff;
+import org.hedera.io.RevisionDiffOld;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
 
 
@@ -25,7 +25,7 @@ import tuan.hadoop.conf.JobConfig;
 public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 
 	private static final class MyMapper extends 
-	Mapper<LongWritable, RevisionDiff, LongWritable, Text> {
+	Mapper<LongWritable, RevisionDiffOld, LongWritable, Text> {
 
 		LongWritable key = new LongWritable();
 		Text value = new Text();
@@ -33,7 +33,7 @@ public class TestWikipediaPageInputFormat extends JobConfig implements Tool {
 		private Random r = new Random();
 
 		@Override
-		protected void map(LongWritable k, RevisionDiff v,
+		protected void map(LongWritable k, RevisionDiffOld v,
 				Context context) throws IOException, InterruptedException {
 
 			double d = r.nextDouble();
