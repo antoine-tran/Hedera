@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.mapreduce.experiments;
+package org.hedera.mapreduce;
 
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;

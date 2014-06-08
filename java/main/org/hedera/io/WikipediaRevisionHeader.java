@@ -9,7 +9,7 @@ import org.apache.hadoop.io.Writable;
 /** 
  * Encode the header of a page into the revision meta-data
  * to build the revision header */
-public class WikipediaRevisionHeader implements Writable {
+public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 	
 	private long pageId;
 	private long revisionId;

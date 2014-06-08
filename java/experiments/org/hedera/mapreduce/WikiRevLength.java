@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.hedera.mapreduce.experiments;
+package org.hedera.mapreduce;
 
 
 

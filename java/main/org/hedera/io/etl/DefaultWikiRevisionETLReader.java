@@ -23,11 +23,11 @@ import org.mortbay.log.Log;
  * from the page header
  */
 public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
-		WikiRevisionETLReader<KEYIN, VALUEIN, WikipediaRevisionHeader> {
+WikiRevisionETLReader<KEYIN, VALUEIN,WikipediaRevisionHeader> {
 
 	private static final Logger LOG = 
 			Logger.getLogger(DefaultWikiRevisionETLReader.class);
-	
+
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
 
@@ -37,7 +37,7 @@ public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 		super.initialize(input, tac);
 		skipNonArticles = tac.getConfiguration()
 				.getBoolean(SKIP_NON_ARTICLES, false);
-		
+
 		LOG.info("Splitting option: " + skipNonArticles);
 	}
 
@@ -70,7 +70,26 @@ public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 			while (true) {
 				if (!fetchMore()) return Ack.EOF;
 				while (hasData()) {
-					byte b = nextByte();				
+					byte b = nextByte();	
+
+					// when passing the namespace and we realize that 
+					// this is not an article, and that the option of skipping
+					// non-article pages is on, we simply skip everything until
+					// the closing </page>				
+					if (skipped) {
+						if (flag >= 6) {
+							Log.warn("Peculiar read after skipping namespace");
+							/* 
+							if (b == END_PAGE[i]) {
+								i++;
+							} else i = 0;
+							if (i >= END_PAGE.length) {
+								return Ack.SKIPPED;
+							} */
+							return Ack.FAILED;
+						} else return Ack.SKIPPED;
+					}
+
 					if (flag == 2) {
 						if (b == START_TITLE[i]) {
 							i++;
@@ -128,21 +147,6 @@ public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 							meta.setNamespace(ns);
 							i = 0;
 						}
-					}
-
-					// when passing the namespace and we realize that 
-					// this is not an article, and that the option of skipping
-					// non-article pages is on, we simply skip everything until
-					// the closing </page>				
-					else if (skipped && flag >= 6) {
-						Log.warn("Peculiar read after skipping namespace");
-						/* if (b == END_PAGE[i]) {
-						i++;
-						} else i = 0;
-						if (i >= END_PAGE.length) {
-							return Ack.SKIPPED;
-						} */
-						return Ack.FAILED;
 					}
 
 					else if (flag == 6) {

@@ -16,7 +16,7 @@ import org.apache.hadoop.io.Writable;
  * @author tuan
  *
  */
-public class WikipediaLinkSnapshot implements Writable {
+public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
 
 	private long pageId;
 	private long revisionId;

@@ -23,7 +23,7 @@ import difflib.InsertDelta;
  * @author tuan
  *
  */
-public class WikipediaRevisionDiff implements Writable {
+public class WikipediaRevisionDiff implements Writable, WikipediaHeader {
 
 	private long pageId;
 	private long revisionId;

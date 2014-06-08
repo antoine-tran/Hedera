@@ -1,4 +1,4 @@
-package org.hedera.mapreduce.experiments;
+package org.hedera.mapreduce;
 
 import java.io.IOException;
 import java.util.Random;
