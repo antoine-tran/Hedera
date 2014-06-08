@@ -17,7 +17,7 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 	private long timestamp;	
 	private String pageTitle;
 	private int namespace;
-	private long length;
+	private int length;
 	private boolean minor = false;
 		
 	public boolean isMinor() {
@@ -62,10 +62,10 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 	public void setNamespace(int namespace) {
 		this.namespace = namespace;
 	}
-	public long getLength() {
+	public int getLength() {
 		return length;
 	}
-	public void setLength(long length) {
+	public void setLength(int length) {
 		this.length = length;
 	}
 	
@@ -100,7 +100,7 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 		parentId = in.readLong();
 		timestamp = in.readLong();
 		namespace = in.readInt();
-		length = in.readLong();
+		length = in.readInt();
 		pageTitle = in.readUTF();
 	}
 	@Override
@@ -110,7 +110,7 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 		out.writeLong(parentId);
 		out.writeLong(timestamp);
 		out.writeInt(namespace);
-		out.writeLong(length);
+		out.writeInt(length);
 		out.writeUTF(pageTitle);		
 	}
 	

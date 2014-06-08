@@ -7,7 +7,7 @@ import org.apache.hadoop.io.DataOutputBuffer;
 public interface ETLExtractor<KEY, VALUE, META> {
 
 	/** compare two revisions based on their meta-data */
-	public float check(META meta1, META meta2);
+	public float check(META metaNow, META metaBefore);
 	
 	/** extract the revision content and populate the OUTPUT .
 	 * 

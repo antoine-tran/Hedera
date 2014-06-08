@@ -234,9 +234,9 @@ public abstract class IntervalWikiRevisionETLReader<KEYIN, VALUEIN> extends
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
 							flag = 18;							
-							// meta.setLength(buffer.getLength());
+							meta.setLength(buffer.getLength());
+							processMetaData(buffer, meta);
 							i = 0;
-							processRevision(buffer, meta);
 						}
 					}
 
@@ -263,5 +263,5 @@ public abstract class IntervalWikiRevisionETLReader<KEYIN, VALUEIN> extends
 	 * @param buffer
 	 * @param meta
 	 */
-	protected abstract void processRevision(DataOutputBuffer buffer, WikipediaHeader meta);
+	protected abstract void processMetaData(DataOutputBuffer buffer, WikipediaHeader meta);
 }
