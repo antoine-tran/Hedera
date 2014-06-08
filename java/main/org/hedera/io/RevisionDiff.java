@@ -8,9 +8,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.apache.hadoop.io.Writable;
-
 import difflib.ChangeDelta;
 import difflib.Chunk;
 import difflib.DeleteDelta;
@@ -23,93 +20,9 @@ import difflib.InsertDelta;
  * @author tuan
  *
  */
-public class WikipediaRevisionDiff implements Writable, WikipediaHeader {
+public class RevisionDiff extends RevisionHeader {
 
-	private long pageId;
-	private long revisionId;
-	private long parentId;
-	private long timestamp;
-	private int namespace;
-	private String pageTitle;
 	private LinkedList<Delta> diffs;
-	
-	/**
-	 * @return the pageId
-	 */
-	public long getPageId() {
-		return pageId;
-	}
-
-	/**
-	 * @param pageId the pageId to set
-	 */
-	public void setPageId(long pageId) {
-		this.pageId = pageId;
-	}
-
-	/**
-	 * @return the revisionId
-	 */
-	public long getRevisionId() {
-		return revisionId;
-	}
-
-	/**
-	 * @param revisionId the revisionId to set
-	 */
-	public void setRevisionId(long revisionId) {
-		this.revisionId = revisionId;
-	}
-
-	/**
-	 * @return the parentId
-	 */
-	public long getParentId() {
-		return parentId;
-	}
-
-	/**
-	 * @param parentId the parentId to set
-	 */
-	public void setParentId(long parentId) {
-		this.parentId = parentId;
-	}
-
-	/**
-	 * @return the timestamp
-	 */
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	/**
-	 * @param timestamp the timestamp to set
-	 */
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-
-	/**
-	 * @return the pageTitle
-	 */
-	public String getPageTitle() {
-		return pageTitle;
-	}
-
-	/**
-	 * @param pageTitle the pageTitle to set
-	 */
-	public void setPageTitle(String pageTitle) {
-		this.pageTitle = pageTitle;
-	}
-	
-	public int getNamespace() {
-		return namespace;
-	}
-
-	public void setNamespace(int namespace) {
-		this.namespace = namespace;
-	}
 
 	/**
 	 * @return the diffs
@@ -130,12 +43,8 @@ public class WikipediaRevisionDiff implements Writable, WikipediaHeader {
 	}
 	
 	public void clear() {
+		super.clear();
 		this.diffs.clear();
-		this.pageTitle = null;
-		this.parentId = -1;
-		this.pageId = -1;
-		this.revisionId = -1;
-		this.timestamp = 0;
 	}
 	
 	public static TYPE byte2opt(byte sig) {
@@ -159,31 +68,23 @@ public class WikipediaRevisionDiff implements Writable, WikipediaHeader {
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		pageId = in.readLong();
-		revisionId = in.readLong();
-		parentId = in.readLong();
-		timestamp = in.readLong();
+		super.readFields(in);
 		int length = in.readInt();
 		this.diffs = new LinkedList<>();
 		for (int i = 0; i < length; i++) {			
 			Delta d = readDelta(in);
 			diffs.add(d);
 		}
-		this.pageTitle = in.readUTF();
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		out.writeLong(pageId);
-		out.writeLong(revisionId);
-		out.writeLong(parentId);
-		out.writeLong(timestamp);
+		super.write(out);
 		out.writeInt(diffs.size());
 		for (int i = 0; i < diffs.size(); i++) {
 			Delta d = diffs.get(i);
 			writeDelta(out, d);
 		}
-		out.writeUTF(pageTitle);
 	}
 	
 	// reconstruct the delta from the input stream

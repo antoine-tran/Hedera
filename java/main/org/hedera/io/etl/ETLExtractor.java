@@ -13,5 +13,6 @@ public interface ETLExtractor<KEY, VALUE, META> {
 	 * 
 	 * NOTE: Make sure all the time and value is clean before, when
 	 * the revisions are treated independently */
-	public void extract(DataOutputBuffer content, META meta, KEY key, VALUE value);	
+	public void extract(DataOutputBuffer content, META meta, 
+			KEY key, VALUE value);	
 }

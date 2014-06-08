@@ -3,8 +3,8 @@ package org.hedera;
 import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
-import org.hedera.io.WikipediaLinkSnapshot;
-import org.hedera.io.WikipediaLinkSnapshot.Link;
+import org.hedera.io.LinkProfile;
+import org.hedera.io.LinkProfile.Link;
 import org.junit.Test;
 
 public class TestWikiETLReaders {
@@ -17,7 +17,7 @@ public class TestWikiETLReaders {
 			reader.initialize();
 			while (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
-				WikipediaLinkSnapshot wls = reader.getCurrentValue();
+				LinkProfile wls = reader.getCurrentValue();
 				System.out.println(key.get());			
 				if (wls.getLinks() != null) {
 					for (Link l : wls.getLinks()) {
@@ -44,7 +44,7 @@ public class TestWikiETLReaders {
 			reader.initialize();
 			while (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
-				WikipediaLinkSnapshot wls = reader.getCurrentValue();
+				LinkProfile wls = reader.getCurrentValue();
 				System.out.println(key.get());			
 				if (wls.getLinks() != null) {
 					for (Link l : wls.getLinks()) {

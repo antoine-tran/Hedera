@@ -19,17 +19,14 @@ import org.apache.hadoop.io.Writable;
  * @author tuan
  *
  */
-public class WikipediaRevisionBOW extends WikipediaRevision implements Writable {
+public class RevisionConcatText extends Revision {
 	
 	/** list of differentials */
 	private List<String> patches;
 	
 	/** Cached string of the last patched revision in memory. Not sent through
 	 * Hadoop spills */
-	private String lastRevision;
-	
-	// last timestamps of the patched revision
-	private long lastTimestamp;
+	private List<String> lastRevision;
 	
 	@Override
 	public void readFields(DataInput in) throws IOException {
@@ -51,6 +48,14 @@ public class WikipediaRevisionBOW extends WikipediaRevision implements Writable 
 		}
 	}
 	
+	public List<String> getLastRevision() {
+		return lastRevision;
+	}
+	
+	public void setLastRevision(List<String> lastRevision) {
+		this.lastRevision = lastRevision;
+	}
+	
 	/** Get the String representation of this BOW. 
 	 * This is an expensive method, it outputs a chunk of text
 	 * @return the original text concatenated with its patches
@@ -67,6 +72,11 @@ public class WikipediaRevisionBOW extends WikipediaRevision implements Writable 
 			sb.append(s);
 		}
 		return sb.toString();
+	}
+	
+	public void loadText(byte[] b, int offset, int len) {
+		super.loadText(b, offset, len);
+		this.lastRevision = new LinkedList<>();
 	}
 	
 	public void addPatch(String word) {

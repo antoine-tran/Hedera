@@ -6,11 +6,9 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.Writable;
 
-/** 
- * Encode the header of a page into the revision meta-data
- * to build the revision header */
-public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
-	
+/** a wikipedia header that provides APIs to access revision meta-data */
+public class RevisionHeader implements Writable {
+
 	private long pageId;
 	private long revisionId;
 	private long parentId;
@@ -76,7 +74,7 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 		this.pageTitle = null;
 	}
 	
-	public void clone(WikipediaRevisionHeader obj) {
+	public void clone(RevisionHeader obj) {
 		this.pageId = obj.pageId;
 		this.namespace = obj.namespace;
 		this.length = obj.length;
@@ -117,8 +115,8 @@ public class WikipediaRevisionHeader implements Writable, WikipediaHeader {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) return true;
-		if (!(obj instanceof WikipediaRevisionHeader)) return false;
-		WikipediaRevisionHeader wrh = (WikipediaRevisionHeader)obj;
+		if (!(obj instanceof RevisionHeader)) return false;
+		RevisionHeader wrh = (RevisionHeader)obj;
 		return (wrh.pageId == pageId && wrh.revisionId == revisionId
 				&& wrh.namespace == namespace);
 	}

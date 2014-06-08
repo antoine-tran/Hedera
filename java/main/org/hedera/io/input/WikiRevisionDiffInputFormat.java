@@ -12,17 +12,17 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.hedera.io.WikipediaRevisionDiff;
+import org.hedera.io.RevisionDiff;
 
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 
 public class WikiRevisionDiffInputFormat 
-		extends WikiRevisionInputFormat<LongWritable, WikipediaRevisionDiff> {
+		extends WikiRevisionInputFormat<LongWritable, RevisionDiff> {
 	
 	@Override
-	public RecordReader<LongWritable, WikipediaRevisionDiff> createRecordReader(
+	public RecordReader<LongWritable, RevisionDiff> createRecordReader(
 			InputSplit input, TaskAttemptContext context) throws IOException,
 			InterruptedException {
 		return new DiffReader(); 
@@ -57,7 +57,7 @@ public class WikiRevisionDiffInputFormat
 	// 17 - just passed the </text> tag
 	// 18 - just passed the </revision>
 	// 19 - just passed the </page>
-	public static class DiffReader extends WikiRevisionReader<WikipediaRevisionDiff> {
+	public static class DiffReader extends WikiRevisionReader<RevisionDiff> {
 
 		// Extra flags:
 		//
@@ -99,7 +99,7 @@ public class WikiRevisionDiffInputFormat
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
-			value = new WikipediaRevisionDiff(); 
+			value = new RevisionDiff(); 
 		}
 
 		private void resetEverything() {

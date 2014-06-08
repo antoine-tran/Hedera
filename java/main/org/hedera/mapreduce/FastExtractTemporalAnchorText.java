@@ -12,9 +12,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.WikipediaLinkSnapshot;
-import org.hedera.io.WikipediaLinkSnapshot.Link;
-import org.hedera.io.etl.WikiRevisionLinkInputFormat;
+import org.hedera.io.LinkProfile;
+import org.hedera.io.LinkProfile.Link;
+import org.hedera.io.etl.RevisionLinkInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.mortbay.log.Log;
 
@@ -25,7 +25,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 
 	private static final class MyMapper extends Mapper<LongWritable,
-	WikipediaLinkSnapshot, PairOfLongs, Text> {
+	LinkProfile, PairOfLongs, Text> {
 
 		private PairOfLongs keyOut = new PairOfLongs();
 		private Text valOut = new Text();
@@ -43,7 +43,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		@Override
 		// Output anchor in format (separated by TAB)
 		// [timestamp] [source ID] [revision ID] [previous revision ID] [source title] [anchor text] [target title]
-		protected void map(LongWritable key, WikipediaLinkSnapshot value,
+		protected void map(LongWritable key, LinkProfile value,
 				Context context) throws IOException, InterruptedException {
 
 			long timestamp = value.getTimestamp();
@@ -101,7 +101,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 		Job job = setup("Hedera: " + name,
 				FastExtractTemporalAnchorText.class, inputDir, outputDir,
-				WikiRevisionLinkInputFormat.class, TextOutputFormat.class,
+				RevisionLinkInputFormat.class, TextOutputFormat.class,
 				PairOfLongs.class, Text.class,
 				PairOfLongs.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);

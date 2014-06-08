@@ -10,7 +10,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.etl.WikiRevisionIdsFormat;
+import org.hedera.io.etl.RevisionIdsFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 
 import edu.umd.cloud9.io.pair.PairOfLongs;
@@ -49,7 +49,7 @@ public class ExtractRevisionIds extends JobConfig implements Tool {
 
 		Job job = setup("Hedera: " + name,
 				ExtractRevisionIds.class, inputDir, outputDir,
-				WikiRevisionIdsFormat.class, TextOutputFormat.class,
+				RevisionIdsFormat.class, TextOutputFormat.class,
 				LongWritable.class, PairOfLongs.class, 
 				LongWritable.class, Text.class,
 				Mapper.class, MyReducer.class, reduceNo);

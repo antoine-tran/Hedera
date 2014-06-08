@@ -1,57 +1,55 @@
+/**
+ * 
+ */
 package org.hedera.io.etl;
+
+import static org.hedera.io.input.WikiRevisionInputFormat.END_ID;
+import static org.hedera.io.input.WikiRevisionInputFormat.END_PARENT_ID;
+import static org.hedera.io.input.WikiRevisionInputFormat.END_REVISION;
+import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
+import static org.hedera.io.input.WikiRevisionInputFormat.END_TIMESTAMP;
+import static org.hedera.io.input.WikiRevisionInputFormat.MINOR_TAG;
+import static org.hedera.io.input.WikiRevisionInputFormat.START_ID;
+import static org.hedera.io.input.WikiRevisionInputFormat.START_PARENT_ID;
+import static org.hedera.io.input.WikiRevisionInputFormat.START_TEXT;
+import static org.hedera.io.input.WikiRevisionInputFormat.START_TIMESTAMP;
+import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.io.LongWritable;
-import org.hedera.io.WikipediaLinkSnapshot;
-import org.hedera.io.WikipediaRevisionHeader;
-
-import static org.hedera.io.input.WikiRevisionInputFormat.START_TEXT;
-import static org.hedera.io.input.WikiRevisionInputFormat.START_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
-import static org.hedera.io.input.WikiRevisionInputFormat.START_PARENT_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_PARENT_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.START_TIMESTAMP;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_TIMESTAMP;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_REVISION;
-import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
-
-import static org.hedera.io.input.WikiRevisionInputFormat.MINOR_TAG;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.hedera.io.RevisionHeader;
 
 /**
- * This ETLReader reads and extracts the links from wiki revision
+ * A WikiRevsionETLReader that skips all revisions out of a specific range
  * @author tuan
  *
  */
-public class WikiRevisionLinkReader 
-		extends DefaultWikiRevisionETLReader<LongWritable, 
-		WikipediaLinkSnapshot> {
+public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
+		DefaultRevisionETLReader<KEYIN, VALUEIN> {
 
-	@Override
-	protected LongWritable initializeKey() {		
-		return new LongWritable();		
-	}
+	public static final String START_TIME_OPT = "org.hedera.io.etl.starttime";
+			public static final String END_TIME_OPT = "org.hedera.io.etl.endtime";
+	
+	private long startTs = Long.MIN_VALUE;
+	private long endTs = Long.MAX_VALUE;
 	
 	@Override
-	protected void freeKey(LongWritable key) {		
-	}
-	
-	@Override
-	protected void freeValue(WikipediaLinkSnapshot value) {
-		value.clear();
-	}
-	
-	@Override
-	protected WikipediaLinkSnapshot initializeValue() {		
-		return new WikipediaLinkSnapshot();		
-	}
-	
-	@Override
-	protected ETLExtractor<LongWritable, WikipediaLinkSnapshot,
-			WikipediaRevisionHeader> initializeExtractor() {		
-		return new WikipediaLinkExtractor();		
+	public void initialize(InputSplit input, TaskAttemptContext tac)
+			throws IOException, InterruptedException {
+		super.initialize(input, tac);
+		Configuration conf = tac.getConfiguration();
+		String startTime = conf.get(START_TIME_OPT);
+		if (startTime != null) {
+			startTs = TIME_FORMAT.parseMillis(startTime);
+		}
+		String endTime = conf.get(END_TIME_OPT);		
+		if (endTime != null) {
+			endTs = TIME_FORMAT.parseMillis(endTime);
+		}
 	}
 	
 	@Override
@@ -68,7 +66,7 @@ public class WikiRevisionLinkReader
 	// 18 - just passed the </text> tag
 	// 19 - just passed the </revision>
 	protected Ack readToNextRevision(DataOutputBuffer buffer, 
-			WikipediaRevisionHeader meta) throws IOException {
+			RevisionHeader meta) throws IOException {
 		int i = 0;
 		int flag = 9;	
 		int parOrTs = -1;
@@ -147,6 +145,10 @@ public class WikiRevisionLinkReader
 									timestampBuf.getLength() 
 									- END_TIMESTAMP.length);
 							long timestamp = TIME_FORMAT.parseMillis(ts);
+							if (timestamp < startTs || timestamp >= endTs) {
+								meta.clear();
+								return Ack.SKIPPED;
+							}							
 							meta.setTimestamp(timestamp);
 							timestampBuf.reset();
 							i = 0;
@@ -230,8 +232,9 @@ public class WikiRevisionLinkReader
 						} else i = 0;
 						buffer.write(b);
 						if (i >= END_TEXT.length) {
-							flag = 18;
+							flag = 18;							
 							meta.setLength(buffer.getLength());
+							processMetaData(buffer, meta);
 							i = 0;
 						}
 					}
@@ -251,4 +254,13 @@ public class WikiRevisionLinkReader
 			}
 		}
 	}
+
+	/**
+	 * This method processes after caching the currently visited revision. It updates
+	 * the meta-data to facilitate the extraction of content right afterwards (in
+	 * WikiRevisionETLReader's code)
+	 * @param buffer
+	 * @param meta
+	 */
+	protected abstract void processMetaData(DataOutputBuffer buffer, RevisionHeader meta);
 }

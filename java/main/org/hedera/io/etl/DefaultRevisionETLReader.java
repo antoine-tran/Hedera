@@ -15,18 +15,18 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
-import org.hedera.io.WikipediaRevisionHeader;
+import org.hedera.io.RevisionHeader;
 import org.mortbay.log.Log;
 
 /**
  * A default WikiRevisionETLReader that extracts title, page id, namespace
  * from the page header
  */
-public abstract class DefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
-WikiRevisionETLReader<KEYIN, VALUEIN,WikipediaRevisionHeader> {
+public abstract class DefaultRevisionETLReader<KEYIN, VALUEIN> extends
+		RevisionETLReader<KEYIN, VALUEIN, RevisionHeader> {
 
 	private static final Logger LOG = 
-			Logger.getLogger(DefaultWikiRevisionETLReader.class);
+			Logger.getLogger(DefaultRevisionETLReader.class);
 
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
@@ -42,8 +42,8 @@ WikiRevisionETLReader<KEYIN, VALUEIN,WikipediaRevisionHeader> {
 	}
 
 	@Override
-	protected WikipediaRevisionHeader initializeMeta() {		
-		return new WikipediaRevisionHeader();		
+	protected RevisionHeader initializeMeta() {		
+		return new RevisionHeader();		
 	}
 
 	@Override
@@ -58,7 +58,7 @@ WikiRevisionETLReader<KEYIN, VALUEIN,WikipediaRevisionHeader> {
 	// 7 - just passed the (page's) <id>
 	// 8 - just passed the </id> tag but outside the <revision>	
 	// 9 - just passed the (next) <revision>
-	protected Ack readToPageHeader(WikipediaRevisionHeader meta) 
+	protected Ack readToPageHeader(RevisionHeader meta) 
 			throws IOException {
 		int i = 0;
 		int flag = 2;		

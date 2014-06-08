@@ -9,21 +9,13 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.hadoop.io.Writable;
-
 /**
  * This object represents the outlink profile of a Wikipedia page at a specific moment
  * @author tuan
  *
  */
-public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
+public class LinkProfile extends RevisionHeader {
 
-	private long pageId;
-	private long revisionId;
-	private long parentId;
-	private long timestamp;	
-	private String pageTitle;
-	private int namespace;
 	private List<Link> links; 
 
 	public static class Link {
@@ -83,54 +75,6 @@ public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
 		}
 	}
 
-	public String getPageTitle() {
-		return pageTitle;
-	}
-
-	public void setPageTitle(String pageTitle) {
-		this.pageTitle = pageTitle;
-	}
-
-	public long getPageId() {
-		return pageId;
-	}
-
-	public void setPageId(long pageId) {
-		this.pageId = pageId;
-	}
-
-	public long getRevisionId() {
-		return revisionId;
-	}
-
-	public void setRevisionId(long revisionId) {
-		this.revisionId = revisionId;
-	}
-
-	public long getParentId() {
-		return parentId;
-	}
-
-	public void setParentId(long parentId) {
-		this.parentId = parentId;
-	}
-
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-
-	public int getNamespace() {
-		return namespace;
-	}
-
-	public void setNamespace(int namespace) {
-		this.namespace = namespace;
-	}
-
 	public List<Link> getLinks() {
 		return links;
 	}
@@ -144,11 +88,7 @@ public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		pageId = in.readLong();
-		revisionId = in.readLong();
-		parentId = in.readLong();
-		timestamp = in.readLong();
-		namespace = in.readInt();
+		super.readFields(in);
 		int len = in.readInt();
 		for (int i = 0; i < len; i++) {
 			int anchorLen = in.readInt();
@@ -164,16 +104,11 @@ public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
 			Link l = new Link(anchor, text);
 			addLink(l);
 		}
-		pageTitle = in.readUTF();
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		out.writeLong(pageId);
-		out.writeLong(revisionId);
-		out.writeLong(parentId);
-		out.writeLong(timestamp);
-		out.writeInt(namespace);
+		super.write(out);
 		if (links == null)
 			out.writeInt(0);
 		else
@@ -186,13 +121,10 @@ public class WikipediaLinkSnapshot implements Writable, WikipediaHeader {
 			out.writeInt(bytes.length);
 			out.write(bytes, 0, bytes.length);
 		}
-		out.writeUTF(pageTitle);
 	}
 
 	public void clear() {
-		this.pageId = this.revisionId = this.parentId = this.timestamp = 0;
-		this.namespace = 0;
-		this.pageTitle = null;
+		super.clear();
 		this.links = null;
 	}
 }

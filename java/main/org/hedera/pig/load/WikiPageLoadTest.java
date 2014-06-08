@@ -19,7 +19,7 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.io.WikipediaRevision;
+import org.hedera.io.Revision;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 
 public class WikiPageLoadTest extends LoadFunc implements LoadMetadata {
@@ -31,7 +31,7 @@ public class WikiPageLoadTest extends LoadFunc implements LoadMetadata {
 	private static final WikiRevisionPageInputFormat INPUT_FORMAT = 
 			new WikiRevisionPageInputFormat();
 	
-	protected RecordReader<LongWritable, WikipediaRevision> reader;
+	protected RecordReader<LongWritable, Revision> reader;
 	
 	protected TupleFactory tuples;
 	protected BagFactory bags;
@@ -81,7 +81,7 @@ public class WikiPageLoadTest extends LoadFunc implements LoadMetadata {
 			hasNext = reader.nextKeyValue();
 			if (hasNext) {
 				LongWritable k = reader.getCurrentKey();
-				WikipediaRevision v = reader.getCurrentValue();
+				Revision v = reader.getCurrentValue();
 				return tuples.newTupleNoCopy(Arrays.asList(k.get(),
 						new String(v.getText(),"UTF-8")));
 			}

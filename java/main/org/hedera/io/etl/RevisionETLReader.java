@@ -25,10 +25,10 @@ import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
-public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META> 
+public abstract class RevisionETLReader<KEYIN, VALUEIN, META> 
 		extends RecordReader<KEYIN, VALUEIN> {
 
-	private static final Logger LOG = Logger.getLogger(WikiRevisionETLReader.class);
+	private static final Logger LOG = Logger.getLogger(RevisionETLReader.class);
 	
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 

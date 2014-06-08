@@ -1,22 +1,20 @@
 package org.hedera;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.END_PARENT_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_PARENT_ID;
-import static org.hedera.io.input.WikiRevisionInputFormat.START_TEXT;
 import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
 import java.io.IOException;
 
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.hedera.io.WikipediaLinkSnapshot;
-import org.hedera.io.WikipediaRevisionHeader;
+import org.hedera.io.LinkProfile;
+import org.hedera.io.RevisionHeader;
 import org.hedera.io.etl.ETLExtractor;
-import org.hedera.io.etl.WikipediaLinkExtractor;
+import org.hedera.io.etl.RevisionLinkInputFormat;
 
 public class LocalWikiRevisionLinkReader extends
-		LocalDefaultWikiRevisionETLReader<LongWritable, WikipediaLinkSnapshot> {
+		LocalDefaultWikiRevisionETLReader<LongWritable, LinkProfile> {
 
 	@Override
 	protected LongWritable initializeKey() {
@@ -24,8 +22,8 @@ public class LocalWikiRevisionLinkReader extends
 	}
 
 	@Override
-	protected WikipediaLinkSnapshot initializeValue() {
-		return new WikipediaLinkSnapshot();
+	protected LinkProfile initializeValue() {
+		return new LinkProfile();
 	}
 	
 	@Override
@@ -33,19 +31,19 @@ public class LocalWikiRevisionLinkReader extends
 	}
 	
 	@Override
-	protected void freeValue(WikipediaLinkSnapshot value) {
+	protected void freeValue(LinkProfile value) {
 		value.clear();
 	}
 	
 	@Override
-	protected ETLExtractor<LongWritable, WikipediaLinkSnapshot,
-			WikipediaRevisionHeader> initializeExtractor() {		
-		return new WikipediaLinkExtractor();		
+	protected ETLExtractor<LongWritable, LinkProfile,
+	RevisionHeader> initializeExtractor() {		
+		return new RevisionLinkInputFormat.LinkExtractor();		
 	}
 
 	@Override
 	protected Ack readToNextRevision(DataOutputBuffer buffer, 
-			WikipediaRevisionHeader meta) throws IOException {
+			RevisionHeader meta) throws IOException {
 		int i = 0;
 		int flag = 9;	
 		int parOrTs = -1;

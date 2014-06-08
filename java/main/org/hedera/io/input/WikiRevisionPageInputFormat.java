@@ -10,13 +10,13 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.hedera.io.WikipediaRevision;
+import org.hedera.io.Revision;
 
 public class WikiRevisionPageInputFormat extends 
-		WikiRevisionInputFormat<LongWritable, WikipediaRevision> {
+		WikiRevisionInputFormat<LongWritable, Revision> {
 
 	@Override
-	public RecordReader<LongWritable, WikipediaRevision> createRecordReader(InputSplit split, 
+	public RecordReader<LongWritable, Revision> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
 		return new RevisionReader();
 	}
@@ -26,7 +26,7 @@ public class WikiRevisionPageInputFormat extends
 	 * @author tuan
 	 * 
 	 */ 
-	public static class RevisionReader extends WikiRevisionReader<WikipediaRevision> {
+	public static class RevisionReader extends WikiRevisionReader<Revision> {
 
 		// Extra flags: 
 		// 
@@ -63,7 +63,7 @@ public class WikiRevisionPageInputFormat extends
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
-			value = new WikipediaRevision(); 
+			value = new Revision(); 
 		}
 
 		private void resetEverything() {			

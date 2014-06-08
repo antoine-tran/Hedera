@@ -3,18 +3,18 @@ package org.hedera;
 import java.io.IOException;
 
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.hedera.io.WikipediaRevisionHeader;
+import org.hedera.io.RevisionHeader;
 import org.mortbay.log.Log;
 
 public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
-		LocalWikiRevisionETLReader<WikipediaRevisionHeader, KEYIN, VALUEIN> {
+		LocalWikiRevisionETLReader<RevisionHeader, KEYIN, VALUEIN> {
 
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
 	
 	@Override
-	protected WikipediaRevisionHeader initializeMeta() {		
-		return new WikipediaRevisionHeader();		
+	protected RevisionHeader initializeMeta() {		
+		return new RevisionHeader();		
 	}
 	
 	@Override
@@ -29,7 +29,7 @@ public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 	// 7 - just passed the (page's) <id>
 	// 8 - just passed the </id> tag but outside the <revision>	
 	// 9 - just passed the (next) <revision>
-	protected Ack readToPageHeader(WikipediaRevisionHeader meta) 
+	protected Ack readToPageHeader(RevisionHeader meta) 
 			throws IOException {
 		int i = 0;
 		int flag = 2;		

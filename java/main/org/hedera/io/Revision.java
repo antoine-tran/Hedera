@@ -7,16 +7,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableUtils;
-
 /**
  * Provide a data model for one Wikipedia revision that is exchangable within Hadoop settings
  *
  * @author tuan
  *
  */
-public class WikipediaRevision extends WikipediaRevisionHeader implements Writable {
+public class Revision extends RevisionHeader {
 
 	private byte[] text;
 		
