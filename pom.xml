@@ -90,7 +90,7 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.7</version>
 			</plugin>
-			<!--  <plugin>
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.7</version>
@@ -103,12 +103,12 @@
 						</goals>
 						<configuration>
 							<sources>
-								<source>java/test</source>
+								<source>java/experiments</source>
 							</sources>
 						</configuration>
 					</execution>
 				</executions>
-			</plugin> -->
+			</plugin>
 		</plugins>
 
 		<sourceDirectory>java/main</sourceDirectory>
