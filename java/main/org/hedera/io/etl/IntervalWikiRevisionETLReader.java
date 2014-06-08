@@ -9,10 +9,11 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.hedera.io.WikipediaRevisionHeader;
 
 /**
+ * A Wiki
  * @author tuan
  *
  */
-public class IntervalWikiETLReader<KEYIN, VALUEIN> extends
+public class IntervalWikiRevisionETLReader<KEYIN, VALUEIN> extends
 		DefaultWikiRevisionETLReader<KEYIN, VALUEIN> {
 
 	@Override

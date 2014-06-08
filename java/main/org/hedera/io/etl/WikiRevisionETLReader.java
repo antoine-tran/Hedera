@@ -408,7 +408,7 @@ public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META>
 			
 			// We use a thread that pings back to the cluster every 5 minutes
 			// to avoid getting killed for slow read
-			TaskHeartbeatThread hearbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+			TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
 				@Override
 				protected void progress() {
 					LOG.info("Task " + context.getTaskAttemptID() 
@@ -417,12 +417,12 @@ public abstract class WikiRevisionETLReader<KEYIN, VALUEIN, META>
 			};
 			
 			try {
-				hearbeat.start();
+				heartbeat.start();
 				pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
 					((FSDataInputStream)fsin).read(buf);
 				pos[0] = 0;
 			} finally {
-				hearbeat.stop();
+				heartbeat.stop();
 			}
 			
 			if (pos[1] == -1) {
