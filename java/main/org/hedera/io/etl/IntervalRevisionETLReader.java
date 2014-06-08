@@ -262,5 +262,5 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 	 * @param buffer
 	 * @param meta
 	 */
-	protected abstract void processMetaData(DataOutputBuffer buffer, RevisionHeader meta);
+	protected void processMetaData(DataOutputBuffer buffer, RevisionHeader meta) {}
 }
