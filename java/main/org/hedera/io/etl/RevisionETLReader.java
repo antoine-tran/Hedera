@@ -27,10 +27,10 @@ import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
 public abstract class RevisionETLReader<KEYIN, VALUEIN, 
-		META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
+META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 
 	private static final Logger LOG = Logger.getLogger(RevisionETLReader.class);
-	
+
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
 
 	private static final float DEFAULT_LOWER_THRESHOLD = 0.01f;
@@ -93,7 +93,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 	protected abstract ETLExtractor<KEYIN, VALUEIN, META> initializeExtractor();
 
 	private TaskAttemptContext context;
-	
+
 	@Override
 	public KEYIN getCurrentKey() throws IOException, InterruptedException {
 		return key;
@@ -114,7 +114,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 	public float getProgress() throws IOException, InterruptedException {
 		return (fsin.getPos() - start) / (float) (end - start);
 	}
-	
+
 	protected TaskAttemptContext getTaskAttemptContext() {
 		return context;
 	}
@@ -211,11 +211,17 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 			// the rare case: One last revision from last page still needs
 			// to be processed
 			if (flag == 4) {
-				freeKey(key);
-				freeValue(value);
-				extractor.extract(prevBuf, meta, key, value);
-				flag = 3;
-				return true;
+				if (meta != null) {
+					freeKey(key);
+					freeValue(value);
+					extractor.extract(prevBuf, meta, key, value);
+					flag = 3;
+					return true;
+				}
+
+				// this should never happen !!
+				else throw new RuntimeException("This should not happen: "
+						+ " error in offset " + fsin.getPos());
 			}
 			else if (flag == 1 || flag == 3) {
 
@@ -260,10 +266,12 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 						// the last revision, extract and stop
 						else {
 							flag = 3;
-							freeKey(key);
-							freeValue(value);
-							extractor.extract(prevBuf,meta,key,value);
-							return true;
+							if (meta != null) {
+								freeKey(key);
+								freeValue(value);
+								extractor.extract(prevBuf,meta,key,value);
+								return true;
+							}
 						}
 					}
 
@@ -287,27 +295,50 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 							// the last revision, extract and stop
 							else {
 								flag = 3;
-								freeKey(key);
-								freeValue(value);
-								extractor.extract(prevBuf,meta,key,value);
-								return true;
+								if (meta != null) {
+									freeKey(key);
+									freeValue(value);
+									extractor.extract(prevBuf,meta,key,value);
+									return true;
+								}
 							}
 						}
 						else if (score > DEFAULT_UPPER_THRESHOLD) {
-							freeKey(key);
-							freeValue(value);
-							extractor.extract(prevBuf,meta,key,value);
-
-							// TODO: Tricky scenario: The very last revision just has
-							// a big change. 
-							if (!hasNextRevision()) {
-								// By turning a special flag value, we hope it will not
-								// be forgotten the next read
-								flag = 4;
+							if (meta != null) {
+								freeKey(key);
+								freeValue(value);
+								extractor.extract(prevBuf,meta,key,value);
+								
+								// Tricky scenario: The very last revision just has
+								// a big change. 
+								if (!hasNextRevision()) {
+									// By turning a special flag value, we hope it will not
+									// be forgotten the next read
+									flag = 4;
+								}
+								updateRevision();
+								return true;
 							}
-							updateRevision();
-							return true;
-						}						
+
+							// Boundary case: We have only one revision. Emit it right away and stop
+							else if (!hasNextRevision()) {
+								updateRevision();
+								if (meta != null) {
+									flag = 3;
+									freeKey(key);
+									freeValue(value);
+									extractor.extract(prevBuf,meta,key,value);
+									return true;
+								}
+							}
+							
+							// there are still more revisions to check, just shift the revision one
+							// step ahead and continue
+							else {
+								updateRevision();
+							}
+						}
+
 					}
 				}
 
@@ -319,10 +350,15 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 					// the last revision, extract and stop
 					else {
 						flag = 3;
-						freeKey(key);
-						freeValue(value);
-						extractor.extract(prevBuf,meta,key,value);
-						return true;
+
+						// it might happen that you skipped all the revisions,
+						// so just move on when meta is null
+						if (meta != null) {
+							freeKey(key);
+							freeValue(value);
+							extractor.extract(prevBuf,meta,key,value);
+							return true;
+						}						
 					}
 				}
 			}			
@@ -409,7 +445,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 		if (buf == null && pos.length != 2)
 			throw new IOException("Internal buffer corrupted.");
 		if (pos[0] == pos[1]) {	
-			
+
 			// We use a thread that pings back to the cluster every 5 minutes
 			// to avoid getting killed for slow read
 			TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
@@ -419,7 +455,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 							+ " pings back...");
 				}
 			};
-			
+
 			try {
 				heartbeat.start();
 				pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
@@ -428,7 +464,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN,
 			} finally {
 				heartbeat.stop();
 			}
-			
+
 			if (pos[1] == -1) {
 				flag = -1;
 				return false;

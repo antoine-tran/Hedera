@@ -97,6 +97,9 @@ public class RevisionBOW implements Writable {
 	/** build the bag-of-word model here.
 	 * TODO: Apply some Stemmer here */
 	public void buildBOW(List<String> words) {
+		if (bow == null) {
+			bow = new HMapSIW();
+		}
 		for (String w : words) {
 			int cnt = 0;
 			if (bow.containsKey(w)) {
@@ -108,6 +111,9 @@ public class RevisionBOW implements Writable {
 	
 	/** update the bag of words with new word */
 	public void updateBOW(String w) {
+		if (bow == null) {
+			bow = new HMapSIW();
+		}
 		int cnt = 0;
 		if (bow.containsKey(w)) {
 			cnt = bow.get(w);
@@ -150,6 +156,8 @@ public class RevisionBOW implements Writable {
 		this.namespace = 0;
 		this.lastTimestamp = -1;
 		this.lastRevisionId = -1;
-		bow.clear();
+		if (bow != null) {
+			bow.clear();
+		}
 	}
 }

@@ -143,8 +143,8 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 				LongWritable key, RevisionBOW value) {
 			
 			// save headers
-			key.set(meta.getPageId());
-			value.setPageId(meta.getPageId());
+			key.set(value.getPageId());
+			value.setPageId(value.getPageId());
 			value.setNamespace(meta.getNamespace());
 			value.setRevisionId(meta.getRevisionId());
 			value.setTimestamp(meta.getTimestamp());

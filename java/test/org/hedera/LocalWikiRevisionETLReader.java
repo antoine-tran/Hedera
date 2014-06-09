@@ -199,6 +199,8 @@ public abstract class LocalWikiRevisionETLReader<
 						// the last revision, extract and stop
 						else {
 							flag = 3;
+							freeKey(key);
+							freeValue(value);
 							extractor.extract(prevBuf,meta,key,value);
 							return true;
 						}
@@ -226,17 +228,39 @@ public abstract class LocalWikiRevisionETLReader<
 							}
 						}
 						else if (score > DEFAULT_UPPER_THRESHOLD) {
-							extractor.extract(prevBuf,meta,key,value);
-							
-							// TODO: Tricky scenario: The very last revision just has
-							// a big change. 
-							if (!hasNextRevision()) {
-								// By turning a special flag value, we hope it will not
-								// be forgotten the next read
-								flag = 4;
+							if (meta != null) {
+								freeKey(key);
+								freeValue(value);
+								extractor.extract(prevBuf,meta,key,value);
+								
+								// Tricky scenario: The very last revision just has
+								// a big change. 
+								if (!hasNextRevision()) {
+									// By turning a special flag value, we hope it will not
+									// be forgotten the next read
+									flag = 4;
+								}
+								updateRevision();
+								return true;
 							}
-							updateRevision();
-							return true;
+
+							// Boundary case: We have only one revision. Emit it right away and stop
+							else if (!hasNextRevision()) {
+								updateRevision();
+								if (meta != null) {
+									flag = 3;
+									freeKey(key);
+									freeValue(value);
+									extractor.extract(prevBuf,meta,key,value);
+									return true;
+								}
+							}
+							
+							// there are still more revisions to check, just shift the revision one
+							// step ahead and continue
+							else {
+								updateRevision();
+							}
 						}						
 					}
 				}
@@ -249,8 +273,15 @@ public abstract class LocalWikiRevisionETLReader<
 					// the last revision, extract and stop
 					else {
 						flag = 3;
-						extractor.extract(prevBuf,meta,key,value);
-						return true;
+						
+						// it might happen that you skipped all the revisions and so,
+						// just move on when meta is null
+						if (meta != null) {
+							freeKey(key);
+							freeValue(value);
+							extractor.extract(prevBuf,meta,key,value);
+							return true;
+						}
 					}
 				}
 			}			

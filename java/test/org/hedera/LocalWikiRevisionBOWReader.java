@@ -12,7 +12,7 @@ import org.hedera.io.etl.ETLExtractor;
 public class LocalWikiRevisionBOWReader extends 
 		LocalIntervalWikiRevisionETLReader<LongWritable, RevisionBOW> {
 
-	private long unitInterval = 1000 * 60 * 60l;
+	protected long unitInterval = 1000 * 60 * 60l;
 	
 	// maintain the word sequence of last visited revision
 	private List<String> prevRevWords = new LinkedList<>();
