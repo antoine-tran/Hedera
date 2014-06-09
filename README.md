@@ -18,7 +18,7 @@ framework has been tested in Hadoop CDH 4.x and Pig 0.11.x. It
 supports both Hadoop YARN and non-YARN models. Free for research and
 educational purpose under GNU and Common Creative License.
 
-### Why Hedea ?##
+### Why Hedera ?##
 
 While there are several frameworks built to support
 processing big textual data (both in MapReduce and non-MapReduce
