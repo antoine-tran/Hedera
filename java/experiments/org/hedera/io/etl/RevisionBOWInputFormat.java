@@ -134,8 +134,8 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 			if (tsNow - prevRev[1] <= unitInterval) {
 				return 0.0005f;
 			}
-			return (metaNow.getLength() - prevRev[2]) 	
-					/ metaBefore.getLength();	
+			return Math.abs(metaNow.getLength() - prevRev[2]) 	
+					/ (float)metaBefore.getLength();	
 		}
 
 		@Override
