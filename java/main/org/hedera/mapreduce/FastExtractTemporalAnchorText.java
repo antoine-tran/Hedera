@@ -13,17 +13,18 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 import org.hedera.io.LinkProfile;
 import org.hedera.io.LinkProfile.Link;
 import org.hedera.io.etl.RevisionLinkInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
-import org.mortbay.log.Log;
 
 import tuan.hadoop.conf.JobConfig;
 
 public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
-
+	private static final Logger LOG = Logger.getLogger(FastExtractTemporalAnchorText.class);
+	
 	private static final class MyMapper extends Mapper<LongWritable,
 	LinkProfile, LongWritable, Text> {
 
@@ -73,8 +74,8 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 					// debug hook
 					cnt++;
-					if (cnt % 1000000l == 0)
-						Log.info(output);
+					if (cnt % 10000000l == 0)
+						LOG.info(output);
 
 					context.write(key, valOut);
 				}

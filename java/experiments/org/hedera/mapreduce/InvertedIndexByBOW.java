@@ -13,13 +13,13 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.RevisionBOW;
+import org.hedera.io.etl.IntervalRevisionETLReader;
 import org.hedera.io.etl.RevisionBOWInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 
 import edu.umd.cloud9.io.array.ArrayListOfLongsWritable;
 import edu.umd.cloud9.io.pair.PairOfLongs;
 import edu.umd.cloud9.util.map.MapKI.Entry;
-
 import tuan.hadoop.conf.JobConfig;
 
 /** Build a simple inverted index from revisions' bag-of-words.
@@ -83,6 +83,21 @@ public class InvertedIndexByBOW extends JobConfig implements Tool {
 		// skip non-article and redirect pages
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_REDIRECT, true);
+		
+		// set up the starting and ending time
+		String startTime = null, endTime = null;
+		if (args.length > 4) {
+			startTime = args[4];
+			if (args.length > 5) {
+				endTime = args[5];
+			}			
+		}		
+		if (startTime != null) {
+			getConf().set(IntervalRevisionETLReader.START_TIME_OPT, startTime);
+		}
+		if (endTime != null) {
+			getConf().set(IntervalRevisionETLReader.END_TIME_OPT, endTime);
+		}
 
 		Job job = setup("Hedera: " + name,
 				InvertedIndexByBOW.class, inputDir, outputDir,
