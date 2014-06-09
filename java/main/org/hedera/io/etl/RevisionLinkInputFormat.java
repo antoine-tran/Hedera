@@ -267,7 +267,7 @@ public class RevisionLinkInputFormat extends
 		public float check(RevisionHeader curMeta, RevisionHeader prevMeta) {		
 			if (prevMeta == null || prevMeta.getLength() == 0) return 1f;
 			if (curMeta.isMinor()) return 0.0005f;
-			return (curMeta.getLength() - prevMeta.getLength()) / (float)prevMeta.getLength();
+			return Math.abs(curMeta.getLength() - prevMeta.getLength()) / (float)prevMeta.getLength();
 		}
 
 		@Override

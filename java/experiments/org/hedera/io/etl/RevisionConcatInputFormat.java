@@ -125,7 +125,7 @@ public class RevisionConcatInputFormat extends
 				return 0.0005f;
 			}
 			if (metaNow.isMinor()) return 0.0005f;
-			return (metaNow.getLength() - metaBefore.getLength()) 	
+			return Math.abs(metaNow.getLength() - metaBefore.getLength()) 	
 					/ (float)metaBefore.getLength();	
 		}
 

@@ -127,7 +127,7 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 			if (prevRev[1] == 0) {
 				if (metaBefore == null || metaBefore.getLength() == 0) return 1f;
 				if (metaNow.isMinor()) return 0.0005f;
-				return (metaNow.getLength() - metaBefore.getLength()) 	
+				return Math.abs(metaNow.getLength() - metaBefore.getLength()) 	
 						/ (float)metaBefore.getLength();
 			}
 
