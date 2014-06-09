@@ -1,9 +1,13 @@
 package org.hedera;
 
+import static org.hedera.io.input.WikiRevisionInputFormat.START_REDIRECT;
+import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
+
 import java.io.IOException;
 
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.hedera.io.RevisionHeader;
+import org.hedera.io.etl.RevisionETLReader.Ack;
 import org.mortbay.log.Log;
 
 public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
@@ -11,6 +15,7 @@ public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
+	protected boolean skipRedirect = true;
 	
 	@Override
 	protected RevisionHeader initializeMeta() {		
@@ -34,6 +39,7 @@ public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 		int i = 0;
 		int flag = 2;		
 		boolean skipped = false;
+		int revOrRedirect = -1;
 		try (DataOutputBuffer pageTitle = new DataOutputBuffer(); 
 				DataOutputBuffer nsBuf = new DataOutputBuffer(); 
 				DataOutputBuffer keyBuf = new DataOutputBuffer()) {
@@ -143,6 +149,39 @@ public abstract class LocalDefaultWikiRevisionETLReader<KEYIN, VALUEIN> extends
 					}
 
 					else if (flag == 8) {
+						int curMatch = 0;						
+						if ((i < START_REVISION.length && b == START_REVISION[i]) 
+								&& (i < START_REDIRECT.length && b == START_REDIRECT[i])) {
+							curMatch = 3;
+						} else if (i < START_REVISION.length && b == START_REVISION[i]) {
+							curMatch = 1;
+						} else if (i < START_REDIRECT.length && b == START_REDIRECT[i]) {
+							curMatch = 2;
+						}				
+						if (curMatch > 0 && (i == 0 || revOrRedirect == 3 
+								|| curMatch == revOrRedirect)) {					
+							i++;			
+							revOrRedirect = curMatch;
+						} else i = 0;
+						if ((revOrRedirect == 2 || revOrRedirect == 3) 
+								&& i >= START_REDIRECT.length) {
+							if (skipRedirect) {
+								skipped = true;
+								meta.clear();
+								return Ack.SKIPPED;
+							}
+							revOrRedirect = -1;	
+							flag = 9;
+							i = 0;
+						} else if ((revOrRedirect == 1 || revOrRedirect == 3) 
+								&& i >= START_REVISION.length) {
+							flag = 10;
+							revOrRedirect = -1;
+							return Ack.PASSED_TO_NEXT_TAG;
+						}							
+					}
+					
+					else if (flag == 9 && !skipRedirect) {
 						if (b == START_REVISION[i]) {
 							i++;
 						} else i = 0;
