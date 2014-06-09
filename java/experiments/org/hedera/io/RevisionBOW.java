@@ -6,6 +6,7 @@ package org.hedera.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 
@@ -84,6 +85,27 @@ public class RevisionBOW implements Writable {
 	 */
 	public void setLastRevisionId(long lastRevisionId) {
 		this.lastRevisionId = lastRevisionId;
+	}
+	
+	/** build the bag-of-word model here.
+	 * TODO: Apply some Stemmer here */
+	public void buildBOW(List<String> words) {
+		for (String w : words) {
+			int cnt = 0;
+			if (bow.containsKey(w)) {
+				cnt = bow.get(w);
+			}
+			bow.put(w, cnt + 1);
+		}
+	}
+	
+	/** update the bag of words with new word */
+	public void updateBOW(String w) {
+		int cnt = 0;
+		if (bow.containsKey(w)) {
+			cnt = bow.get(w);
+		}
+		bow.put(w, cnt + 1);
 	}
 
 	@Override
