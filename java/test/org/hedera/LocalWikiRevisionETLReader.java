@@ -119,7 +119,7 @@ public abstract class LocalWikiRevisionETLReader<
 		extractor = initializeExtractor();
 	}	
 	
-	private void updateRevision() throws IOException {
+	protected void updateRevision() throws IOException {
 		if (meta == null) {
 			meta = initializeMeta();
 		}
@@ -130,7 +130,7 @@ public abstract class LocalWikiRevisionETLReader<
 		curBuf.reset();
 	}
 	
-	private void clearRevisions() {
+	protected void clearRevisions() {
 		meta = null;
 		prevBuf.reset();
 		curBuf.reset();		

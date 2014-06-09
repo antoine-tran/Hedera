@@ -35,7 +35,7 @@ public class TestWikiETLReaders {
 		}		
 	}
 	
-	@Test
+	//@Test
 	public void testArticleSkipping() {
 		LocalWikiRevisionLinkReader reader = new LocalWikiRevisionLinkReader();
 		reader.skipNonArticles = true;
@@ -73,7 +73,7 @@ public class TestWikiETLReaders {
 			while (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
 				LinkProfile wls = reader.getCurrentValue();
-				System.out.println(key.get());			
+				System.out.println(key.get() + "\t" + wls.getRevisionId());			
 				if (wls.getLinks() != null) {
 					for (Link l : wls.getLinks()) {
 						System.out.println(wls.getPageTitle() + "==>" 
@@ -88,5 +88,10 @@ public class TestWikiETLReaders {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}		
+	}
+	
+	@Test
+	public void testBOWReader() {
+		
 	}
 }
