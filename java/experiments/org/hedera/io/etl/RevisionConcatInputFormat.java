@@ -144,7 +144,7 @@ public class RevisionConcatInputFormat extends
 				value.setPageTitle(meta.getPageTitle());
 				value.setParentId(meta.getParentId());
 				value.setRevisionId(meta.getRevisionId());
-				value.setTimestamp(meta.getRevisionId());
+				value.setTimestamp(meta.getTimestamp());
 				
 				value.loadText(content.getData(), 0, content.getLength() 
 						- END_TEXT.length);

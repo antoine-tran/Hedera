@@ -284,7 +284,7 @@ public class RevisionLinkInputFormat extends
 			value.setPageTitle(meta.getPageTitle());
 			value.setParentId(meta.getParentId());
 			value.setRevisionId(meta.getRevisionId());
-			value.setTimestamp(meta.getRevisionId());
+			value.setTimestamp(meta.getTimestamp());
 
 			// add content (here the list of links)	
 			DataOutputBuffer linkBuffer = new DataOutputBuffer();

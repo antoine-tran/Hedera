@@ -5,6 +5,7 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -81,6 +82,21 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		}
 
 	}
+	
+	private static final class MyReducer extends 
+			Reducer<LongWritable, Text, NullWritable, Text> {
+
+		NullWritable k = NullWritable.get();
+		
+		
+		@Override
+		protected void reduce(LongWritable key, Iterable<Text> vals, Context context)
+				throws IOException, InterruptedException {
+			for (Text v : vals) {
+				context.write(k, v);
+			}
+		}
+	}
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -99,8 +115,8 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 				FastExtractTemporalAnchorText.class, inputDir, outputDir,
 				RevisionLinkInputFormat.class, TextOutputFormat.class,
 				LongWritable.class, Text.class,
-				LongWritable.class, Text.class,
-				MyMapper.class, Reducer.class, reduceNo);
+				NullWritable.class, Text.class,
+				MyMapper.class, MyReducer.class, reduceNo);
 
 		job.waitForCompletion(true);
 		return 0;
