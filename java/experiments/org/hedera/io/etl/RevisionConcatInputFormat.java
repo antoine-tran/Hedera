@@ -130,9 +130,13 @@ public class RevisionConcatInputFormat extends
 		}
 
 		@Override
-		public void extract(DataOutputBuffer content, RevisionHeader meta,
+		public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 				LongWritable key, RevisionConcatText value) {
 			
+			if (meta == null || meta.getLength() == 0) {
+				return false;
+			}
+
 			List<String> lastText = value.getLastRevision();
 			if (lastText == null) {
 				
@@ -170,6 +174,7 @@ public class RevisionConcatInputFormat extends
 				}
 				lastText = curText;
 			}
+			return true;
 		}
 	}
 }

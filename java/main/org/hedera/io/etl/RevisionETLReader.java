@@ -214,8 +214,12 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 				if (meta != null) {
 					freeKey(key);
 					freeValue(value);
-					extractor.extract(prevBuf, meta, key, value);
+					boolean res = extractor.extract(prevBuf, meta, key, value);
 					flag = 3;
+					if (!res) {
+						throw new RuntimeException("This should not happen: "
+								+ " error in offset " + fsin.getPos());
+					}
 					return true;
 				}
 
@@ -269,8 +273,13 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 							if (meta != null) {
 								freeKey(key);
 								freeValue(value);
-								extractor.extract(prevBuf,meta,key,value);
-								return true;
+								boolean res = extractor.extract(prevBuf,meta,key,value);
+								
+								// every revsion that is checked is empty
+								if (!res) {
+									continue;
+								}
+								else return true;
 							}
 						}
 					}
@@ -298,8 +307,12 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 								if (meta != null) {
 									freeKey(key);
 									freeValue(value);
-									extractor.extract(prevBuf,meta,key,value);
-									return true;
+									boolean res = extractor.extract(prevBuf,meta,key,value);
+									// every revsion that is checked is empty
+									if (!res) {
+										continue;
+									}
+									else return true;
 								}
 							}
 						}
@@ -307,7 +320,7 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 							if (meta != null) {
 								freeKey(key);
 								freeValue(value);
-								extractor.extract(prevBuf,meta,key,value);
+								boolean res = extractor.extract(prevBuf,meta,key,value);
 								
 								// Tricky scenario: The very last revision just has
 								// a big change. 
@@ -317,7 +330,9 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 									flag = 4;
 								}
 								updateRevision();
-								return true;
+								if (res)
+									return true;
+								else continue;
 							}
 
 							// Boundary case: We have only one revision. Emit it right away and stop
@@ -327,8 +342,13 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 									flag = 3;
 									freeKey(key);
 									freeValue(value);
-									extractor.extract(prevBuf,meta,key,value);
-									return true;
+									boolean res = extractor.extract(prevBuf,meta,key,value);
+									
+									if (res)
+										return true;
+									
+									else throw new RuntimeException("No way! String to " +
+											"inspect: " + new String(prevBuf.getData(), "UTF-8"));
 								}
 							}
 							
@@ -356,8 +376,10 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 						if (meta != null) {
 							freeKey(key);
 							freeValue(value);
-							extractor.extract(prevBuf,meta,key,value);
-							return true;
+							boolean res = extractor.extract(prevBuf,meta,key,value);
+							if (res)
+								return true;
+							else continue;
 						}						
 					}
 				}

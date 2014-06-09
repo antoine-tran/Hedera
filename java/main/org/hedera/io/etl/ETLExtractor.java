@@ -12,7 +12,9 @@ public interface ETLExtractor<KEY, VALUE, META> {
 	/** extract the revision content and populate the OUTPUT .
 	 * 
 	 * NOTE: Make sure all the time and value is clean before, when
-	 * the revisions are treated independently */
-	public void extract(DataOutputBuffer content, META meta, 
+	 * the revisions are treated independently. 
+	 * Return true when the extracting is successful and new
+	 * values are flushed. Return false when there is no updates */
+	public boolean extract(DataOutputBuffer content, META meta, 
 			KEY key, VALUE value);	
 }

@@ -139,12 +139,16 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 		}
 
 		@Override
-		public void extract(DataOutputBuffer content, RevisionHeader meta,
+		public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 				LongWritable key, RevisionBOW value) {
 			
+			// empty header, do nothing
+			if (meta == null || meta.getLength() == 0) {
+				return false;
+			}
 			// save headers
-			key.set(value.getPageId());
-			value.setPageId(value.getPageId());
+			key.set(meta.getPageId());
+			value.setPageId(meta.getPageId());
 			value.setNamespace(meta.getNamespace());
 			value.setRevisionId(meta.getRevisionId());
 			value.setTimestamp(meta.getTimestamp());
@@ -178,7 +182,9 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 			prevRevWords.addAll(thisRevWords);
 			prevRev[0] = meta.getRevisionId();
 			prevRev[1] = meta.getTimestamp();
-			prevRev[2] = meta.getLength();			
+			prevRev[2] = meta.getLength();	
+			
+			return true;
 		}
 	}
 }

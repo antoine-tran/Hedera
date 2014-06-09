@@ -172,14 +172,18 @@ WikiRevisionInputFormat<LongWritable, PairOfLongs> {
 		}
 
 		@Override
-		public void extract(DataOutputBuffer content, RevisionHeader meta,
+		public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 				LongWritable key, PairOfLongs value) {
-			RevisionHeader header = (RevisionHeader)meta;
-			long revId = header.getRevisionId();
-			long ts = header.getTimestamp();
+			if (meta == null || meta.getLength() == 0) {
+				return false;
+			}
+			long revId = meta.getRevisionId();
+			long ts = meta.getTimestamp();
 
 			key.set(meta.getPageId());
 			value.set(revId, ts);
+			
+			return true;
 		}
 	}
 }

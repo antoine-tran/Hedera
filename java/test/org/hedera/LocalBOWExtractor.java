@@ -58,9 +58,12 @@ public class LocalBOWExtractor implements ETLExtractor<LongWritable,
 	}
 
 	@Override
-	public void extract(DataOutputBuffer content, RevisionHeader meta,
+	public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 			LongWritable key, RevisionBOW value) {
 		
+		if (meta == null || meta.getLength() == 0) {
+			return false;
+		}
 		// save headers
 		key.set(meta.getPageId());
 		value.setPageId(meta.getPageId());
@@ -97,7 +100,9 @@ public class LocalBOWExtractor implements ETLExtractor<LongWritable,
 		prevRevWords.addAll(thisRevWords);
 		prevRev[0] = meta.getRevisionId();
 		prevRev[1] = meta.getTimestamp();
-		prevRev[2] = meta.getLength();			
+		prevRev[2] = meta.getLength();		
+		
+		return true;
 	}
 }
 

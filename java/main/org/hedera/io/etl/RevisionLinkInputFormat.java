@@ -271,9 +271,11 @@ public class RevisionLinkInputFormat extends
 		}
 
 		@Override
-		public void extract(DataOutputBuffer content, RevisionHeader meta,
+		public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 				LongWritable key, LinkProfile value) {
-
+			if (meta == null || meta.getLength() == 0) {
+				return false;
+			}
 			// add meta-data		
 			key.set(meta.getPageId());
 
@@ -330,6 +332,8 @@ public class RevisionLinkInputFormat extends
 				LOG.error("Error extracting link from revision: [" 
 						+ value.getPageId() + ", rev: " + value.getRevisionId() + "]");
 			}
+			return true;
 		}
 	}
+	
 }
