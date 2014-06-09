@@ -66,7 +66,7 @@ public class TestWikiETLReaders {
 	public void testRedirectSkipping() {
 		LocalWikiRevisionLinkReader reader = new LocalWikiRevisionLinkReader();
 		reader.skipRedirect = true;
-		reader.skipNonArticles = false;
+		reader.skipNonArticles = true;
 		
 		try {
 			reader.initialize();

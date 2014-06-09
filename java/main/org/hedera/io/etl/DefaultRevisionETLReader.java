@@ -186,17 +186,27 @@ public abstract class DefaultRevisionETLReader<KEYIN, VALUEIN> extends
 
 					else if (flag == 8) {
 						int curMatch = 0;						
-						if ((i < START_REVISION.length && b == START_REVISION[i]) 
-								&& (i < START_REDIRECT.length && b == START_REDIRECT[i])
+						if ((i < START_REVISION.length 
+								&& b == START_REVISION[i]) 
+								&& (i < START_REDIRECT.length 
+								&& b == START_REDIRECT[i])
 								
-								// subtle bug here: some tag names can overlap multiple times
-								&& (revOrRedirect == 3 || revOrRedirect == -1)) {
+								// subtle bug here: some tag names can overlap
+								// multiple times
+								&& (revOrRedirect == 3 
+								|| revOrRedirect == -1)){
 							curMatch = 3;
-						} else if (i < START_REVISION.length && b == START_REVISION[i]) {
+						} else if (i < START_REVISION.length 
+								&& b == START_REVISION[i]
+								&& revOrRedirect != 2) {
 							curMatch = 1;
-						} else if (i < START_REDIRECT.length && b == START_REDIRECT[i]) {
+						} else if (i < START_REDIRECT.length 
+								&& b == START_REDIRECT[i]
+								&& revOrRedirect != 1) {
 							curMatch = 2;
-						}				
+						} else {
+							curMatch = 0;
+						}
 						if (curMatch > 0 && (i == 0 || revOrRedirect == 3 
 								|| curMatch == revOrRedirect)) {					
 							i++;			
