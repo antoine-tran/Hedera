@@ -33,8 +33,8 @@ public abstract class LocalIntervalWikiRevisionETLReader<KEYIN, VALUEIN> extends
 	@Override
 	public void initialize() throws IOException {
 		super.initialize();
-		startTs = TIME_FORMAT.parseMillis("2005-03-28T07:41:42Z");
-		endTs = TIME_FORMAT.parseMillis("2003-05-30T12:57:20Z");		
+		endTs = TIME_FORMAT.parseMillis("2005-03-28T07:41:42Z");
+		startTs = TIME_FORMAT.parseMillis("2003-05-30T12:57:20Z");		
 	}
 
 	@Override
