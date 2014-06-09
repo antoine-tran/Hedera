@@ -7,7 +7,8 @@ import java.io.IOException;
 import org.apache.hadoop.io.Writable;
 
 /** a wikipedia header that provides APIs to access revision meta-data */
-public class RevisionHeader implements Writable {
+public class RevisionHeader implements Writable, 
+		CloneableObject<RevisionHeader> {
 
 	private long pageId;
 	private long revisionId;

@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.io.DataOutputBuffer;
+import org.hedera.io.CloneableObject;
 import org.hedera.io.etl.ETLExtractor;
 
 
 /** The local variant of WikiRevisionETLReader for testing purposes */
-public abstract class LocalWikiRevisionETLReader<META,KEYIN,VALUEIN> {
+public abstract class LocalWikiRevisionETLReader<
+		META extends CloneableObject<META>,KEYIN,VALUEIN> {
 
 	public static final String START_PAGE_TAG = "<page>";
 	public static final String END_PAGE_TAG = "</page>";
@@ -118,7 +120,10 @@ public abstract class LocalWikiRevisionETLReader<META,KEYIN,VALUEIN> {
 	}	
 	
 	private void updateRevision() throws IOException {
-		meta = curMeta;
+		if (meta == null) {
+			meta = initializeMeta();
+		}
+		meta.clone(curMeta);
 		prevBuf.reset();
 		prevBuf.write(curBuf.getData(), 0, curBuf.getLength() 
 				- END_TEXT.length);
@@ -173,13 +178,7 @@ public abstract class LocalWikiRevisionETLReader<META,KEYIN,VALUEIN> {
 				}
 			}
 			if (flag == 2) {				
-				Ack r = readToNextRevision(curBuf, curMeta);
-				
-				// debug hook				
-				String s = new String(curBuf.getData(), 0, curBuf.getLength());
-				System.out.println("Content: " + s);
-				
-				
+				Ack r = readToNextRevision(curBuf, curMeta);	
 				if (r == Ack.EOF)
 					return false;
 				else if (r == Ack.FAILED)

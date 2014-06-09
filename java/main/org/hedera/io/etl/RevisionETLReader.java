@@ -17,6 +17,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
+import org.hedera.io.CloneableObject;
 
 import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
@@ -25,8 +26,8 @@ import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
-public abstract class RevisionETLReader<KEYIN, VALUEIN, META> 
-		extends RecordReader<KEYIN, VALUEIN> {
+public abstract class RevisionETLReader<KEYIN, VALUEIN, 
+		META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 
 	private static final Logger LOG = Logger.getLogger(RevisionETLReader.class);
 	
@@ -172,7 +173,10 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN, META>
 	}
 
 	protected void updateRevision() throws IOException {
-		meta = curMeta;
+		if (meta == null) {
+			meta = initializeMeta();
+		}
+		meta.clone(curMeta);
 		prevBuf.reset();
 
 		// some ETL Reader dont read the content at all !!
