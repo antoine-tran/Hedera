@@ -18,16 +18,14 @@ import org.hedera.io.etl.RevisionLinkInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.mortbay.log.Log;
 
-import edu.umd.cloud9.io.pair.PairOfLongs;
 import tuan.hadoop.conf.JobConfig;
 
 public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 
 	private static final class MyMapper extends Mapper<LongWritable,
-	LinkProfile, PairOfLongs, Text> {
+	LinkProfile, LongWritable, Text> {
 
-		private PairOfLongs keyOut = new PairOfLongs();
 		private Text valOut = new Text();
 
 		// simple counter to sparse the debug printout
@@ -51,8 +49,6 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 			long pageId = value.getPageId();
 			long revId = value.getRevisionId();
 			long parId = value.getParentId();
-
-			keyOut.set(revId, timestamp);
 
 			String title = value.getPageTitle();			
 			StringBuilder prefix = new StringBuilder();
@@ -79,7 +75,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 					if (cnt % 1000000l == 0)
 						Log.info(output);
 
-					context.write(keyOut, valOut);
+					context.write(key, valOut);
 				}
 			}
 		}
@@ -102,8 +98,8 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		Job job = setup("Hedera: " + name,
 				FastExtractTemporalAnchorText.class, inputDir, outputDir,
 				RevisionLinkInputFormat.class, TextOutputFormat.class,
-				PairOfLongs.class, Text.class,
-				PairOfLongs.class, Text.class,
+				LongWritable.class, Text.class,
+				LongWritable.class, Text.class,
 				MyMapper.class, Reducer.class, reduceNo);
 
 		job.waitForCompletion(true);

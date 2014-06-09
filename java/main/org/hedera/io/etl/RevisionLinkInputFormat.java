@@ -19,7 +19,7 @@ import org.hedera.io.input.WikiRevisionInputFormat;
  * each revision on the go 
  */
 public class RevisionLinkInputFormat extends 
-WikiRevisionInputFormat<LongWritable, LinkProfile> {
+		WikiRevisionInputFormat<LongWritable, LinkProfile> {
 
 	@Override
 	public RecordReader<LongWritable, LinkProfile> createRecordReader(

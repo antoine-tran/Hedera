@@ -61,4 +61,32 @@ public class TestWikiETLReaders {
 			e.printStackTrace();
 		}		
 	}
+	
+	@Test
+	public void testRedirectSkipping() {
+		LocalWikiRevisionLinkReader reader = new LocalWikiRevisionLinkReader();
+		reader.skipRedirect = true;
+		reader.skipNonArticles = false;
+		
+		try {
+			reader.initialize();
+			while (reader.nextKeyValue()) {
+				LongWritable key = reader.getCurrentKey();
+				LinkProfile wls = reader.getCurrentValue();
+				System.out.println(key.get());			
+				if (wls.getLinks() != null) {
+					for (Link l : wls.getLinks()) {
+						System.out.println(wls.getPageTitle() + "==>" 
+								+ l.getAnchorText() + "," + l.getTarget());
+					}
+				}
+			}
+			System.out.println("Finished.");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}		
+	}
 }

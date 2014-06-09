@@ -187,7 +187,10 @@ public abstract class DefaultRevisionETLReader<KEYIN, VALUEIN> extends
 					else if (flag == 8) {
 						int curMatch = 0;						
 						if ((i < START_REVISION.length && b == START_REVISION[i]) 
-								&& (i < START_REDIRECT.length && b == START_REDIRECT[i])) {
+								&& (i < START_REDIRECT.length && b == START_REDIRECT[i])
+								
+								// subtle bug here: some tag names can overlap multiple times
+								&& (revOrRedirect == 3 || revOrRedirect == -1)) {
 							curMatch = 3;
 						} else if (i < START_REVISION.length && b == START_REVISION[i]) {
 							curMatch = 1;
@@ -222,7 +225,7 @@ public abstract class DefaultRevisionETLReader<KEYIN, VALUEIN> extends
 							i++;
 						} else i = 0;
 						if (i >= START_REVISION.length) {
-							flag = 9;
+							flag = 10;
 							return Ack.PASSED_TO_NEXT_TAG;
 						}
 					}					
