@@ -171,7 +171,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN, META>
 				DEFAULT_MAX_BLOCK_SIZE);
 	}
 
-	private void updateRevision() throws IOException {
+	protected void updateRevision() throws IOException {
 		meta = curMeta;
 		prevBuf.reset();
 
@@ -183,7 +183,7 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN, META>
 		}
 	}
 
-	private void clearRevisions() {
+	protected void clearRevisions() {
 		meta = null;
 		prevBuf.reset();
 		curBuf.reset();
