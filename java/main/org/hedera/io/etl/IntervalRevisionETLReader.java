@@ -262,9 +262,9 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 	}
 
 	/**
-	 * This method processes after caching the currently visited revision. It updates
-	 * the meta-data to facilitate the extraction of content right afterwards (in
-	 * WikiRevisionETLReader's code)
+	 * This method processes after caching the currently visited revision.
+	 * It performs the meta-data quick updates before the actual extraction 
+	 * (in WikiRevisionETLReader's code)
 	 * @param buffer
 	 * @param meta
 	 */

@@ -62,6 +62,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
 	public static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
+	public static final String SKIP_REDIRECT = "org.hedera.input.noredirects"; 
 	
 	protected CompressionCodecFactory compressionCodecs = null;
 
@@ -97,6 +98,9 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	public static final byte[] END_PARENT_ID = "</text>".getBytes(StandardCharsets.UTF_8);	
 	
 	public static final byte[] MINOR_TAG = "<minor/>".getBytes(StandardCharsets.UTF_8);
+	
+	public static final byte[] START_REDIRECT = "<redirect title=".getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_REDIRECT = "</redirect>".getBytes(StandardCharsets.UTF_8);
 	
 	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
