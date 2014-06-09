@@ -21,21 +21,15 @@ import difflib.Patch;
 
 public class RevisionConcatInputFormat extends
 		WikiRevisionInputFormat<LongWritable, RevisionConcatText> {
-
-	public static final String SCALE_OPT = "org.hedera.io.etl.bow.scale";
-	public static final String HOUR_SCALE_OPT = "hour";
-	public static final String DAY_SCALE_OPT = "day";
-	public static final String WEEK_SCALE_OPT = "week";
-	public static final String MONTH_SCALE_OPT = "month";
 	
 	// default: 1 hour
-	private long intervalUnit = 1000 * 60 * 60;
+	private long unitInterval = 1000 * 60 * 60;
 	
 	@Override
 	public RecordReader<LongWritable, RevisionConcatText> createRecordReader(
 			InputSplit input, TaskAttemptContext context) throws IOException,
 			InterruptedException {
-		return new IntervalRevisionBOWReader();
+		return new IntervalRevisionConcatTextReader();
 	}
 
 	/**
@@ -49,7 +43,7 @@ public class RevisionConcatInputFormat extends
 	 *  
 	 * @author tuan
 	 * */
-	public class IntervalRevisionBOWReader extends
+	public class IntervalRevisionConcatTextReader extends
 			IntervalRevisionETLReader<LongWritable, RevisionConcatText> {
 						
 		@Override
@@ -60,16 +54,16 @@ public class RevisionConcatInputFormat extends
 			String scale = conf.get(SCALE_OPT);
 			if (scale != null) {
 				if (HOUR_SCALE_OPT.equals(scale)) {
-					intervalUnit = 1000 * 60 * 60;
+					unitInterval = 1000 * 60 * 60;
 				}
 				else if (DAY_SCALE_OPT.equals(scale)) {
-					intervalUnit = 1000 * 60 * 60 * 24;
+					unitInterval = 1000 * 60 * 60 * 24;
 				}
 				else if (WEEK_SCALE_OPT.equals(scale)) {
-					intervalUnit = 1000 * 60 * 60 * 24 * 7;
+					unitInterval = 1000 * 60 * 60 * 24 * 7;
 				}
 				else if (MONTH_SCALE_OPT.equals(scale)) {
-					intervalUnit = 1000 * 60 * 60 * 24 * 30;
+					unitInterval = 1000 * 60 * 60 * 24 * 30;
 				}
 			}
 		}
@@ -77,7 +71,7 @@ public class RevisionConcatInputFormat extends
 		@Override
 		protected ETLExtractor<LongWritable, RevisionConcatText, 
 				RevisionHeader> initializeExtractor() {
-			return new RevisionBOWExtractor();
+			return new RevisionConcatTextExtractor();
 		}
 		
 		@Override
@@ -114,16 +108,20 @@ public class RevisionConcatInputFormat extends
 	 * @author tuan
 	 *
 	 */
-	public class RevisionBOWExtractor implements ETLExtractor<LongWritable,
+	public class RevisionConcatTextExtractor implements ETLExtractor<LongWritable,
 			RevisionConcatText, RevisionHeader> {
 				
 		@Override
 		public float check(RevisionHeader metaNow,
 				RevisionHeader metaBefore) {
+			
 			if (metaBefore == null || metaBefore.getLength() == 0) return 1f;
 			long tsNow = metaNow.getTimestamp();
 			long tsBefore = metaBefore.getTimestamp();
-			if (tsNow - tsBefore <= intervalUnit) {
+			
+			// TODO: Wrong !! should use a global timestamp, tsBefore is
+			// always updated 
+			if (tsNow - tsBefore <= unitInterval) {
 				return 0.0005f;
 			}
 			if (metaNow.isMinor()) return 0.0005f;

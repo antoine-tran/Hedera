@@ -32,11 +32,17 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 		DefaultRevisionETLReader<KEYIN, VALUEIN> {
 
 	public static final String START_TIME_OPT = "org.hedera.io.etl.starttime";
-			public static final String END_TIME_OPT = "org.hedera.io.etl.endtime";
-	
+	public static final String END_TIME_OPT = "org.hedera.io.etl.endtime";
+
+	public static final String SCALE_OPT = "org.hedera.io.etl.bow.scale";
+	public static final String HOUR_SCALE_OPT = "hour";
+	public static final String DAY_SCALE_OPT = "day";
+	public static final String WEEK_SCALE_OPT = "week";
+	public static final String MONTH_SCALE_OPT = "month";
+
 	private long startTs = Long.MIN_VALUE;
 	private long endTs = Long.MAX_VALUE;
-	
+
 	@Override
 	public void initialize(InputSplit input, TaskAttemptContext tac)
 			throws IOException, InterruptedException {
@@ -51,7 +57,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 			endTs = TIME_FORMAT.parseMillis(endTime);
 		}
 	}
-	
+
 	@Override
 	// -1: EOF
 	// 9 - default
@@ -88,7 +94,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// everything inside the inner <id></id> 
 					// block goes to revision buffer
 					else if (flag == 10) {
@@ -106,7 +112,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// after the inner <id>, check for either <timestamp> or <parentId>
 					else if (flag == 11) {
 						int curMatch = 0;				
@@ -132,7 +138,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}		
 					}
-					
+
 					// inside <timestamp></timestamp> block everything goes to timestamp buffer
 					else if (flag == 12) {
 						if (b == END_TIMESTAMP[i]) {
@@ -154,7 +160,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// inside <parentId></parentId> block everything goes to parentId buffer
 					else if (flag == 14) {
 						if (b == END_PARENT_ID[i]) {
@@ -171,7 +177,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// after the </parentId>, search for <timestamp>
 					else if (flag == 15) {
 						if (b == START_TIMESTAMP[i]) {
@@ -182,10 +188,10 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// After the timestamp, sometimes we can make a quick check to see
 					// whether we should  skip this revision
-					
+
 					// after the </timestamp>, check for <minor/>, if they exist
 					else if (flag == 13) {
 						int curMatch = 0;				
@@ -213,7 +219,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}	
 					}
-					
+
 					// after the <minor/>, and search for <text>
 					else if (flag == 16) {
 						if (b == START_TEXT[i]) {
@@ -224,7 +230,7 @@ public abstract class IntervalRevisionETLReader<KEYIN, VALUEIN> extends
 							i = 0;
 						}
 					}
-					
+
 					// inside <text></text> block everything goes to content buffer
 					else if (flag == 17) {
 						if (b == END_TEXT[i]) {

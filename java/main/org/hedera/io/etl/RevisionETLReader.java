@@ -155,8 +155,8 @@ public abstract class RevisionETLReader<KEYIN, VALUEIN, META>
 		flag = 1;
 		pos[0] = pos[1] = 0;
 		meta = null;
-		initializeObjects();
 		this.context = tac;
+		initializeObjects();
 	}
 
 	private void initializeObjects() {
