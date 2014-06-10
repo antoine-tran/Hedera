@@ -35,6 +35,9 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 
 	private static final float DEFAULT_LOWER_THRESHOLD = 0.01f;
 	private static final float DEFAULT_UPPER_THRESHOLD = 0.1f;
+	
+	// threshold for checking the revision seriously
+	private static final long GOOD_ENOUGH_REVISION = 10;
 
 	/** The acknowledgement signal when invoking one internal consuming method.
 	 * There are three states can return:
@@ -181,8 +184,7 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 
 		// some ETL Reader dont read the content at all !!
 		if (curBuf.getLength() > 0) {
-			prevBuf.write(curBuf.getData(), 0, curBuf.getLength() 
-					- END_TEXT.length);
+			prevBuf.write(curBuf.getData(), 0, curBuf.getLength());
 			curBuf.reset();
 		}
 	}
@@ -256,10 +258,31 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 					throw new IOException("error when reading the next "
 							+ "</revision");
 
-				// We never have skipped inside the revision block
-
 				else if (r == Ack.PASSED_TO_NEXT_TAG) {
 
+					// if the current revision is too small, just skip it
+					if (curBuf.getLength() < GOOD_ENOUGH_REVISION) {
+						if (hasNextRevision()) {
+							continue;
+						} 
+
+						// the last revision, extract and stop
+						else {
+							flag = 3;
+							if (meta != null) {
+								freeKey(key);
+								freeValue(value);
+								boolean res = extractor.extract(prevBuf,meta,key,value);
+								
+								// every revsion that is checked is empty
+								if (!res) {
+									continue;
+								}
+								else return true;
+							}
+						}
+					}
+					
 					// The first revision always replace the previous (empty) one
 					if (meta == null) {						
 						updateRevision();

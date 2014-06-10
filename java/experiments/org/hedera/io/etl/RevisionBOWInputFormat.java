@@ -122,7 +122,7 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 		public float check(RevisionHeader metaNow, RevisionHeader metaBefore) {
 			if (metaBefore == null || metaBefore.getLength() == 0) return 1f;
 			long tsNow = metaNow.getTimestamp();
-
+			
 			// defer assigning the first revision to after the extraction phase
 			if (prevRev[1] == 0) {
 				if (metaBefore == null || metaBefore.getLength() == 0) return 1f;
