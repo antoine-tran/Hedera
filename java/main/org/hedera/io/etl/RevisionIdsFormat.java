@@ -174,7 +174,8 @@ WikiRevisionInputFormat<LongWritable, PairOfLongs> {
 		@Override
 		public boolean extract(DataOutputBuffer content, RevisionHeader meta,
 				LongWritable key, PairOfLongs value) {
-			if (meta == null || meta.getLength() == 0) {
+			if (meta == null || (meta.getRevisionId() == 0 
+					&& meta.getTimestamp() == 0)) {
 				return false;
 			}
 			long revId = meta.getRevisionId();
