@@ -331,6 +331,12 @@ public class RevisionLinkInputFormat extends
 			} catch (IOException e) {
 				LOG.error("Error extracting link from revision: [" 
 						+ value.getPageId() + ", rev: " + value.getRevisionId() + "]");
+			} finally {
+				try {
+					linkBuffer.close();
+				} catch (IOException e) {
+					LOG.warn("Cannot close link buffer afterwards.");
+				}
 			}
 			return true;
 		}
