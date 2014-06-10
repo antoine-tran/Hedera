@@ -308,7 +308,8 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 									freeKey(key);
 									freeValue(value);
 									boolean res = extractor.extract(prevBuf,meta,key,value);
-									// every revsion that is checked is empty
+									
+									// every revision that is checked is empty --> skip this page
 									if (!res) {
 										continue;
 									}

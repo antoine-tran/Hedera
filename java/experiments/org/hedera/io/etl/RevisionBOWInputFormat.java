@@ -143,7 +143,8 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 				LongWritable key, RevisionBOW value) {
 			
 			// empty header, do nothing
-			if (meta == null || meta.getLength() == 0) {
+			if (meta == null || meta.getRevisionId() == 0 
+					|| meta.getTimestamp() == 0 || content.getLength() == 0) {
 				return false;
 			}
 			// save headers
@@ -158,7 +159,7 @@ WikiRevisionInputFormat<LongWritable, RevisionBOW> {
 				value.setLastTimestamp(prevRev[1]);
 			}
 		
-			// remove mark-ups
+			// remove mark-ups			
 			String rawText = new String(content.getData(), 0, content.getLength()
 					- END_TEXT.length);
 			String plainText = processor.getContent(rawText);
