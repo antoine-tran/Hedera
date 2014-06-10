@@ -471,11 +471,11 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 			// We use a thread that pings back to the cluster every 5 minutes
 			// to avoid getting killed for slow read
 			TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
-				/*@Override
+				@Override
 				protected void progress() {
-					LOG.info("Task " + context.getTaskAttemptID() 
-							+ " pings back...");
-				}*/
+					/*LOG.info("Task " + context.getTaskAttemptID() 
+							+ " pings back...");*/
+				}
 			};
 
 			try {
