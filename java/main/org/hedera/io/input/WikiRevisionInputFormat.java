@@ -282,4 +282,8 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	protected FileSplit makeSplit(Path file, long start, long length, String[] hosts) {
 		return new FileSplit(file, start, length, hosts);
 	}
+	
+	public static void main(String[] args) {
+		System.out.println(END_TEXT.length);
+	}
 }
