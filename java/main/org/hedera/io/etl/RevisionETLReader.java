@@ -344,9 +344,7 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 							if (meta != null) {
 								freeKey(key);
 								freeValue(value);
-								
-								LOG.info("Before extracting: " + new String(prevBuf.getData(), 0, prevBuf.getLength()));
-								
+																
 								boolean res = extractor.extract(prevBuf,meta,key,value);
 								
 								// Tricky scenario: The very last revision just has
