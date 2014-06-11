@@ -25,9 +25,12 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 	private static final Logger LOG = Logger.getLogger(FastExtractTemporalAnchorText.class);
 	
+	private static final long MAX_KEY_RANGE = 10000000l;
+	
 	private static final class MyMapper extends Mapper<LongWritable,
 	LinkProfile, LongWritable, Text> {
 
+		private LongWritable keyOut = new LongWritable();
 		private Text valOut = new Text();
 
 		// simple counter to sparse the debug printout
@@ -77,7 +80,11 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 					if (cnt % 10000000l == 0)
 						LOG.info(output);
 
-					context.write(key, valOut);
+					// re-balance the key to avoid bottleneck in reduce phase
+					long k = System.currentTimeMillis() / MAX_KEY_RANGE;
+					keyOut.set(k);
+					
+					context.write(keyOut, valOut);
 				}
 			}
 		}

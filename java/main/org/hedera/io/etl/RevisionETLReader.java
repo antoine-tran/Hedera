@@ -36,6 +36,10 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 	private static final float DEFAULT_LOWER_THRESHOLD = 0.01f;
 	private static final float DEFAULT_UPPER_THRESHOLD = 0.1f;
 	
+	// add a few break after five iterations to give other jobs in the cluster chances
+	// to get executed
+	private int threadCnt;
+	
 	// threshold for checking the revision seriously
 	private static final long GOOD_ENOUGH_REVISION = 10;
 
@@ -157,6 +161,7 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 			fsin.seek(start);
 		}
 		flag = 1;
+		threadCnt = 0;
 		pos[0] = pos[1] = 0;
 		meta = null;
 		this.context = tac;
@@ -206,6 +211,12 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		while (fsin.getPos() < end) {
 
+			// take a break for other jobs running in the cluster
+			threadCnt++;
+			if (threadCnt % 10 == 0) {
+				Thread.sleep(500);
+			}
+			
 			if (flag == -1) {
 				return false;
 			}
