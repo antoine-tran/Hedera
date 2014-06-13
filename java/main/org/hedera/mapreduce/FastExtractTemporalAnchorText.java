@@ -5,6 +5,7 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
+
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
