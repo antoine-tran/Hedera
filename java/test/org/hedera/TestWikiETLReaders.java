@@ -104,7 +104,8 @@ public class TestWikiETLReaders {
 			while (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
 				RevisionBOW bow = reader.getCurrentValue();
-				System.out.println(key.get() + "\t" + bow.getRevisionId());			
+				System.out.println(key.get() + "\t" + bow.getRevisionId() + bow.getPageId() 
+						+ "\t" + bow.getTimestamp());			
 				Iterator<Entry<String>> iter = bow.getWords();
 				while (iter.hasNext()) {
 					Entry<String> e = iter.next();

@@ -509,8 +509,8 @@ META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {
 			TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
 				@Override
 				protected void progress() {
-					/*LOG.info("Task " + context.getTaskAttemptID() 
-							+ " pings back...");*/
+					LOG.info("Task " + context.getTaskAttemptID() 
+							+ " pings back...");
 				}
 			};
 

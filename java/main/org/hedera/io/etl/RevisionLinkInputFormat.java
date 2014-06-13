@@ -3,9 +3,14 @@ package org.hedera.io.etl;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.SplittableCompressionCodec;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
@@ -26,6 +31,11 @@ public class RevisionLinkInputFormat extends
 			InputSplit input, TaskAttemptContext context) 
 					throws IOException, InterruptedException {
 		return new RevisionLinkReader();
+	}
+	
+	@Override
+	public boolean isSplitable(JobContext context, Path file) {
+		return false;
 	}
 
 	public static class RevisionLinkReader 
