@@ -32,11 +32,6 @@ public class RevisionLinkInputFormat extends
 					throws IOException, InterruptedException {
 		return new RevisionLinkReader();
 	}
-	
-	@Override
-	public boolean isSplitable(JobContext context, Path file) {
-		return false;
-	}
 
 	public static class RevisionLinkReader 
 	extends DefaultRevisionETLReader<LongWritable, 
