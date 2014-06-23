@@ -1,7 +1,7 @@
 package org.hedera.io.input;
 
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.DataOutputBuffer;
@@ -10,19 +10,29 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.hedera.io.Revision;
+import org.hedera.io.FullRevision;
 
-public class WikiRevisionPageInputFormat extends 
-		WikiRevisionInputFormat<LongWritable, Revision> {
+public class WikiRevisionFullInputFormat extends
+WikiRevisionInputFormat<LongWritable, FullRevision> {
+
+	public static final byte[] START_CONTRIBUTOR = "<contributor>"
+			.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_CONTRIBUTOR = "</contributor>"
+			.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] START_COMMENT = "<comment>"
+			.getBytes(StandardCharsets.UTF_8);
+	public static final byte[] END_COMMENT = "</comment>"
+			.getBytes(StandardCharsets.UTF_8);
 
 	@Override
-	public RecordReader<LongWritable, Revision> createRecordReader(InputSplit split, 
+	public RecordReader<LongWritable, FullRevision> createRecordReader(InputSplit split, 
 			TaskAttemptContext context) {
 		return new RevisionReader();
 	}
 
 	/**
-	 * Read each revision of Wikipedia page and transform into a WikipediaRevision object
+	 * Read each revision of Wikipedia page and transform into a WikipediaRevision object.
+	 * This reader does not skip the user and comment info
 	 * @author tuan
 	 * 
 	 */ 
@@ -48,7 +58,14 @@ public class WikiRevisionPageInputFormat extends
 	// 17 - just passed the </text> tag
 	// 18 - just passed the </revision>
 	// 19 - just passed the </page>
-	public static class RevisionReader extends WikiRevisionReader<Revision> {
+	//
+	// Additional states:
+	// 20 - just passed the <contributor>
+	// 21 - just passed the </contributor> but outside the <comment>
+	// 23 - just passed the <comment> (optionally)
+	// 24 - just passed the </comment> but outside the <text>
+	//
+	public static class RevisionReader extends WikiRevisionReader<FullRevision> {
 
 		// Extra flags: 
 		// 
@@ -66,6 +83,20 @@ public class WikiRevisionPageInputFormat extends
 		//  3 - Matched both <parentId> and <timestamp> partially
 		private int parOrTs = -1;
 
+		// indicating the flow condition within [flag = 13]
+		// -1 - Unmatched
+		//  1 - Matched <contributor> tag partially
+		//  2 - Matched <comment> tag partially
+		//  3 - Matched both <contributor> and <comment> partially
+		private int conOrCom = -1;
+
+		// indicating the flow condition within [flag = 21]
+		// -1 - Unmatched
+		//  1 - Matched <comment> tag partially
+		//  2 - Matched <text> tag partially
+		//  3 - Matched both <text> and <comment> partially
+		private int comOrText = -1;
+
 		// We now convert and cache everything from pageHeader to the followin global variables
 		// NOTE: they all need to be synchronized with pageHeader !!
 		// private DataOutputBuffer pageHeader = new DataOutputBuffer();
@@ -81,11 +112,15 @@ public class WikiRevisionPageInputFormat extends
 		private DataOutputBuffer parBuf = new DataOutputBuffer();		
 		private DataOutputBuffer contentBuf = new DataOutputBuffer();
 
+		// User and comment buffers
+		private DataOutputBuffer contribBuf = new DataOutputBuffer();	
+		private DataOutputBuffer commentBuf = new DataOutputBuffer();	
+
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
-			value = new Revision(); 
+			value = new FullRevision(); 
 		}
 
 		private void resetEverything() {			
@@ -98,9 +133,15 @@ public class WikiRevisionPageInputFormat extends
 			revBuf.reset();
 			nsBuf.reset();
 			pageTitle.reset();
+
+			contribBuf.reset();
+			commentBuf.reset();
+
 			skipped = false;
 			revOrPage = -1;
 			parOrTs = -1;
+			conOrCom = -1;
+			comOrText = -1;
 		}
 
 		@Override
@@ -122,6 +163,27 @@ public class WikiRevisionPageInputFormat extends
 				contentBuf.reset();
 
 			}
+
+			// Parse contributor
+			else if (flag == 21) {
+				if (!skipped) {
+					String contribStr = new String(contribBuf.getData(), 0, contribBuf.getLength() 
+							- END_CONTRIBUTOR.length);					
+					value.loadContributor(contribStr);
+				}
+				contribBuf.reset();
+			}
+
+			// Parse comment
+			else if (flag == 23) {
+				if (!skipped) {
+					String comment = new String(commentBuf.getData(), 0, commentBuf.getLength() 
+							- END_COMMENT.length);					
+					value.setComment(comment);
+				}
+				commentBuf.reset();
+			}
+
 			else if (flag == 15) {
 				if (!skipped) {
 					String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
@@ -255,7 +317,7 @@ public class WikiRevisionPageInputFormat extends
 							return true;
 						}
 					}
-					
+
 					// when passing the namespace and we realize that 
 					// this is not an article, and that the option of skipping
 					// non-article pages is on, we simply skip everything till
@@ -386,8 +448,88 @@ public class WikiRevisionPageInputFormat extends
 						}
 					}
 
-					// after the </timestamp>, check for <text>
+					// after the </timestamp>, check for either <contributor> or <comment>
+					// 20 - just passed the <contributor>
+					// 21 - just passed the </contributor> but outside the <comment>
+					// 22 - just passed the <comment> (optionally)
+					// 23 - just passed the </comment> but outside the <text>
 					else if (flag == 13) {
+						int curMatch = 0;				
+						if ((i < START_CONTRIBUTOR.length && b == START_CONTRIBUTOR[i]) 
+								&& (i < START_COMMENT.length && b == START_COMMENT[i])) {
+							curMatch = 3;
+						} else if (i < START_CONTRIBUTOR.length && b == START_CONTRIBUTOR[i]) {
+							curMatch = 1;
+						} else if (i < START_COMMENT.length && b == START_COMMENT[i]) {
+							curMatch = 2;
+						}				
+						if (curMatch > 0 && (i == 0 || conOrCom == 3 || curMatch == conOrCom)) {					
+							i++;			
+							conOrCom = curMatch;
+						} else i = 0;
+						if ((conOrCom == 2 || conOrCom == 3) && i >= START_COMMENT.length) {
+							flag = 22;
+							conOrCom = -1;
+							return true;							
+						} else if ((conOrCom == 1 || conOrCom == 3) && i >= START_CONTRIBUTOR.length) {
+							flag = 20;
+							conOrCom = -1;
+							return true;
+						}		
+					}
+
+					// Everything within <contributor></contributor> goes into contribBuf
+					else if (flag == 20) {
+						if (b == END_CONTRIBUTOR[i]) {
+							i++;
+						} else i = 0;
+						contribBuf.write(b);
+						if (i >= END_CONTRIBUTOR.length) {
+							flag = 21;
+							return true;
+						}
+					}
+					
+					// after the </contributor>, check for the either <comment> or <text>
+					else if (flag == 21) {
+						int curMatch = 0;				
+						if ((i < START_TEXT.length && b == START_TEXT[i]) 
+								&& (i < START_COMMENT.length && b == START_COMMENT[i])) {
+							curMatch = 3;
+						} else if (i < START_TEXT.length && b == START_TEXT[i]) {
+							curMatch = 1;
+						} else if (i < START_COMMENT.length && b == START_COMMENT[i]) {
+							curMatch = 2;
+						}				
+						if (curMatch > 0 && (i == 0 || comOrText == 3 || curMatch == comOrText)) {					
+							i++;			
+							comOrText = curMatch;
+						} else i = 0;
+						if ((comOrText == 2 || comOrText == 3) && i >= START_COMMENT.length) {
+							flag = 22;
+							comOrText = -1;
+							return true;							
+						} else if ((comOrText == 1 || comOrText == 3) && i >= START_TEXT.length) {
+							flag = 16;
+							comOrText = -1;
+							return true;
+						}		
+					}
+
+					// Everything within <contributor></contributor> goes into commentBuf
+					else if (flag == 22) {
+						if (b == END_COMMENT[i]) {
+							i++;
+						} else i = 0;
+						commentBuf.write(b);
+						if (i >= END_COMMENT.length) {
+							flag = 23;
+							return true;
+						}
+					}
+					
+					// after the </comment>, check for <text>
+					else if (flag == 23) {
 						if (b == START_TEXT[i]) {
 							i++;
 						} else i = 0;
