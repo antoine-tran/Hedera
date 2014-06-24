@@ -1,5 +1,6 @@
 package org.hedera.mapreduce;
 
+import info.bliki.api.Revision;
 import it.unimi.dsi.sux4j.mph.TwoStepsLcpMonotoneMinimalPerfectHashFunction;
 import it.unimi.dsi.util.FrontCodedStringList;
 import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
@@ -19,7 +20,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -40,12 +40,30 @@ import org.clueweb.dictionary.DictionaryTransformationStrategy;
 import org.clueweb.util.QuickSort;
 
 import tl.lin.data.pair.PairOfIntLong;
+import tuan.hadoop.conf.JobConfig;
 
 import com.google.common.collect.Lists;
 
 /** this code re-uses the clueweb-tools in building the dictionary for 
- * Wikipedia Revision */
-public class BuildDictionary extends Configured implements Tool {
+ * Wikipedia Revision articles (skip non-article pages). It takes as
+ * inputs the Revision object. I put all copyright notes from ClueWeb
+ * down here:
+ * 
+ * ClueWeb Tools: Hadoop tools for manipulating ClueWeb collections
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+public class BuildDictionary extends JobConfig implements Tool {
   private static final Logger LOG = Logger.getLogger(BuildDictionary.class);
 
   private static final String HADOOP_OUTPUT_OPTION = "dictionary.path";
@@ -63,7 +81,10 @@ public class BuildDictionary extends Configured implements Tool {
   public static final String CF_BY_TERM_DATA = "cf.terms";
   public static final String CF_BY_ID_DATA = "cf.ids";
 
-  private static class MyReducer
+  
+  private static final class MyMapper extends Mapper<LongWritable, Revision, >
+  
+  private static final class MyReducer
       extends Reducer<Text, PairOfIntLong, NullWritable, NullWritable> {
     private FSDataOutputStream termsOut, idsOut, idsToTermOut,
         dfByTermOut, cfByTermOut, dfByIntOut, cfByIntOut;

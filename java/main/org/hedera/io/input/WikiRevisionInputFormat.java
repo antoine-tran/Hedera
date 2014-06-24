@@ -55,6 +55,10 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
  * @author Matsubara 
  * 
  * @since 13.04.2014
+ * 
+ * TODO: 2014-06-24: Implement the parallel splitting in MapReduce style, output:
+ * (key=Text,value=Null) --> (key=SplitUnit, value=Null). 
+ * SplitUnit contains fileName, start, end, host[]....
  *
  */
 public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
@@ -160,7 +164,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 		}
 		long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(jc));
 		long goalSize = totalSize / 317;
-		for (FileStatus file: files) {
+		for (FileStatus file : files) {
 			if (file.isDirectory()) {
 				throw new IOException("Not a file: "+ file.getPath());
 			}
@@ -175,7 +179,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 			// the size here to accommodate the mass number of mappers
 			// splitSize = (splitSize > 300) ? splitSize / 300 : splitSize;
 			
-			for (InputSplit x: getSplits(jc, file, START_PAGE_TAG, splitSize)) 
+			for (InputSplit x: getSplits(jc, file, splitSize)) 
 				splits.add(x);
 		}
 		return splits;
@@ -187,8 +191,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	 * @param job the job context
 	 * @throws IOException
 	 */
-	public List<InputSplit> getSplits(JobContext jc, FileStatus file, String pattern, 
-			long splitSize) throws IOException {
+	public List<InputSplit> getSplits(JobContext jc, FileStatus file, long splitSize) throws IOException {
 
 		NetworkTopology clusterMap = new NetworkTopology();
 		List<InputSplit> splits = new ArrayList<InputSplit>();
@@ -292,9 +295,5 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	@Override
 	protected FileSplit makeSplit(Path file, long start, long length, String[] hosts) {
 		return new FileSplit(file, start, length, hosts);
-	}
-	
-	public static void main(String[] args) {
-		System.out.println(END_TEXT.length);
 	}
 }
