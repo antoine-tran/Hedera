@@ -150,14 +150,16 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 		List<FileStatus> files = listStatus(jc);
 		// Save the number of input files for metrics/loadgen
 		
+		long totalSize = 0;
 		// check we have valid files
 		for (FileStatus file: files) {                
 			if (file.isDirectory()) {
 				throw new IOException("Not a file: "+ file.getPath());
 			}
+			totalSize += file.getLen();
 		}
 		long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(jc));
-		long maxSize = getMaxSplitSize(jc);
+		long goalSize = totalSize / 317;
 		for (FileStatus file: files) {
 			if (file.isDirectory()) {
 				throw new IOException("Not a file: "+ file.getPath());
@@ -167,11 +169,11 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 			// 2014-06-06: Tuan _ I have to manually increase the file split size
 			// here to cope with Wikipedia Revision .bz2 file - the decompressor
 			// takes too long to run
-			long splitSize = computeSplitSize(blockSize, minSize, maxSize);
+			long splitSize = computeSplitSize(goalSize, minSize, blockSize);
 			
 			// 2014-06-24: To exploit huge clusters like Amazon AWS, we can change
 			// the size here to accommodate the mass number of mappers
-			splitSize = (splitSize > 300) ? splitSize / 300 : splitSize;
+			// splitSize = (splitSize > 300) ? splitSize / 300 : splitSize;
 			
 			for (InputSplit x: getSplits(jc, file, START_PAGE_TAG, splitSize)) 
 				splits.add(x);
