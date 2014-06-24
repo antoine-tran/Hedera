@@ -95,7 +95,7 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 		}
 		flag = 1;
 		pos[0] = pos[1] = 0;	
-		skipNonArticles = conf.getBoolean(SKIP_NON_ARTICLES, false);
+		skipNonArticles = conf.getBoolean(SKIP_NON_ARTICLES, true);
 	}
 
 	protected static void setBlockSize(Configuration conf) {
