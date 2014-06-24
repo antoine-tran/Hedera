@@ -85,7 +85,7 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 			// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
 			CompressionInputStream cis = codec.createInputStream(fs.open(file));
 
-			cis.skip(start - 1);
+			if (start >= 1) cis.skip(start - 1);
 
 			fsin = cis;
 		} else { // file is uncompressed	
