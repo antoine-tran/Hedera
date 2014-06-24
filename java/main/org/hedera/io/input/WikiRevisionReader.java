@@ -22,6 +22,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.SKIP_NON_ARTICLES;
+import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_BEGIN_TIME;
+import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_END_TIME;
 
 public abstract class WikiRevisionReader<VALUEIN> extends 
 RecordReader<LongWritable, VALUEIN> {
@@ -52,6 +54,10 @@ RecordReader<LongWritable, VALUEIN> {
 
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
+	
+	// option to skip revisions outside a range
+	protected long minTime = 0l;
+	protected long maxTime = Long.MAX_VALUE;
 
 	// a direct buffer to improve the local IO performance
 	protected byte[] buf = new byte[134217728];
@@ -112,6 +118,8 @@ RecordReader<LongWritable, VALUEIN> {
 		flag = 1;
 		pos[0] = pos[1] = 0;	
 		skipNonArticles = conf.getBoolean(SKIP_NON_ARTICLES, true);
+		minTime = conf.getLong(REVISION_BEGIN_TIME, 0);
+		maxTime = conf.getLong(REVISION_END_TIME, Long.MAX_VALUE);
 	}
 
 	protected static void setBlockSize(Configuration conf) {

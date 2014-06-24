@@ -136,6 +136,7 @@ public class WikiRevisionPageInputFormat extends
 					String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
 							- END_TIMESTAMP.length);
 					long timestamp = TIME_FORMAT.parseMillis(ts);
+					skipped = (timestamp < minTime || timestamp >= maxTime);
 					value.setTimestamp(timestamp);
 				}
 				timestampBuf.reset();
@@ -260,7 +261,7 @@ public class WikiRevisionPageInputFormat extends
 					// this is not an article, and that the option of skipping
 					// non-article pages is on, we simply skip everything till
 					// the closing </page>
-					else if (skipped && flag >= 6 && flag < 19) {
+					else if (skipped && flag >= 6 && flag != 19) {
 						if (b == END_PAGE[i]) {
 							i++;
 						} else i = 0;

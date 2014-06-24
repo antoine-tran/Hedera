@@ -61,8 +61,12 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 		extends FileInputFormat<KEYIN, VALUEIN> {
 	
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
+	
 	public static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
 	public static final String SKIP_REDIRECT = "org.hedera.input.noredirects"; 
+	
+	public static final String REVISION_BEGIN_TIME = "org.hedera.input.begintime";
+	public static final String REVISION_END_TIME = "org.hedera.input.begintime";
 	
 	protected CompressionCodecFactory compressionCodecs = null;
 
@@ -163,7 +167,12 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 			// 2014-06-06: Tuan _ I have to manually increase the file split size
 			// here to cope with Wikipedia Revision .bz2 file - the decompressor
 			// takes too long to run
-			long splitSize = computeSplitSize(blockSize, minSize, maxSize) * 3;
+			long splitSize = computeSplitSize(blockSize, minSize, maxSize);
+			
+			// 2014-06-24: To exploit huge clusters like Amazon AWS, we can change
+			// the size here to accommodate the mass number of mappers
+			splitSize = (splitSize > 300) ? splitSize / 300 : splitSize;
+			
 			for (InputSplit x: getSplits(jc, file, START_PAGE_TAG, splitSize)) 
 				splits.add(x);
 		}
