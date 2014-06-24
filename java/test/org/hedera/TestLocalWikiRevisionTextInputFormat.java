@@ -41,7 +41,7 @@ public class TestLocalWikiRevisionTextInputFormat {
 	protected static long THRESHOLD = 137438953472l;
 
 
-	private static final String INPUT = "/home/tuan/Downloads/enwiki-latest-pages-meta-history6.xml-p000236948p000252388";
+	private static final String INPUT = "files/testwiki.txt";
 
 	private DataOutputBuffer pageHeader = new DataOutputBuffer();
 
