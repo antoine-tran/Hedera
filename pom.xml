@@ -63,19 +63,19 @@
 				</configuration> </execution> </executions> </plugin> -->
 
 			<!-- We customize this tool and no longer depend on its maven artifact 
-			  <plugin>
+		  <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-install-plugin</artifactId>
 				<version>2.3.1</version>
 				<executions>
 					<execution>
 						<phase>validate</phase>
-						<id>install-google-diff-match</id>
+						<id>install-clueweb</id>
 						<configuration>
-							<file>${project.basedir}/lib/diff_match_patch-current.jar</file>
-							<groupId>diff_match_patch</groupId>
-							<artifactId>diff_match_patch</artifactId>
-							<version>current</version>
+							<file>${project.basedir}/lib/clueweb-tools-0.4-SNAPSHOT.jar</file>
+							<groupId>org.clueweb</groupId>
+  	          <artifactId>clueweb-tools</artifactId>
+  		        <version>0.4-SNAPSHOT</version>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
 						</configuration>
