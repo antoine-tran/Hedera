@@ -158,7 +158,7 @@
 		<sourceDirectory>java/main</sourceDirectory>
 		<testSourceDirectory>java/test</testSourceDirectory>
 		<outputDirectory>build</outputDirectory>
-		<finalName>${articfactId}-${project.version}-SNAPSHOT</finalName>
+		<finalName>${artifactId}-${project.version}-SNAPSHOT</finalName>
 	</build>
 
 	<dependencies>
