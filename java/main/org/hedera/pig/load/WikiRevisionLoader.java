@@ -3,12 +3,10 @@ package org.hedera.pig.load;
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -19,7 +17,6 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.BagFactory;
-import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -29,11 +26,6 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.hedera.io.FullRevision;
 import org.hedera.io.input.WikiRevisionFullInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
-import org.jsoup.select.Elements;
 
 public class WikiRevisionLoader extends LoadFunc implements LoadMetadata {
 	private static final WikiRevisionInputFormat<LongWritable, FullRevision> INPUT_FORMAT = 
