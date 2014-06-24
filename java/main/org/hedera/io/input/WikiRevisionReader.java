@@ -9,9 +9,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
+import org.apache.hadoop.io.compress.Decompressor;
+import org.apache.hadoop.io.compress.SplitCompressionInputStream;
+import org.apache.hadoop.io.compress.SplittableCompressionCodec;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -20,10 +24,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import static org.hedera.io.input.WikiRevisionInputFormat.SKIP_NON_ARTICLES;
 
 public abstract class WikiRevisionReader<VALUEIN> extends 
-		RecordReader<LongWritable, VALUEIN> {
-	
+RecordReader<LongWritable, VALUEIN> {
+
 	protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
-	
+
 	// A state after processing one valid tag
 	protected static enum STATE {
 		CONTINUE,
@@ -45,7 +49,7 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 
 	// compression mode checking
 	protected boolean compressed = false;
-	
+
 	// option to whether skip non-article pages
 	protected boolean skipNonArticles = false;
 
@@ -57,9 +61,9 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 
 	protected LongWritable key = new LongWritable();
 	protected VALUEIN value;
-	
+
 	protected DataOutputBuffer keyBuf = new DataOutputBuffer();		
-	
+
 	protected boolean skipped = false;
 
 	@Override
@@ -77,15 +81,27 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 
 		CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
 		CompressionCodec codec = compressionCodecs.getCodec(file);
-
 		FileSystem fs = file.getFileSystem(conf);
+
+		CompressionInputStream cis = null;		
 
 		if (codec != null) { // file is compressed
 			compressed = true;
-			// fsin = new FSDataInputStream(codec.createInputStream(fs.open(file)));
-			CompressionInputStream cis = codec.createInputStream(fs.open(file));
-
-			if (start >= 1) cis.skip(start - 1);
+			Decompressor decompressor = CodecPool.getDecompressor(codec);
+			if (codec instanceof SplittableCompressionCodec) {
+				SplittableCompressionCodec scodec = (SplittableCompressionCodec)codec;
+				SplitCompressionInputStream cin = scodec.createInputStream
+						(fs.open(file), decompressor, start, end, 
+								SplittableCompressionCodec.READ_MODE.BYBLOCK);
+				cis = cin;
+			} else {
+				// non-splittable compression input stream
+				// no seeking or offsetting is needed
+				assert start == 0;
+				CompressionInputStream cin = codec.createInputStream(fs.open(file), decompressor);
+				cis = cin;
+				if (start >= 1) cis.skip(start - 1);
+			}			 
 
 			fsin = cis;
 		} else { // file is uncompressed	
@@ -107,7 +123,7 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 	public LongWritable getCurrentKey() throws IOException, InterruptedException {
 		return key;
 	}
-	
+
 	@Override
 	public VALUEIN getCurrentValue() 
 			throws IOException, InterruptedException {
@@ -144,7 +160,7 @@ public abstract class WikiRevisionReader<VALUEIN> extends
 
 	/** What to do when encountering one relevant tag */
 	protected abstract STATE doWhenMatch() throws IOException, InterruptedException;
-	
+
 	/** What to do when reading till the next relevant tag */
 	protected abstract boolean readUntilMatch() throws IOException;
 }
