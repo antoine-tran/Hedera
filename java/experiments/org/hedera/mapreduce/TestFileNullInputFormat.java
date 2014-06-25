@@ -66,7 +66,7 @@ public class TestFileNullInputFormat extends JobConfig implements Tool {
 
 		// add all paths from the input dir
 		FileSystem fs = FileSystem.get(getConf());
-		FileStatus[] statuses = fs.listStatus(new Path(input));
+		FileStatus[] statuses = fs.globStatus(new Path(input));
 		for (FileStatus status : statuses) {
 			Path p = status.getPath();
 			MultipleInputs.addInputPath(job, p, FileNullInputFormat.class);
