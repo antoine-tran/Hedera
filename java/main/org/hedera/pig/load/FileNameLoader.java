@@ -49,7 +49,6 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 					Tuple tuple = tuples.newTupleNoCopy(Arrays.asList(text.toString()));
 					return tuple;
 				}
-				return null;
 			}
 		} catch (InterruptedException e) {
 			throw new IOException(e);
