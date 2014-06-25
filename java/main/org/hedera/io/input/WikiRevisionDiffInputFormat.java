@@ -193,7 +193,7 @@ public class WikiRevisionDiffInputFormat
 				String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
 						- END_NAMESPACE.length);
 				int ns = Integer.parseInt(nsStr);
-				if (ns == 0) {
+				if (ns != 0) {
 					skipped = skipNonArticles;					
 				}
 				value.setNamespace(ns);
