@@ -164,7 +164,7 @@ public class WikiRevisionPageInputFormat extends
 				String nsStr = new String(nsBuf.getData(), 0, nsBuf.getLength()
 						- END_NAMESPACE.length);
 				int namespace = Integer.parseInt(nsStr);
-				if (namespace == 0) {
+				if (namespace != 0) {
 					skipped = skipNonArticles;					
 				}
 				value.setNamespace(namespace);
