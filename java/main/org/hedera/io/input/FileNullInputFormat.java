@@ -26,7 +26,9 @@ public class FileNullInputFormat extends FileInputFormat<Text, NullWritable> {
 	@Override
 	public RecordReader<Text, NullWritable> createRecordReader(InputSplit in,
 			TaskAttemptContext tac) throws IOException, InterruptedException {
-		return new FileNullRecordReader();
+		FileNullRecordReader reader = new FileNullRecordReader();
+		reader.initialize(in, tac);
+		return reader;
 	}
 
 	public static class FileNullRecordReader extends RecordReader<Text, NullWritable> {
