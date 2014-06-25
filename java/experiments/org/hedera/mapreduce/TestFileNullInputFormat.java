@@ -95,7 +95,6 @@ public class TestFileNullInputFormat extends JobConfig implements Tool {
 		job.setMapOutputValueClass(NullWritable.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(NullWritable.class);
-		job.setInputFormatClass(FileNullInputFormat.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
 		job.setMapperClass(Mapper.class);
 		job.setReducerClass(Reducer.class);
