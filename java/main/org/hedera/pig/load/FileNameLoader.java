@@ -24,12 +24,16 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.hedera.io.input.FileNullInputFormat;
 import org.hedera.io.input.FileNullInputFormat.FileNullRecordReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple UDF loader that reads a file and returns its path
  */
 public class FileNameLoader extends LoadFunc implements LoadMetadata {
 
+	private static final Logger LOG = LoggerFactory.getLogger(FileNameLoader.class);
+	
 	protected volatile ResourceSchema schema;
 	protected TupleFactory tuples;
 	protected FileNullRecordReader reader;
@@ -45,6 +49,7 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 			boolean hasNext = reader.nextKeyValue();
 			if (hasNext) {
 				Text text = reader.getCurrentKey();
+				LOG.info("loaded key: " + text.toString());
 				if (text != null) {
 					Tuple tuple = tuples.newTupleNoCopy(Arrays.asList(text.toString()));
 					return tuple;
@@ -61,6 +66,7 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 			throws IOException {
 		this.reader = (FileNullRecordReader) reader;
 		this.tuples = TupleFactory.getInstance();
+		LOG.info("Loaded reader");
 
 	}
 
