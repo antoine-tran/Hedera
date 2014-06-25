@@ -1,5 +1,6 @@
 package org.hedera.pig.load;
 
+import static java.lang.String.valueOf;
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
 import java.io.IOException;
@@ -29,9 +30,6 @@ import org.hedera.io.input.FileNullInputFormat.FileNullRecordReader;
  */
 public class FileNameLoader extends LoadFunc implements LoadMetadata {
 
-	private boolean processed;
-	// a cached object that defines the output schema of a Wikipedia page. Use volatile to fix
-	// the infamous double-checked locking issue, and to make access to this object thread-safe
 	protected volatile ResourceSchema schema;
 	protected TupleFactory tuples;
 	protected FileNullRecordReader reader;
@@ -43,26 +41,25 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 
 	@Override
 	public Tuple getNext() throws IOException {
-		if (!processed) {
-			Text text = null;
-			try {
-				text = reader.getCurrentKey();
-			} catch (InterruptedException e) {
-				throw new IOException(e);
+		try {
+			boolean hasNext = reader.nextKeyValue();
+			if (hasNext) {
+				Text text = reader.getCurrentKey();
+				if (text != null) {
+					Tuple tuple = tuples.newTupleNoCopy(Arrays.asList(text.toString()));
+					return tuple;
+				}
+				return null;
 			}
-			if (text != null) {
-				Tuple tuple = tuples.newTupleNoCopy(Arrays.asList(text.toString()));
-				return tuple;
-			}
-			return null;
-		}
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}		
 		return null;
 	}
 
 	@Override
 	public void prepareToRead(RecordReader reader, PigSplit split)
 			throws IOException {
-		processed = false;
 		this.reader = (FileNullRecordReader) reader;
 		this.tuples = TupleFactory.getInstance();
 
@@ -106,7 +103,6 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 	protected void defineSchema() throws FrontendException {
 		Schema schema = new Schema();
 
-		// canonical fields in Wikipedia SQL dump
 		schema.add(new FieldSchema("filename", DataType.CHARARRAY));
 		this.schema = new ResourceSchema(schema);
 	}

@@ -65,9 +65,8 @@ public class LiteWikipediaLoader extends LoadFunc implements LoadMetadata {
 	// read each block of Wikipedia page in XML format, convert them into relation following 
 	// the layout of Wikipedia SQL dump
 	public Tuple getNext() throws IOException {
-		boolean hasNext;
 		try {
-			hasNext = reader.nextKeyValue();
+			boolean hasNext = reader.nextKeyValue();
 			if (hasNext) {
 				WikipediaPage page = reader.getCurrentValue();
 				String id = page.getDocid();
