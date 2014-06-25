@@ -93,10 +93,6 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 	private static final String HADOOP_DF_MIN_OPTION = "df.min";
 	private static final String HADOOP_DF_MAX_OPTION = "df.max";
-
-	// All begin and end time are in ISOTimeFormat
-	private static final String BEGIN_TIME_OPTION = "time.begin";
-	private static final String END_TIME_OPTION = "time.begin";
 	
 	private static final String REDUCE_OPTION = "reduceNo";
 
@@ -222,6 +218,10 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	public static final String OUTPUT_OPTION = "output";
 	public static final String DF_MIN_OPTION = "dfMin";
 	public static final String PREPROCESSING = "preprocessing";
+	
+	// All begin and end time are in ISOTimeFormat
+	private static final String BEGIN_TIME_OPTION = "begin";
+	private static final String END_TIME_OPTION = "end";
 
 	/**
 	 * Runs this tool.
