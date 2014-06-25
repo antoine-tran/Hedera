@@ -38,6 +38,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.clueweb.dictionary.DictionaryTransformationStrategy;
 import org.clueweb.util.QuickSort;
+import org.hedera.io.input.WikiRevisionInputFormat;
 
 import tl.lin.data.pair.PairOfIntLong;
 import tuan.hadoop.conf.JobConfig;
@@ -81,8 +82,6 @@ public class BuildDictionary extends JobConfig implements Tool {
   public static final String CF_BY_TERM_DATA = "cf.terms";
   public static final String CF_BY_ID_DATA = "cf.ids";
 
-  
-  private static final class MyMapper extends Mapper<LongWritable, Revision, >
   
   private static final class MyReducer
       extends Reducer<Text, PairOfIntLong, NullWritable, NullWritable> {
@@ -275,7 +274,7 @@ public class BuildDictionary extends JobConfig implements Tool {
     String input = cmdline.getOptionValue(INPUT_OPTION);
     String output = cmdline.getOptionValue(OUTPUT_OPTION);
 
-    LOG.info("Tool name: " + ComputeTermStatistics.class.getSimpleName());
+    LOG.info("Tool name: " + BuildDictionary.class.getSimpleName());
     LOG.info(" - input: " + input);
     LOG.info(" - output: " + output);
 
@@ -289,24 +288,13 @@ public class BuildDictionary extends JobConfig implements Tool {
     conf.set("mapreduce.reduce.memory.mb", "2048");
     conf.set("mapreduce.reduce.java.opts", "-Xmx2048m");
 
-    Job job = new Job(conf, BuildDictionary.class.getSimpleName() + ":" + input);
-
-    job.setJarByClass(BuildDictionary.class);
-    job.setNumReduceTasks(1);
-
-    FileInputFormat.setInputPaths(job, new Path(input));
-    FileOutputFormat.setOutputPath(job, new Path(output));
-
-    job.setInputFormatClass(SequenceFileInputFormat.class);
-    job.setOutputFormatClass(NullOutputFormat.class);
-
-    job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(PairOfIntLong.class);
-    job.setOutputKeyClass(Text.class);
+    Job job = setup(BuildDictionary.class.getSimpleName() + ":" + input,
+    		BuildDictionary.class, input, output,
+    		SequenceFileInputFormat.class, NullOutputFormat.class,
+    		Text.class, PairOfIntLong.class, Text.class, NullWritable.class,
+    		Mapper.class, MyReducer.class, 1);
+    
     job.setSortComparatorClass(DictionaryTransformationStrategy.WritableComparator.class);
-
-    job.setMapperClass(Mapper.class);
-    job.setReducerClass(MyReducer.class);
 
     FileSystem.get(getConf()).delete(new Path(output), true);
     long startTime = System.currentTimeMillis();

@@ -41,7 +41,6 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.hadoop.net.NetworkTopology;
 import org.apache.log4j.Logger;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -193,7 +192,6 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	 */
 	public List<InputSplit> getSplits(JobContext jc, FileStatus file, long splitSize) throws IOException {
 
-		NetworkTopology clusterMap = new NetworkTopology();
 		List<InputSplit> splits = new ArrayList<InputSplit>();
 		Path path = file.getPath();
 		
@@ -230,7 +228,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 					{
 						long st = Math.min(start + skip + splitSize, length - 1);
 						split = makeSplit(path, st, Math.min(splitSize, length - st), 
-								clusterMap, blkLocations);
+								blkLocations);
 						if ( in != null )
 							in.close();
 						if ( split.getLength() <= 1 ) {
@@ -249,12 +247,12 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 						split = makeSplit(path,
 								split.getStart(),
 								Math.min(split.getLength() + splitSize, length - split.getStart()),
-								clusterMap, blkLocations);
+								blkLocations);
 					}
 					if ( matcher.getLastUnmatchPos() > 0
 							&&  matcher.getPos() > matcher.getLastUnmatchPos()
 							&&  !processedPageEnds.contains(matcher.getPos()) ) {
-						splits.add(makeSplit(path, start, matcher.getPos() - start, clusterMap, 
+						splits.add(makeSplit(path, start, matcher.getPos() - start,  
 								blkLocations));
 						processedPageEnds.add(matcher.getPos());
 						long newstart = Math.max(matcher.getLastUnmatchPos(), start);
@@ -273,7 +271,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 			if ( in != null )
 				in.close();
 		} else if (length != 0) {
-			splits.add(makeSplit(path, 0, length, clusterMap, blkLocations));
+			splits.add(makeSplit(path, 0, length, blkLocations));
 		} else { 
 			//Create empty hosts array for zero length files
 			splits.add(makeSplit(path, 0, length, new String[0]));
@@ -281,7 +279,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 		return splits;
 	}
 
-	private FileSplit makeSplit(Path path, long start, long size, NetworkTopology clusterMap, 
+	private FileSplit makeSplit(Path path, long start, long size, 
 			BlockLocation[] blkLocations) throws IOException {
 		String[] hosts = blkLocations[blkLocations.length-1].getHosts();
 		return makeSplit(path, start, size,hosts);
