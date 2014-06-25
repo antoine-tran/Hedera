@@ -1,6 +1,5 @@
 package org.hedera.pig.load;
 
-import static java.lang.String.valueOf;
 import static org.apache.hadoop.mapreduce.lib.input.FileInputFormat.setInputPaths;
 
 import java.io.IOException;
@@ -34,13 +33,15 @@ public class FileNameLoader extends LoadFunc implements LoadMetadata {
 
 	private static final Logger LOG = LoggerFactory.getLogger(FileNameLoader.class);
 	
+	private static final FileNullInputFormat format = new FileNullInputFormat();
+	
 	protected volatile ResourceSchema schema;
 	protected TupleFactory tuples;
 	protected FileNullRecordReader reader;
 
 	@Override
 	public InputFormat getInputFormat() throws IOException {
-		return new FileNullInputFormat();
+		return format;
 	}
 
 	@Override
