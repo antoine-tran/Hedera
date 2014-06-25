@@ -53,7 +53,7 @@ RecordReader<LongWritable, VALUEIN> {
 	protected boolean compressed = false;
 
 	// option to whether skip non-article pages
-	protected boolean skipNonArticles = false;
+	protected boolean skipNonArticles = true;
 	
 	// option to skip revisions outside a range
 	protected long minTime = 0l;

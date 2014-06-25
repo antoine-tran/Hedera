@@ -37,15 +37,15 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.clueweb.util.AnalyzerFactory;
+import org.hedera.io.FullRevision;
 import org.hedera.io.Revision;
+import org.hedera.io.input.WikiFullRevisionJsonInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.hedera.io.input.WikiRevisionPageInputFormat;
 import org.hedera.util.MediaWikiProcessor;
@@ -94,7 +94,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	private static final String HADOOP_DF_MIN_OPTION = "df.min";
 	private static final String HADOOP_DF_MAX_OPTION = "df.max";
 
-	// All begin and end time are in ISOTime format
+	// All begin and end time are in ISOTimeFormat
 	private static final String BEGIN_TIME_OPTION = "time.begin";
 	private static final String END_TIME_OPTION = "time.begin";
 	
@@ -106,7 +106,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
 
 	private static class MyMapper extends
-	Mapper<LongWritable, Revision, Text, PairOfIntLong> {
+			Mapper<LongWritable, FullRevision, Text, PairOfIntLong> {
 		
 		private static final Text term = new Text();
 		private static final PairOfIntLong pair = new PairOfIntLong();
@@ -124,7 +124,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		}
 
 		@Override
-		public void map(LongWritable key, Revision doc, Context context) throws IOException,
+		public void map(LongWritable key, FullRevision doc, Context context) throws IOException,
 		InterruptedException {
 
 			context.getCounter(Records.TOTAL).increment(1);
@@ -283,12 +283,10 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		}
 				
 		long begin = 0, end = Long.MAX_VALUE;
-		if (!cmdline.hasOption(BEGIN_TIME_OPTION) || !cmdline.hasOption(END_TIME_OPTION)) {
+		if (cmdline.hasOption(BEGIN_TIME_OPTION)) {
 			String beginTs = cmdline.getOptionValue(BEGIN_TIME_OPTION);
-			String endTs = cmdline.getOptionValue(END_TIME_OPTION);
 			try {
 				begin = TIME_FORMAT.parseMillis(beginTs);
-				end = TIME_FORMAT.parseMillis(endTs);
 			} catch (Exception e) {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp(this.getClass().getName(), options);
@@ -296,8 +294,19 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				System.err.println("Invalid time format: " + e.getMessage());
 			}
 		}		
-				
-
+		
+		if (cmdline.hasOption(END_TIME_OPTION)) {
+			String endTs = cmdline.getOptionValue(END_TIME_OPTION);
+			try {
+				end = TIME_FORMAT.parseMillis(endTs);
+			} catch (Exception e) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp(this.getClass().getName(), options);
+				ToolRunner.printGenericCommandUsage(System.out);
+				System.err.println("Invalid time format: " + e.getMessage());
+			}
+		}
+		
 		LOG.info("Tool name: " + BasicComputeTermStats.class.getSimpleName());
 		LOG.info(" - input: " + input);
 		LOG.info(" - output: " + output);
@@ -314,7 +323,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		
 		Job job = setup(BasicComputeTermStats.class.getSimpleName() + ":" + input, 
 				BasicComputeTermStats.class, input, output,
-				WikiRevisionPageInputFormat.class, SequenceFileOutputFormat.class,
+				WikiFullRevisionJsonInputFormat.class, SequenceFileOutputFormat.class,
 				Text.class, PairOfIntLong.class, Text.class, PairOfIntLong.class, 
 				MyMapper.class, MyReducer.class, reduceNo);
 		
