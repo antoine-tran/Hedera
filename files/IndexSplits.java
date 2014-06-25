@@ -53,11 +53,14 @@ import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE_TAG;
 
 /**
  * This tool parses the list of dump files for Wikipedia revision
- * and performs the splitting, then indexes the mapping
- * of file paths with their split lists.
+ * and performs the splitting, then repacks the splits into a
+ * sequence file.
  * 
- * It takes as inputs the list of files, de-compresses and returns
- * the SplitUnit objects as outputss
+ * The tool accepts two kinds of input: A glob-like string
+ * specifying the input path, or a text file containing the list of 
+ * file paths, one per line (in this case the flag input-type-option must be turned
+ * on)
+ * 
  * @author tuan
  *
  */
@@ -73,6 +76,9 @@ public class IndexSplits extends JobConfig implements Tool {
 	public static final String OUTPUT_OPTION = "output";
 	public static final String SPLIT_OPTION = "split_size";
 
+	// When turned on, then the input path is of type .csv
+	public static final String INPUT_TYPE_OPTION = "file";
+	
 	public static final String HADOOP_SPLIT_OPTION = "file.split.size";
 
 	// The mapper performs block size computation and splitting of code,
@@ -101,7 +107,7 @@ public class IndexSplits extends JobConfig implements Tool {
 		protected void map(Text key, NullWritable value, Context context)
 				throws IOException, InterruptedException {
 			FileSplit fileSplit = (FileSplit)context.getInputSplit();
-			String s = FileSystem.getF
+			//String s = FileSystem.getF
 			Configuration conf = context.getConfiguration();
 			Path file = new Path(s);
 			FileSystem fs = file.getFileSystem(conf);
