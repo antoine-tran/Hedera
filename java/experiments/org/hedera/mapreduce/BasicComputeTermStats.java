@@ -327,19 +327,11 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				Text.class, PairOfIntLong.class, Text.class, PairOfIntLong.class, 
 				MyMapper.class, MyReducer.class, reduceNo);
 		
-		job.setJarByClass(BasicComputeTermStats.class);
-
-		job.setNumReduceTasks(reduceNo);
-
 		if (cmdline.hasOption(DF_MIN_OPTION)) {
 			int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
 			LOG.info(" - dfMin: " + dfMin);
 			job.getConfiguration().setInt(HADOOP_DF_MIN_OPTION, dfMin);
 		}
-
-		job.setMapperClass(MyMapper.class);
-		job.setCombinerClass(MyCombiner.class);
-		job.setReducerClass(MyReducer.class);
 
 		FileSystem.get(getConf()).delete(new Path(output), true);
 
