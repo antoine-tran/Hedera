@@ -315,7 +315,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		getConf().set(PREPROCESSING, preprocessing);
 
 		// skip non-article
-		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, false);
 		
 		// set up range
 		getConf().setLong(WikiRevisionInputFormat.REVISION_BEGIN_TIME, begin);
