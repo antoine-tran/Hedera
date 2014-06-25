@@ -337,7 +337,8 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 		long startTime = System.currentTimeMillis();
 		job.waitForCompletion(true);
-		LOG.info("Job Finished in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds.");
+		LOG.info("Job Finished in " + (System.currentTimeMillis() - 
+				startTime) / 1000.0 + " seconds.");
 
 		return 0;
 	}

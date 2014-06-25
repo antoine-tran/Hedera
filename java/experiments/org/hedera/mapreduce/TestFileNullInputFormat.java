@@ -61,7 +61,7 @@ public class TestFileNullInputFormat extends JobConfig implements Tool {
 		String input = cmdline.getOptionValue(INPUT_OPTION);
 		String output = cmdline.getOptionValue(OUTPUT_OPTION);		
 
-		Job job = create("Test FileNullInputFormat: " + input,
+		Job job = create("Hedera: Test FileNullInputFormat: " + input,
 				TestFileNullInputFormat.class);
 
 		// add all paths from the input dir
@@ -105,4 +105,7 @@ public class TestFileNullInputFormat extends JobConfig implements Tool {
 		return 0;
 	}
 
+	public static void main(String[] args) throws Exception {
+		ToolRunner.run(new TestFileNullInputFormat(), args);
+	}
 }
