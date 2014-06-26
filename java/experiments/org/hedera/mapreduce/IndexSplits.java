@@ -326,4 +326,8 @@ public class IndexSplits extends JobConfig implements Tool {
 		job.waitForCompletion(true);
 		return 0;
 	}
+	
+	public static void main(String[] args) throws Exception {
+		ToolRunner.run(new IndexSplits(), args);
+	}
 }
