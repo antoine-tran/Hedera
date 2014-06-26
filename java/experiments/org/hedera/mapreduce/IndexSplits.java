@@ -107,13 +107,12 @@ public class IndexSplits extends JobConfig implements Tool {
 			keyOut.set(key);
 			valOut.clear();
 
-			FileSplit fileSplit = (FileSplit)context.getInputSplit();
-			Path file = fileSplit.getPath();
-			String s = file.toString();
+			String s = key.toString();
+			Path file = new Path(s);
 			valOut.setFilePath(s);
 
 			Configuration conf = context.getConfiguration();
-			FileSystem fs = file.getFileSystem(conf);
+			FileSystem fs = FileSystem.get(conf);
 			FileStatus[] statuses = fs.listStatus(file);
 			FileStatus status = null;
 			if (statuses == null || statuses.length > 1) {
