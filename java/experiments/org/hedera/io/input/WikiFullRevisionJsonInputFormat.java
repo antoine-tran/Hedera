@@ -141,12 +141,12 @@ public class WikiFullRevisionJsonInputFormat
 
 		public boolean decodeLineToJson(JsonParser parser, Text line,
 				FullRevision value) {
-			LOG.info("Got string '{}'", line);
+			// LOG.info("Got string '{}'", line);
 			try {
 				JsonObject obj =
 						(JsonObject) parser.parse(line.toString());
 				
-				int namespace = obj.get("namespace").getAsInt();
+				int namespace = obj.get("page_namespace").getAsInt();
 				if (namespace != 0 && skipNonArticles) {
 					return false;
 				}
