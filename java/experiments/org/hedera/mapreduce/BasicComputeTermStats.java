@@ -86,7 +86,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	private static final Logger LOG = Logger.getLogger(BasicComputeTermStats.class);
 
 	private static enum Records {
-		TOTAL, PAGES, ERRORS, SKIPPED
+		TOTAL, PAGES, ERRORS, SKIPPED, TERMS,
 	};
 
 	private static Analyzer ANALYZER;
@@ -174,6 +174,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		@Override
 		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
 				throws IOException, InterruptedException {
+			context.getCounter(Records.TERMS).increment(1);
 			int df = 0;
 			long cf = 0;
 			for (PairOfIntLong pair : values) {
@@ -200,6 +201,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		@Override
 		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
 				throws IOException, InterruptedException {
+						
 			int df = 0;
 			long cf = 0;
 			for (PairOfIntLong pair : values) {
@@ -340,6 +342,8 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		LOG.info("Job Finished in " + (System.currentTimeMillis() - 
 				startTime) / 1000.0 + " seconds.");
 
+		LOG.info("Map Reduce output reducers: " + job.getCounters().findCounter(
+				"org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS"));
 		return 0;
 	}
 

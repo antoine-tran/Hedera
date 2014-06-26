@@ -1,6 +1,5 @@
 package org.hedera.mapreduce;
 
-import info.bliki.api.Revision;
 import it.unimi.dsi.sux4j.mph.TwoStepsLcpMonotoneMinimalPerfectHashFunction;
 import it.unimi.dsi.util.FrontCodedStringList;
 import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
@@ -29,16 +28,13 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.clueweb.dictionary.DictionaryTransformationStrategy;
 import org.clueweb.util.QuickSort;
-import org.hedera.io.input.WikiRevisionInputFormat;
 
 import tl.lin.data.pair.PairOfIntLong;
 import tuan.hadoop.conf.JobConfig;
@@ -159,8 +155,7 @@ public class BuildDictionary extends JobConfig implements Tool {
     }
 
     @Override
-    public void cleanup(
-        Reducer<Text, PairOfIntLong, NullWritable, NullWritable>.Context context)
+    public void cleanup(Context context)
         throws IOException {
       LOG.info("Starting cleanup.");
       if (curKeyIndex != numTerms) {
