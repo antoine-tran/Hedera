@@ -46,7 +46,7 @@ public class FileNullInputFormat extends FileInputFormat<Text, NullWritable> {
 		public boolean nextKeyValue() throws IOException, InterruptedException {
 			if (!processed) {				
 				Path file = fileSplit.getPath();
-				key.set(file.getName());				
+				key.set(file.toString());				
 				processed = true;
 				return true;
 			}
