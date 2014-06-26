@@ -37,6 +37,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -98,7 +99,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 	private static final int MAX_TOKEN_LENGTH = 64;       // Throw away tokens longer than this.
 	private static final int MIN_DF_DEFAULT = 100;        // Throw away terms with df less than this.
-	private static final int MAX_DOC_LENGTH = 512 * 1024 * 1024 * 1024; // Skip document if long than this.
+	private static final long MAX_DOC_LENGTH = 512 * 1024 * 1024 * 1024 * 1024 * 1024; // Skip document if long than this.
 	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
 
 	private static class MyMapper extends
@@ -174,7 +175,6 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		@Override
 		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
 				throws IOException, InterruptedException {
-			context.getCounter(Records.TERMS).increment(1);
 			int df = 0;
 			long cf = 0;
 			for (PairOfIntLong pair : values) {
@@ -191,10 +191,10 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		private int dfMin, dfMax;
 
 		@Override
-		public void setup(Reducer<Text, PairOfIntLong, Text, PairOfIntLong>.Context context) {
+		public void setup(Context context) {
 			dfMin = context.getConfiguration().getInt(HADOOP_DF_MIN_OPTION, MIN_DF_DEFAULT);
 			dfMax = context.getConfiguration().getInt(HADOOP_DF_MAX_OPTION, Integer.MAX_VALUE);
-			LOG.info("dfMin = " + dfMin);
+			LOG.info("dfMin = " + dfMin);			
 		}
 
 		@Override
@@ -210,7 +210,10 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				return;
 			}
 			output.set(df, cf);
-			context.getCounter("org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS").increment(1);
+			
+			// context.getCounter(TaskCounter.MAP_OUTPUT_RECORDS).increment(1);
+			context.getCounter(Records.TERMS).increment(1);
+
 			context.write(key, output);
 		}
 	}
@@ -342,7 +345,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				startTime) / 1000.0 + " seconds.");
 
 		LOG.info("Map Reduce output reducers: " + job.getCounters().findCounter(
-				"org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS").getValue());
+				Records.TERMS).getValue());
 		return 0;
 	}
 
