@@ -280,9 +280,9 @@ public class BuildVByteDocVectors extends JobConfig implements Tool {
 		job.setInputFormatClass(WikiFullRevisionJsonInputFormat.class);
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
-		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(BytesWritable.class);
-		job.setOutputKeyClass(Text.class);
+		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(BytesWritable.class);
 
 		job.setMapperClass(MyMapper.class);
