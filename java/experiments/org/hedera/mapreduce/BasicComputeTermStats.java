@@ -343,7 +343,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				startTime) / 1000.0 + " seconds.");
 
 		LOG.info("Map Reduce output reducers: " + job.getCounters().findCounter(
-				"org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS"));
+				"org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS").getValue());
 		return 0;
 	}
 
