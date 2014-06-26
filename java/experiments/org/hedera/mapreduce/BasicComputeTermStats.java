@@ -35,12 +35,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.TaskCounter;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -48,10 +48,8 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.clueweb.util.AnalyzerFactory;
 import org.hedera.io.FullRevision;
-import org.hedera.io.Revision;
 import org.hedera.io.input.WikiFullRevisionJsonInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
-import org.hedera.io.input.WikiRevisionPageInputFormat;
 import org.hedera.util.MediaWikiProcessor;
 
 import tl.lin.data.pair.PairOfIntLong;
@@ -151,7 +149,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 						if (term.length() > MAX_TOKEN_LENGTH) {
 							continue;
 						}
-
+						LOG.info("term: " + term);
 						if (map.containsKey(term)) {
 							map.put(term, map.get(term) + 1);
 						} else {
@@ -193,27 +191,11 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		private static final PairOfIntLong output = new PairOfIntLong();
 		private int dfMin, dfMax;
 
-		private long mapperCounter;
-
-
 		@Override
 		public void setup(Context context) {
 			dfMin = context.getConfiguration().getInt(HADOOP_DF_MIN_OPTION, MIN_DF_DEFAULT);
 			dfMax = context.getConfiguration().getInt(HADOOP_DF_MAX_OPTION, Integer.MAX_VALUE);
 			LOG.info("dfMin = " + dfMin);			
-
-			//check get counter from mapper
-
-			JobClient client;
-			try {
-				client = new JobClient(context.getConfiguration());
-				RunningJob parentJob = 
-						client.getJob("job_201406131553_1543");
-				mapperCounter = parentJob.getCounters().getCounter(Records.TERMS);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		}
 
 		@Override
@@ -233,12 +215,9 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 			output.set(df, cf);
 
 			// context.getCounter(TaskCounter.MAP_OUTPUT_RECORDS).increment(1);
-			//context.getCounter(Records.TERMS).increment(1);
+			context.getCounter(Records.TERMS).increment(1);
 			
-			mapperCounter++;
 			
-			LOG.info("term counter: " + mapperCounter);
-
 			context.write(key, output);
 		}
 	}
@@ -350,11 +329,31 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		getConf().setLong(WikiRevisionInputFormat.REVISION_BEGIN_TIME, begin);
 		getConf().setLong(WikiRevisionInputFormat.REVISION_END_TIME, end);
 
-		Job job = setup(BasicComputeTermStats.class.getSimpleName() + ":" + input, 
-				BasicComputeTermStats.class, input, output,
-				WikiFullRevisionJsonInputFormat.class, SequenceFileOutputFormat.class,
-				Text.class, PairOfIntLong.class, Text.class, PairOfIntLong.class, 
-				MyMapper.class, MyReducer.class, reduceNo);
+		Job job = new Job(getConf(), BasicComputeTermStats.class.getSimpleName() + ":" + input);
+	    job.setJarByClass(BasicComputeTermStats.class);
+
+	    job.setNumReduceTasks(100);
+
+	    if (cmdline.hasOption(DF_MIN_OPTION)) {
+	      int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
+	      LOG.info(" - dfMin: " + dfMin);
+	      job.getConfiguration().setInt(HADOOP_DF_MIN_OPTION, dfMin);
+	    }
+
+	    FileInputFormat.setInputPaths(job, input);
+	    FileOutputFormat.setOutputPath(job, new Path(output));
+
+	    job.setInputFormatClass(WikiFullRevisionJsonInputFormat.class);
+	    job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
+	    job.setMapOutputKeyClass(Text.class);
+	    job.setMapOutputValueClass(PairOfIntLong.class);
+	    job.setOutputKeyClass(Text.class);
+	    job.setOutputValueClass(PairOfIntLong.class);
+
+	    job.setMapperClass(MyMapper.class);
+	    job.setCombinerClass(MyCombiner.class);
+	    job.setReducerClass(MyReducer.class);
 
 		if (cmdline.hasOption(DF_MIN_OPTION)) {
 			int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
