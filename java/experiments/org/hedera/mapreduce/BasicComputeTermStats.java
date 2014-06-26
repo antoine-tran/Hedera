@@ -149,7 +149,6 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 						if (term.length() > MAX_TOKEN_LENGTH) {
 							continue;
 						}
-						LOG.info("term: " + term);
 						if (map.containsKey(term)) {
 							map.put(term, map.get(term) + 1);
 						} else {
