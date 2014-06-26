@@ -100,7 +100,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 	private static final int MAX_TOKEN_LENGTH = 64;       // Throw away tokens longer than this.
 	private static final int MIN_DF_DEFAULT = 100;        // Throw away terms with df less than this.
-	private static final long MAX_DOC_LENGTH = 512 * 1024 * 1024 * 1024 * 1024 * 1024; // Skip document if long than this.
+	private static final long MAX_DOC_LENGTH = 512 * 1024 * 1024 ; // Skip document if long than this.
 	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
 
 	private static class MyMapper extends
@@ -217,7 +217,6 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 			// context.getCounter(TaskCounter.MAP_OUTPUT_RECORDS).increment(1);
 			context.getCounter(Records.TERMS).increment(1);
 			
-			
 			context.write(key, output);
 		}
 	}
@@ -332,7 +331,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		Job job = new Job(getConf(), BasicComputeTermStats.class.getSimpleName() + ":" + input);
 	    job.setJarByClass(BasicComputeTermStats.class);
 
-	    job.setNumReduceTasks(100);
+	    job.setNumReduceTasks(1);
 
 	    if (cmdline.hasOption(DF_MIN_OPTION)) {
 	      int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
