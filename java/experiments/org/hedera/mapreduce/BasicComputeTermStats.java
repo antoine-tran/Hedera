@@ -34,6 +34,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -94,7 +97,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 	private static final String HADOOP_DF_MIN_OPTION = "df.min";
 	private static final String HADOOP_DF_MAX_OPTION = "df.max";
-	
+
 	private static final String REDUCE_OPTION = "reduceNo";
 
 	private static final int MAX_TOKEN_LENGTH = 64;       // Throw away tokens longer than this.
@@ -103,12 +106,12 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
 
 	private static class MyMapper extends
-			Mapper<LongWritable, FullRevision, Text, PairOfIntLong> {
-		
+	Mapper<LongWritable, FullRevision, Text, PairOfIntLong> {
+
 		private static final Text term = new Text();
 		private static final PairOfIntLong pair = new PairOfIntLong();
 		private MediaWikiProcessor processor;
-				
+
 		@Override
 		public void setup(Context context) throws IOException {
 			String analyzerType = context.getConfiguration().get(PREPROCESSING);
@@ -131,7 +134,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				context.getCounter(Records.PAGES).increment(1);
 				try {
 					String content = new String(doc.getText(), StandardCharsets.UTF_8);
-					
+
 					// If the document is excessively long, it usually means that something is wrong (e.g., a
 					// binary object). Skip so the parsing doesn't choke.
 					// As an alternative, we might want to consider putting in a timeout, e.g.,
@@ -190,11 +193,27 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		private static final PairOfIntLong output = new PairOfIntLong();
 		private int dfMin, dfMax;
 
+		private long mapperCounter;
+
+
 		@Override
 		public void setup(Context context) {
 			dfMin = context.getConfiguration().getInt(HADOOP_DF_MIN_OPTION, MIN_DF_DEFAULT);
 			dfMax = context.getConfiguration().getInt(HADOOP_DF_MAX_OPTION, Integer.MAX_VALUE);
 			LOG.info("dfMin = " + dfMin);			
+
+			//check get counter from mapper
+
+			JobClient client;
+			try {
+				client = new JobClient(context.getConfiguration());
+				RunningJob parentJob = 
+						client.getJob("job_201406131553_1543");
+				mapperCounter = parentJob.getCounters().getCounter(Records.TERMS);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		@Override
@@ -206,14 +225,19 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				df += pair.getLeftElement();
 				cf += pair.getRightElement();
 			}
+			LOG.info("check df");
 			if (df < dfMin || df > dfMax) {
 				LOG.info("wtf");
 				return;
 			}
 			output.set(df, cf);
-			
+
 			// context.getCounter(TaskCounter.MAP_OUTPUT_RECORDS).increment(1);
-			context.getCounter(Records.TERMS).increment(1);
+			//context.getCounter(Records.TERMS).increment(1);
+			
+			mapperCounter++;
+			
+			LOG.info("term counter: " + mapperCounter);
 
 			context.write(key, output);
 		}
@@ -223,7 +247,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	public static final String OUTPUT_OPTION = "output";
 	public static final String DF_MIN_OPTION = "dfMin";
 	public static final String PREPROCESSING = "preprocessing";
-	
+
 	// All begin and end time are in ISOTimeFormat
 	private static final String BEGIN_TIME_OPTION = "begin";
 	private static final String END_TIME_OPTION = "end";
@@ -249,7 +273,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				.withDescription("end time").create(END_TIME_OPTION));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
 				.withDescription("end time").create(REDUCE_OPTION));
-		
+
 		CommandLine cmdline;
 		CommandLineParser parser = new GnuParser();
 		try {
@@ -286,7 +310,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				System.err.println("Invalid reduce No. : " + reduceNoStr);
 			}
 		}
-				
+
 		long begin = 0, end = Long.MAX_VALUE;
 		if (cmdline.hasOption(BEGIN_TIME_OPTION)) {
 			String beginTs = cmdline.getOptionValue(BEGIN_TIME_OPTION);
@@ -299,7 +323,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				System.err.println("Invalid time format: " + e.getMessage());
 			}
 		}		
-		
+
 		if (cmdline.hasOption(END_TIME_OPTION)) {
 			String endTs = cmdline.getOptionValue(END_TIME_OPTION);
 			try {
@@ -311,7 +335,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				System.err.println("Invalid time format: " + e.getMessage());
 			}
 		}
-		
+
 		LOG.info("Tool name: " + BasicComputeTermStats.class.getSimpleName());
 		LOG.info(" - input: " + input);
 		LOG.info(" - output: " + output);
@@ -321,17 +345,17 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, false);
-		
+
 		// set up range
 		getConf().setLong(WikiRevisionInputFormat.REVISION_BEGIN_TIME, begin);
 		getConf().setLong(WikiRevisionInputFormat.REVISION_END_TIME, end);
-		
+
 		Job job = setup(BasicComputeTermStats.class.getSimpleName() + ":" + input, 
 				BasicComputeTermStats.class, input, output,
 				WikiFullRevisionJsonInputFormat.class, SequenceFileOutputFormat.class,
 				Text.class, PairOfIntLong.class, Text.class, PairOfIntLong.class, 
 				MyMapper.class, MyReducer.class, reduceNo);
-		
+
 		if (cmdline.hasOption(DF_MIN_OPTION)) {
 			int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
 			LOG.info(" - dfMin: " + dfMin);
