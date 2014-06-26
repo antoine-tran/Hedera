@@ -38,8 +38,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.hedera.io.RevisionSplits;
 import org.hedera.io.input.FileNullInputFormat;
-import org.wikimedia.wikihadoop.ByteMatcher;
-import org.wikimedia.wikihadoop.SeekableInputStream;
+import org.hedera.util.ByteMatcher;
+import org.hedera.util.SeekableInputStream;
 
 import tuan.hadoop.conf.JobConfig;
 

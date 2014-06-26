@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wikimedia.wikihadoop;
+package org.hedera.util;
 
 import java.io.*;
 

@@ -45,10 +45,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
 import org.hedera.io.RevisionSplits;
+import org.hedera.util.ByteMatcher;
+import org.hedera.util.SeekableInputStream;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.wikimedia.wikihadoop.ByteMatcher;
-import org.wikimedia.wikihadoop.SeekableInputStream;
 
 /** A InputFormat implementation that splits a Wikipedia Revision File into page fragments, output 
  * them as input records.
