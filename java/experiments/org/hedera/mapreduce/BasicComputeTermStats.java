@@ -181,7 +181,6 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				df += pair.getLeftElement();
 				cf += pair.getRightElement();
 			}
-
 			output.set(df, cf);
 			context.write(key, output);
 		}
@@ -200,8 +199,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 		@Override
 		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
-				throws IOException, InterruptedException {
-						
+				throws IOException, InterruptedException {			
 			int df = 0;
 			long cf = 0;
 			for (PairOfIntLong pair : values) {
@@ -212,6 +210,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				return;
 			}
 			output.set(df, cf);
+			context.getCounter("org.apache.hadoop.mapred.Task$Counter", "MAP_OUTPUT_RECORDS").increment(1);
 			context.write(key, output);
 		}
 	}
