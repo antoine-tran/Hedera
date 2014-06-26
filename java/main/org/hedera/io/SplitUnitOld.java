@@ -10,8 +10,10 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 /** A splitUnit repsents a set of blocks in a file in HDFS
- * that the mapper can read in parallel */
-public class SplitUnit implements WritableComparable<SplitUnit> {
+ * that the mapper can read in parallel 
+ * @deprecated please use RevisionSplits instead */
+@Deprecated 
+public class SplitUnitOld implements WritableComparable<SplitUnitOld> {
 
 	// path to the physical file in HDFS
 	private String filePath;
@@ -22,14 +24,14 @@ public class SplitUnit implements WritableComparable<SplitUnit> {
 	// list of hosts
 	private String[] hosts;
 	
-	public SplitUnit(String filePath, long start, long length, String[] hosts) {
+	public SplitUnitOld(String filePath, long start, long length, String[] hosts) {
 		this.filePath = filePath;
 		this.start = start;
 		this.length = length;
 		this.hosts = hosts;
 	}
 
-	public SplitUnit() {
+	public SplitUnitOld() {
 	}
 
 	/**
@@ -119,7 +121,7 @@ public class SplitUnit implements WritableComparable<SplitUnit> {
 	}
 
 	@Override
-	public int compareTo(SplitUnit o) {
+	public int compareTo(SplitUnitOld o) {
 		return Long.compare(start, o.start);
 	}
 
