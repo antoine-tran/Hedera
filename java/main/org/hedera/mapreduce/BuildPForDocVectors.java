@@ -1,4 +1,8 @@
-/*
+package org.hedera.mapreduce;
+
+/* 
+ * Build compacted vectors. Adapting from ClueWeb tool with FullRevision obj
+ * 
  * ClueWeb Tools: Hadoop tools for manipulating ClueWeb collections
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -13,15 +17,10 @@
  * implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-package org.hedera.mapreduce;
-
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -31,13 +30,13 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
@@ -45,78 +44,51 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.clueweb.data.PForDocVector;
+import org.clueweb.data.VByteDocVector;
+import org.clueweb.dictionary.DefaultFrequencySortedDictionary;
 import org.clueweb.util.AnalyzerFactory;
 import org.hedera.io.FullRevision;
 import org.hedera.io.input.WikiFullRevisionJsonInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.hedera.util.MediaWikiProcessor;
 
-import tl.lin.data.pair.PairOfIntLong;
+import tl.lin.data.array.IntArrayWritable;
 import tl.lin.lucene.AnalyzerUtils;
 import tuan.hadoop.conf.JobConfig;
-import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_BEGIN_TIME;
 import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_END_TIME;
+import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
-/**
- * Compute the term statistics from Wikipedia Revision. This app
- * re-uses the ComputeTermStatistics from ClueWeb tool, so I pasted
- * here the copyright notes from the project:
- * 
- * 
- * ClueWeb Tools: Hadoop tools for manipulating ClueWeb collections
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You may
- * obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * permissions and limitations under the License.
- * 
- * 
- * 2014-0624: In this variant, we treat each revision independently, and 
- * compute the term statistics with revisions as documents
- * @author tuan
- *
- */
-
-public class BasicComputeTermStats extends JobConfig implements Tool {
-	private static final Logger LOG = Logger.getLogger(BasicComputeTermStats.class);
+public class BuildPForDocVectors extends JobConfig implements Tool {
+	private static final Logger LOG = Logger.getLogger(BuildPForDocVectors.class);
 
 	private static enum Records {
-		TOTAL, PAGES, ERRORS, SKIPPED, TERMS,
+		TOTAL, PAGES, ERRORS, SKIPPED
 	};
 
 	private static Analyzer ANALYZER;
 
-	private static final String HADOOP_DF_MIN_OPTION = "df.min";
-	private static final String HADOOP_DF_MAX_OPTION = "df.max";
-
-	private static final String REDUCE_OPTION = "reduceNo";
-
-	private static final int MAX_TOKEN_LENGTH = 64;       // Throw away tokens longer than this.
-	private static final int MIN_DF_DEFAULT = 100;        // Throw away terms with df less than this.
-	private static final long MAX_DOC_LENGTH = 512l * 1024l * 1024l * 1024l * 1024l; ; // Skip document if long than this.
-	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
+	private static final long MAX_DOC_LENGTH = 512l * 1024l * 1024l * 1024l * 1024l; // Skip document if long than this.
 
 	private static class MyMapper extends
-	Mapper<LongWritable, FullRevision, Text, PairOfIntLong> {
+	Mapper<LongWritable, FullRevision, LongWritable, IntArrayWritable> {
+		private static final LongWritable DOCID = new LongWritable();
+		private static final IntArrayWritable DOC = new IntArrayWritable();
 
-		private static final Text term = new Text();
-		private static final PairOfIntLong pair = new PairOfIntLong();
-		private MediaWikiProcessor processor;
+		private DefaultFrequencySortedDictionary dictionary;
 		
+		private MediaWikiProcessor processor;
 		private long begin = 0;
 		private long end = Long.MAX_VALUE;
-
+		
 		@Override
 		public void setup(Context context) throws IOException {
 			Configuration conf = context.getConfiguration();
+			FileSystem fs = FileSystem.get(conf);
+			String path = conf.get(DICTIONARY_OPTION);
+			dictionary = new DefaultFrequencySortedDictionary(path, fs);
+
 			String analyzerType = conf.get(PREPROCESSING);
 			ANALYZER = AnalyzerFactory.getAnalyzer(analyzerType);
 			if (ANALYZER == null) {
@@ -129,21 +101,23 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		}
 
 		@Override
-		public void map(LongWritable key, FullRevision doc, Context context) throws IOException,
-		InterruptedException {
-
+		public void map(LongWritable key, FullRevision doc, Context context)
+				throws IOException, InterruptedException {
 			context.getCounter(Records.TOTAL).increment(1);
 
 			long revisionId = doc.getRevisionId();
 			if (revisionId != 0) {
+				DOCID.set(revisionId);
+
 				context.getCounter(Records.PAGES).increment(1);
 				try {
-					
 					long timestamp = doc.getTimestamp();
 					if (timestamp < begin || timestamp >= end) {
 						LOG.info("Skipping " + revisionId + " due to invalid timestamp: ["
 								+ begin + ", " + end + "]");
 						context.getCounter(Records.SKIPPED).increment(1);
+						PForDocVector.toIntArrayWritable(DOC, new int[] {}, 0);
+						context.write(DOCID, DOC);
 						return;
 					}
 					
@@ -153,98 +127,50 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 					// binary object). Skip so the parsing doesn't choke.
 					// As an alternative, we might want to consider putting in a timeout, e.g.,
 					// http://stackoverflow.com/questions/2275443/how-to-timeout-a-thread
-					if (content.length() > MAX_DOC_LENGTH || content.length() <= MIN_DOC_LENGTH) {
-						LOG.info("Skipping " + revisionId + " due to invalid length: " + content.length());
+					if (content.length() > MAX_DOC_LENGTH) {
+						LOG.info("Skipping " + revisionId + " due to excessive length: " + content.length());
 						context.getCounter(Records.SKIPPED).increment(1);
+						PForDocVector.toIntArrayWritable(DOC, new int[] {}, 0);
+						context.write(DOCID, DOC);
 						return;
 					}
 
 					String cleaned = processor.getContent(content);
-					Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
-					for (String term : AnalyzerUtils.parse(ANALYZER, cleaned)) {
-						if (term.length() > MAX_TOKEN_LENGTH) {
-							continue;
-						}
-						if (map.containsKey(term)) {
-							map.put(term, map.get(term) + 1);
-						} else {
-							map.put(term, 1);
+					List<String> tokens = AnalyzerUtils.parse(ANALYZER, cleaned);
+
+					int len = 0;
+					int[] termids = new int[tokens.size()];
+					for (String token : tokens) {
+						int id = dictionary.getId(token);
+						if (id != -1) {
+							termids[len] = id;
+							len++;
 						}
 					}
 
-					for (Map.Entry<String, Integer> entry : map.entrySet()) {
-						term.set(entry.getKey());
-						pair.set(1, entry.getValue());
-						context.write(term, pair);
-					}
+					PForDocVector.toIntArrayWritable(DOC, termids, len);
+					context.write(DOCID, DOC);
 				} catch (Exception e) {
+					// If Jsoup throws any exceptions, catch and move on, but emit empty doc.
 					LOG.info("Error caught processing " + revisionId);
+					DOC.setArray(new int[] {}); // Clean up possible corrupted data
 					context.getCounter(Records.ERRORS).increment(1);
+					PForDocVector.toIntArrayWritable(DOC, new int[] {}, 0);
+					context.write(DOCID, DOC);
 				}
 			}
 		}
 	}
 
-	private static class MyCombiner extends Reducer<Text, PairOfIntLong, Text, PairOfIntLong> {
-		private static final PairOfIntLong output = new PairOfIntLong();
-
-		@Override
-		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
-				throws IOException, InterruptedException {
-			int df = 0;
-			long cf = 0;
-			for (PairOfIntLong pair : values) {
-				df += pair.getLeftElement();
-				cf += pair.getRightElement();
-			}
-			output.set(df, cf);
-			context.write(key, output);
-		}
-	}
-
-	private static class MyReducer extends Reducer<Text, PairOfIntLong, Text, PairOfIntLong> {
-		private static final PairOfIntLong output = new PairOfIntLong();
-		private int dfMin, dfMax;
-
-		@Override
-		public void setup(Context context) {
-			dfMin = context.getConfiguration().getInt(HADOOP_DF_MIN_OPTION, MIN_DF_DEFAULT);
-			dfMax = context.getConfiguration().getInt(HADOOP_DF_MAX_OPTION, Integer.MAX_VALUE);
-			LOG.info("dfMin = " + dfMin);			
-		}
-
-		@Override
-		public void reduce(Text key, Iterable<PairOfIntLong> values, Context context)
-				throws IOException, InterruptedException {			
-			int df = 0;
-			long cf = 0;
-			for (PairOfIntLong pair : values) {
-				df += pair.getLeftElement();
-				cf += pair.getRightElement();
-			}
-			LOG.info("check df");
-			if (df < dfMin || df > dfMax) {
-				LOG.info("wtf");
-				return;
-			}
-			output.set(df, cf);
-
-			// context.getCounter(TaskCounter.MAP_OUTPUT_RECORDS).increment(1);
-			context.getCounter(Records.TERMS).increment(1);
-			
-			context.write(key, output);
-		}
-	}
-
 	public static final String INPUT_OPTION = "input";
 	public static final String OUTPUT_OPTION = "output";
-	public static final String DF_MIN_OPTION = "dfMin";
+	public static final String DICTIONARY_OPTION = "dictionary";
+	public static final String REDUCERS_OPTION = "reducers";
 	public static final String PREPROCESSING = "preprocessing";
 
 	// All begin and end time are in ISOTimeFormat
 	private static final String BEGIN_TIME_OPTION = "begin";
 	private static final String END_TIME_OPTION = "end";
-
 	/**
 	 * Runs this tool.
 	 */
@@ -256,16 +182,16 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				.withDescription("input path").create(INPUT_OPTION));
 		options.addOption(OptionBuilder.withArgName("path").hasArg()
 				.withDescription("output path").create(OUTPUT_OPTION));
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("dictionary").create(DICTIONARY_OPTION));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
-				.withDescription("minimum df").create(DF_MIN_OPTION));
+				.withDescription("number of reducers").create(REDUCERS_OPTION));
 		options.addOption(OptionBuilder.withArgName("string " + AnalyzerFactory.getOptions()).hasArg()
 				.withDescription("preprocessing").create(PREPROCESSING));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
 				.withDescription("begin time").create(BEGIN_TIME_OPTION));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
 				.withDescription("end time").create(END_TIME_OPTION));
-		options.addOption(OptionBuilder.withArgName("num").hasArg()
-				.withDescription("end time").create(REDUCE_OPTION));
 
 		CommandLine cmdline;
 		CommandLineParser parser = new GnuParser();
@@ -280,7 +206,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		}
 
 		if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION)
-				|| !cmdline.hasOption(PREPROCESSING)) {
+				|| !cmdline.hasOption(DICTIONARY_OPTION) || !cmdline.hasOption(PREPROCESSING)) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp(this.getClass().getName(), options);
 			ToolRunner.printGenericCommandUsage(System.out);
@@ -289,20 +215,8 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 		String input = cmdline.getOptionValue(INPUT_OPTION);
 		String output = cmdline.getOptionValue(OUTPUT_OPTION);
+		String dictionary = cmdline.getOptionValue(DICTIONARY_OPTION);
 		String preprocessing = cmdline.getOptionValue(PREPROCESSING);
-		int reduceNo;
-
-		if (cmdline.hasOption(REDUCE_OPTION)) {
-			String reduceNoStr = cmdline.getOptionValue(REDUCE_OPTION);
-			try {
-				reduceNo = Integer.parseInt(reduceNoStr);
-			} catch (NumberFormatException e) {
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp(this.getClass().getName(), options);
-				ToolRunner.printGenericCommandUsage(System.out);
-				System.err.println("Invalid reduce No. : " + reduceNoStr);
-			}
-		}
 
 		long begin = 0, end = Long.MAX_VALUE;
 		if (cmdline.hasOption(BEGIN_TIME_OPTION)) {
@@ -328,62 +242,52 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				System.err.println("Invalid time format: " + e.getMessage());
 			}
 		}
-
-		LOG.info("Tool name: " + BasicComputeTermStats.class.getSimpleName());
-		LOG.info(" - input: " + input);
-		LOG.info(" - output: " + output);
-		LOG.info(" - preprocessing: " + preprocessing);
-
-		getConf().set(PREPROCESSING, preprocessing);
-
 		// skip non-article
-		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, false);
 
 		// set up range
 		getConf().setLong(REVISION_BEGIN_TIME, begin);
 		getConf().setLong(REVISION_END_TIME, end);
+		
+		Job job = create(BuildPForDocVectors.class.getSimpleName() + ":" + input,
+				BuildPForDocVectors.class);
 
-		Job job = create(BasicComputeTermStats.class.getSimpleName() + ":" + input,
-				BasicComputeTermStats.class);
+		LOG.info("Tool name: " + BuildPForDocVectors.class.getSimpleName());
+		LOG.info(" - input: " + input);
+		LOG.info(" - output: " + output);
+		LOG.info(" - dictionary: " + dictionary);
+		LOG.info(" - preprocessing: " + preprocessing);
 
-	    job.setNumReduceTasks(1);
-
-	    if (cmdline.hasOption(DF_MIN_OPTION)) {
-	      int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
-	      LOG.info(" - dfMin: " + dfMin);
-	      job.getConfiguration().setInt(HADOOP_DF_MIN_OPTION, dfMin);
-	    }
-
-	    FileInputFormat.setInputPaths(job, input);
-	    FileOutputFormat.setOutputPath(job, new Path(output));
-
-	    job.setInputFormatClass(WikiFullRevisionJsonInputFormat.class);
-	    job.setOutputFormatClass(SequenceFileOutputFormat.class);
-
-	    job.setMapOutputKeyClass(Text.class);
-	    job.setMapOutputValueClass(PairOfIntLong.class);
-	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(PairOfIntLong.class);
-
-	    job.setMapperClass(MyMapper.class);
-	    job.setCombinerClass(MyCombiner.class);
-	    job.setReducerClass(MyReducer.class);
-
-		if (cmdline.hasOption(DF_MIN_OPTION)) {
-			int dfMin = Integer.parseInt(cmdline.getOptionValue(DF_MIN_OPTION));
-			LOG.info(" - dfMin: " + dfMin);
-			job.getConfiguration().setInt(HADOOP_DF_MIN_OPTION, dfMin);
+		if (cmdline.hasOption(REDUCERS_OPTION)) {
+			int numReducers = Integer.parseInt(cmdline.getOptionValue(REDUCERS_OPTION));
+			LOG.info(" - reducers: " + numReducers);
+			job.setNumReduceTasks(numReducers);
+		} else {
+			job.setNumReduceTasks(0);
 		}
+
+		FileInputFormat.setInputPaths(job, input);
+		FileOutputFormat.setOutputPath(job, new Path(output));
+
+		job.getConfiguration().set(DICTIONARY_OPTION, dictionary);
+		job.getConfiguration().set(PREPROCESSING, preprocessing);
+
+		job.setInputFormatClass(WikiFullRevisionJsonInputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(IntArrayWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(IntArrayWritable.class);
+
+		job.setMapperClass(MyMapper.class);
 
 		FileSystem.get(getConf()).delete(new Path(output), true);
 
 		long startTime = System.currentTimeMillis();
 		job.waitForCompletion(true);
-		LOG.info("Job Finished in " + (System.currentTimeMillis() - 
-				startTime) / 1000.0 + " seconds.");
+		LOG.info("Job Finished in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds");
 
-		LOG.info("Map Reduce output reducers: " + job.getCounters().findCounter(
-				Records.TERMS).getValue());
 		return 0;
 	}
 
@@ -391,8 +295,10 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	 * Dispatches command-line arguments to the tool via the <code>ToolRunner</code>.
 	 */
 	public static void main(String[] args) throws Exception {
-		LOG.info("Running " + BasicComputeTermStats.class.getCanonicalName() + " with args "
-				+ Arrays.toString(args));
-		ToolRunner.run(new BasicComputeTermStats(), args);
+		/*LOG.info("Running " + BuildPForDocVectors.class.getCanonicalName() + " with args "
+        		+ Arrays.toString(args));
+    	ToolRunner.run(new BuildPForDocVectors(), args);*/
+		long a = 512l * 1024l * 1024l * 1024l * 1024l;
+		System.out.println(a);
 	}
 }
