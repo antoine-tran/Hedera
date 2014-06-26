@@ -207,6 +207,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				cf += pair.getRightElement();
 			}
 			if (df < dfMin || df > dfMax) {
+				LOG.info("wtf");
 				return;
 			}
 			output.set(df, cf);
