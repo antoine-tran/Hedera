@@ -3,6 +3,7 @@ package com.twitter.elephantbird.util;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.Progressable;
 import org.apache.log4j.Logger;
 
 /**
@@ -22,7 +23,7 @@ public class TaskHeartbeatThread {
    * @param context the task attempt context, used to send progress signals to the task
    * @param periodMillis how often to wake up and send a progress signal in milliseconds
    */
-  public TaskHeartbeatThread(final TaskAttemptContext context, final long periodMillis) {
+  public TaskHeartbeatThread(final Progressable context, final long periodMillis) {
     beat = new Thread(
       new Runnable() {
         @Override

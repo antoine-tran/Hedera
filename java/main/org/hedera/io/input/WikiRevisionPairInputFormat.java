@@ -1,6 +1,7 @@
 package org.hedera.io.input;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.DataOutputBuffer;
@@ -10,6 +11,8 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
 public class WikiRevisionPairInputFormat 
 		extends WikiRevisionInputFormat<LongWritable, Text> {
@@ -125,6 +128,8 @@ public class WikiRevisionPairInputFormat
 		//  2 - Matched </page> tag partially
 		//  3 - Matched both <revision> and </page> partially
 		private int lastMatchTag = -1;
+		
+		private TaskAttemptContext context;
 
 		private DataOutputBuffer pageHeader = new DataOutputBuffer();
 		private DataOutputBuffer keyBuf = new DataOutputBuffer();
@@ -137,6 +142,7 @@ public class WikiRevisionPairInputFormat
 			super.initialize(input, tac);
 			revisionVisited = 0;
 			value = new Text();
+			this.context = tac;
 		}
 
 		@Override
@@ -190,10 +196,27 @@ public class WikiRevisionPairInputFormat
 			int i = 0;
 			while (true) {
 				if (pos[0] == pos[1]) {				
-					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
-						((FSDataInputStream)fsin).read(buf);
-					pos[0] = 0;
+					// We use a thread that pings back to the cluster every 5 minutes
+					// to avoid getting killed for slow read
+					TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+						@Override
+						protected void progress() {
+							LOG.info("Task " + context.getTaskAttemptID() 
+									+ " pings back...");
+						}
+					};
+
+					try {
+						heartbeat.start();
+						pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
+							((FSDataInputStream)fsin).read(buf);
+						pos[0] = 0;
+					} finally {
+						heartbeat.stop();
+					}
+
 					if (pos[1] == -1) {
+						flag = -1;
 						return false;
 					}
 				} 

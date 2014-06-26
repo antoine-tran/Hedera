@@ -31,6 +31,8 @@ import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.SplitCompressionInputStream;
@@ -42,6 +44,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
+import org.hedera.io.RevisionSplits;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.wikimedia.wikihadoop.ByteMatcher;
@@ -61,16 +64,20 @@ import org.wikimedia.wikihadoop.SeekableInputStream;
  *
  */
 public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
-		extends FileInputFormat<KEYIN, VALUEIN> {
-	
+extends FileInputFormat<KEYIN, VALUEIN> {
+
 	protected static final String KEY_SKIP_FACTOR = "org.wikimedia.wikihadoop.skipFactor";
-	
+
+	// New features since 2014-06-25: Fast split files from pre-computed split index
+	public static final String SPLIT_INDEX_OPTION = "index";
+	public static final String SPLIT_MAPFILE_LOC = "org.hedera.split.index";
+
 	public static final String SKIP_NON_ARTICLES = "org.hedera.input.onlyarticle"; 
 	public static final String SKIP_REDIRECT = "org.hedera.input.noredirects"; 
-	
+
 	public static final String REVISION_BEGIN_TIME = "org.hedera.input.begintime";
 	public static final String REVISION_END_TIME = "org.hedera.input.begintime";
-	
+
 	protected CompressionCodecFactory compressionCodecs = null;
 
 	public static final String START_PAGE_TAG = "<page>";
@@ -87,35 +94,35 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 
 	public static final byte[] START_TITLE = "<title>".getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_TITLE = "</title>".getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final byte[] START_NAMESPACE = "<ns>".getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_NAMESPACE = "</ns>".getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final String START_TIMESTAMP_TAG = "<timestamp>";
 	public static final String END_TIMESTAMP_TAG = "</timestamp>";
 	public static final byte[] START_TIMESTAMP = START_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_TIMESTAMP = END_TIMESTAMP_TAG.getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final byte[] START_TEXT = "<text xml:space=\"preserve\">"
 			.getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_TEXT = "</text>".getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final byte[] START_PARENT_ID = "<text xml:space=\"preserve\">"
 			.getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_PARENT_ID = "</text>".getBytes(StandardCharsets.UTF_8);	
-	
+
 	public static final byte[] MINOR_TAG = "<minor/>".getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final byte[] START_REDIRECT = "<redirect title=".getBytes(StandardCharsets.UTF_8);
 	public static final byte[] END_REDIRECT = "</redirect>".getBytes(StandardCharsets.UTF_8);
-	
+
 	public static final DateTimeFormatter TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
-	
+
 	protected static long THRESHOLD = 137438953472l;
-	
+
 	// An umbrella log for debugging
 	protected static final Logger LOG = Logger.getLogger(WikiRevisionInputFormat.class);
-	
+
 	public WikiRevisionInputFormat() {
 		super();
 	}
@@ -123,7 +130,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	@Override
 	public abstract RecordReader<KEYIN, VALUEIN> createRecordReader(InputSplit input,
 			TaskAttemptContext context) throws IOException, InterruptedException;
-		
+
 	public void configure(Configuration conf) {
 		if (compressionCodecs == null)
 			compressionCodecs = new CompressionCodecFactory(conf);
@@ -148,39 +155,66 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 	 */
 	@Override
 	public List<InputSplit> getSplits(JobContext jc) throws IOException {
-		// List<InputSplit> old = super.getSplits(jc);
-		List<InputSplit> splits = new ArrayList<InputSplit>();
+
 		List<FileStatus> files = listStatus(jc);
-		// Save the number of input files for metrics/loadgen
+		List<FileStatus> remainingFiles = new ArrayList<>();
 		
+		List<InputSplit> splits = new ArrayList<InputSplit>();
 		long totalSize = 0;
-		// check we have valid files
-		for (FileStatus file: files) {                
-			if (file.isDirectory()) {
-				throw new IOException("Not a file: "+ file.getPath());
+		
+		// New features: Load splits from the index
+		// Check the index before performing the split on the physical files
+		Configuration conf = jc.getConfiguration();
+
+		String mapFile = conf.get(SPLIT_MAPFILE_LOC);
+		MapFile.Reader reader = null;
+		Text key = null;
+		RevisionSplits val = new RevisionSplits();
+		try {
+			if (mapFile != null) {
+				reader = new MapFile.Reader(new Path(mapFile + "/part-r-00000"), 
+						conf);
+				key = new Text();
 			}
-			totalSize += file.getLen();
-		}
-		long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(jc));
-		long goalSize = totalSize / 317;
-		for (FileStatus file : files) {
-			if (file.isDirectory()) {
-				throw new IOException("Not a file: "+ file.getPath());
+
+			// check we have valid files
+			for (FileStatus file: files) {                
+				if (file.isDirectory()) {
+					throw new IOException("Not a file: "+ file.getPath());
+				}
+				
+				// if found in the index, load the splits into main memory, otherwise
+				// add to remainings for next processing
+				if (reader != null) {
+					key.set(file.getPath().toString());
+					if (reader.seek(key)) {
+						reader.get(key, val);
+						FileSplit[] spl = val.splits();
+						for (FileSplit sp : spl) splits.add(sp);
+						continue;
+					}
+				}
+				remainingFiles.add(file);
+				totalSize += file.getLen();
 			}
-			long blockSize = file.getBlockSize();
+			long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(jc));
 			
 			// 2014-06-06: Tuan _ I have to manually increase the file split size
 			// here to cope with Wikipedia Revision .bz2 file - the decompressor
 			// takes too long to run
-			long splitSize = computeSplitSize(goalSize, minSize, blockSize);
+			long goalSize = totalSize / 317;
 			
-			// 2014-06-24: To exploit huge clusters like Amazon AWS, we can change
-			// the size here to accommodate the mass number of mappers
-			// splitSize = (splitSize > 300) ? splitSize / 300 : splitSize;
-			
-			for (InputSplit x: getSplits(jc, file, splitSize)) 
-				splits.add(x);
+			for (FileStatus file : remainingFiles) {
+				long blockSize = file.getBlockSize();
+				long splitSize = computeSplitSize(goalSize, minSize, blockSize);
+				
+				for (InputSplit x: getSplits(jc, file, splitSize)) 
+					splits.add(x);
+			}
+		} finally {
+			if (reader != null) reader.close();
 		}
+		
 		return splits;
 	}
 
@@ -194,9 +228,9 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 
 		List<InputSplit> splits = new ArrayList<InputSplit>();
 		Path path = file.getPath();
-		
+	
 		LOG.info("Splitting file " + path.getName());
-		
+
 		Configuration conf = jc.getConfiguration();
 		configure(conf);
 
@@ -240,7 +274,7 @@ public abstract class WikiRevisionInputFormat<KEYIN, VALUEIN>
 
 					// read until the next page end in the look-ahead split
 					while ( !matcher.readUntilMatch(END_PAGE_TAG, null, split.getStart() 
-							+ split.getLength()) ) {
+							+ split.getLength(), null)) {
 						if (matcher.getPos() >= length  ||  split.getLength() == length 
 								- split.getStart())
 							break READLOOP;

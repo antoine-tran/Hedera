@@ -42,6 +42,15 @@ public class RevisionSplits implements Writable {
 				hosts.get(i));
 	}
 	
+	public FileSplit[] splits() {
+		int n = starts.size();
+		FileSplit[] splits = new FileSplit[n];
+		for (int i = 0; i < n; i++) {
+			splits[i] = split(i);
+		}
+		return splits;
+	}
+	
 	public void clear() {
 		this.filePath = null;
 		this.path = null;

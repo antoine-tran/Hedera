@@ -2,6 +2,7 @@ package org.hedera.io.input;
 
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.DataOutputBuffer;
@@ -11,6 +12,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.hedera.io.Revision;
+
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
 public class WikiRevisionPageInputFormat extends 
 		WikiRevisionInputFormat<LongWritable, Revision> {
@@ -80,12 +83,15 @@ public class WikiRevisionPageInputFormat extends
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();		
 		private DataOutputBuffer parBuf = new DataOutputBuffer();		
 		private DataOutputBuffer contentBuf = new DataOutputBuffer();
+		
+		private TaskAttemptContext context;
 
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
 			value = new Revision(); 
+			this.context = tac;
 		}
 
 		private void resetEverything() {			
@@ -191,10 +197,28 @@ public class WikiRevisionPageInputFormat extends
 			int i = 0;
 			while (true) {
 				if (pos[0] == pos[1]) {				
-					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
-						((FSDataInputStream)fsin).read(buf);
-					pos[0] = 0;
+
+					// We use a thread that pings back to the cluster every 5 minutes
+					// to avoid getting killed for slow read
+					TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+						@Override
+						protected void progress() {
+							LOG.info("Task " + context.getTaskAttemptID() 
+									+ " pings back...");
+						}
+					};
+
+					try {
+						heartbeat.start();
+						pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
+							((FSDataInputStream)fsin).read(buf);
+						pos[0] = 0;
+					} finally {
+						heartbeat.stop();
+					}
+
 					if (pos[1] == -1) {
+						flag = -1;
 						return false;
 					}
 				} 

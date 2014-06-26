@@ -178,7 +178,7 @@ public class IndexSplits extends JobConfig implements Tool {
 
 						// read until the next page end in the look-ahead split
 						while ( !matcher.readUntilMatch(END_PAGE_TAG, null,
-								unit.getStart() + unit.getLength()) ) {
+								unit.getStart() + unit.getLength(), context)) {
 							if (matcher.getPos() >= length  ||
 									unit.getLength() == length - unit.getStart())
 								break READLOOP;

@@ -1,6 +1,7 @@
 package org.hedera.io.input;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.cli.CommandLine;
@@ -20,6 +21,8 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.MutableDateTime;
+
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
 
 public class WikiRevisionTimeInputFormat extends 
@@ -107,6 +110,8 @@ public class WikiRevisionTimeInputFormat extends
 				+ "</text></revision>\n")
 				.getBytes(StandardCharsets.UTF_8);
 
+		private TaskAttemptContext context;
+		
 		// indicating the flow condition within [flag = 8]
 		// -1 - Unmatched
 		//  1 - Matched <revision> tag partially
@@ -141,6 +146,7 @@ public class WikiRevisionTimeInputFormat extends
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
 			value = new Text();
+			this.context = tac;
 		}
 
 		@Override
@@ -270,11 +276,27 @@ public class WikiRevisionTimeInputFormat extends
 			int i = 0;
 			while (true) {
 				if (pos[0] == pos[1]) {				
-					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
-						((FSDataInputStream)fsin).read(buf);
-					LOG.info(pos[1] + " bytes read from the stream...");
-					pos[0] = 0;
+					// We use a thread that pings back to the cluster every 5 minutes
+					// to avoid getting killed for slow read
+					TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+						@Override
+						protected void progress() {
+							LOG.info("Task " + context.getTaskAttemptID() 
+									+ " pings back...");
+						}
+					};
+
+					try {
+						heartbeat.start();
+						pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
+							((FSDataInputStream)fsin).read(buf);
+						pos[0] = 0;
+					} finally {
+						heartbeat.stop();
+					}
+
 					if (pos[1] == -1) {
+						flag = -1;
 						return false;
 					}
 				} 

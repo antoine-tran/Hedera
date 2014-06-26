@@ -1,6 +1,7 @@
 package org.hedera.io.input;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,6 +14,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.hedera.io.RevisionDiffOld;
+
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
 import difflib.Delta;
 import difflib.DiffUtils;
@@ -74,6 +77,8 @@ public class WikiRevisionDiffInputFormat
 		//  2 - Matched <timestamp> tag partially
 		//  3 - Matched both <parentId> and <timestamp> partially
 		private int parOrTs = -1;
+		
+		private TaskAttemptContext context;
 
 		// We now convert and cache everything from pageHeader to the followin global variables
 		// NOTE: they all need to be synchronized with pageHeader !!
@@ -100,6 +105,7 @@ public class WikiRevisionDiffInputFormat
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
 			value = new RevisionDiffOld(); 
+			this.context = tac;
 		}
 
 		private void resetEverything() {
@@ -251,11 +257,27 @@ public class WikiRevisionDiffInputFormat
 			int i = 0;
 			while (true) {
 				if (pos[0] == pos[1]) {				
-					pos[1] = (compressed) ? ((CompressionInputStream)fsin).read(buf) :
-						((FSDataInputStream)fsin).read(buf);
-					pos[0] = 0;
-					LOG.info(pos[1] + " bytes read from the stream...");
+					// We use a thread that pings back to the cluster every 5 minutes
+					// to avoid getting killed for slow read
+					TaskHeartbeatThread heartbeat = new TaskHeartbeatThread(context, 60 * 5000) {
+						@Override
+						protected void progress() {
+							LOG.info("Task " + context.getTaskAttemptID() 
+									+ " pings back...");
+						}
+					};
+
+					try {
+						heartbeat.start();
+						pos[1] = (compressed) ? ((InputStream)fsin).read(buf) :
+							((FSDataInputStream)fsin).read(buf);
+						pos[0] = 0;
+					} finally {
+						heartbeat.stop();
+					}
+
 					if (pos[1] == -1) {
+						flag = -1;
 						return false;
 					}
 				} 
