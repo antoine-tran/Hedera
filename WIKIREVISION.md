@@ -75,8 +75,17 @@ either work directly with raw dump files in XML format, or with processed JSON o
 
 
 ##### 1. Working with Articles#####
-Wikipedia revision history dumps includes pages of all types (articles, talks, User pages, discussions, etc. Full list [here](http://en.wikipedia.org/wiki/Wikipedia:Namespace))
+Wikipedia revision history dumps includes pages of all types (articles, talks, User pages, discussions, etc. Full list [here](http://en.wikipedia.org/wiki/Wikipedia:Namespace)). In Hedera, you can choose to extract information from article pages only by specifying the configuration variable "org.hedera.input.onlyarticle". In Java you can do it by:
 
+<code>
+jobConfigurationObject.setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
+</code>
+
+or in Pig:
+
+<code>
+SET 'org.hedera.input.onlyarticle' true
+</code>
 
 Copyright
 =============
