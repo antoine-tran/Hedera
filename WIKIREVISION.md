@@ -87,7 +87,7 @@ or in Pig:
 SET 'org.hedera.input.onlyarticle' true
 </code>
 
-Copyright
+#### Copyright####
 =============
 Hedera uses the following library for working with Wikipedia
 
