@@ -87,8 +87,8 @@ or in Pig:
 SET 'org.hedera.input.onlyarticle' true
 </code>
 
+==============
 #### Copyright####
-=============
 Hedera uses the following library for working with Wikipedia
 
 + [Cloud9](https://github.com/antoine-tran/Cloud9) : Hedera uses the WikipediaPage input formats and Writable implementations from Cloud9 tools
