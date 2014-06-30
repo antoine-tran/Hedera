@@ -42,22 +42,39 @@ Here is the example for registering a job to a specific InputSplit:
 
 <pre>
 <code>
-  String inputDir = Wikipedia_revision_files_path;
-  String outputDir = output_path;
-  int reduceNo = some_number;
-  Job job = setup("Job description", YOURJOB.class, inputDir, outputDir,
-	WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
-	MAPPEROUTPUTKEY.class, MAPPEROUTPUTVAL.class,
-	Text.class, Text.class,
-	MyMapper.class, Reducer.class, reduceNo);
+  // Use tuan4j-distributed lib for fast configuration of Hadoop jobs
+  import tuan.hadoop.conf.JobConfig
+  
+  ....
+  
+  public class MyJob extends JobConfig {
+    
+    
+  public void run(String[] args) {
+      String inputDir = Wikipedia_revision_files_path;
+      String outputDir = output_path;
+      int reduceNo = some_number;
+      Job job = setup("Job description", YOURJOB.class, inputDir, outputDir,
+	      WikiRevisionDiffInputFormat.class, TextOutputFormat.class,
+	      MAPPEROUTPUTKEY.class, MAPPEROUTPUTVAL.class,
+	      Text.class, Text.class,
+	      MyMapper.class, Reducer.class, reduceNo);
+	
+	  ...
+	}
 </code>
 </pre>
 
 
 
-Fast Checking and Extracting:
+Handling Text:
 =============
-to be added soon...
+
+Hedera supports basic tasks that are pretty much required for almost all text mining work. You can
+either work directly with raw dump files in XML format, or with processed JSON ones.
+
+
+##### Working with Articles#####
 
 
 
