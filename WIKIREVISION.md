@@ -87,6 +87,28 @@ or in Pig:
 SET 'org.hedera.input.onlyarticle' true
 </code>
 
+
+##### 2. Specify time span#####
+The revision history dump contains all text in Wikimedia projects from the beginning (2001) till the date of the dumps. You can specify one particular date of your choice with the following code snippets:
+
+###### Example in Java######
+<pre>
+<code>
+hadoop jar hedera-0.X-SNAPSHOT.jar [CLASS_NAME] -begin [TIME1] -end [TIME2]
+</code>
+</pre>
+
+
+###### Example in Pig######
+<pre>
+<code>
+SET 'org.hedera.input.begintime' TIME1
+SET 'org.hedera.input.endtime' TIME2
+</code>
+</pre>
+
+where TIME1 and TIME2's are strings in ISOTime format.
+
 ==============
 #### Copyright####
 Hedera uses the following library for working with Wikipedia
