@@ -98,7 +98,6 @@ hadoop jar hedera-0.X-SNAPSHOT.jar [CLASS_NAME] -begin [TIME1] -end [TIME2]
 </code>
 </pre>
 
-
 ###### Example in Pig######
 <pre>
 <code>
@@ -108,6 +107,37 @@ SET 'org.hedera.input.endtime' TIME2
 </pre>
 
 where TIME1 and TIME2's are strings in ISOTime format.
+
+
+##### 3. Building Dictionary, Vectorization#####
+
+(this is still tentative. To be updated soon)
+
+In Hedera, you can also build basic data structures for Information Retrieval / matrix-like computation, such as mappings of entity / revision / texts into continous ID arrays. 
+
+
+###### 3.1. Flattening dumps to CSV files ######
+(Thanks to contribution from giangbinhtran :) )
+
+One of the favourite format for handling text in different programming languages (e.g. Python) is plain-text CSV files. In Hedera you can flatten the XML dumps into CSV files simply by calling the Pig script XML2JSON.pig in source directory <code>pig/utils</code>. The output is the set of .csv files, each containing one revision per line in JSON format with the following schema:
+
+
+<pre>
+<code>
+{
+ "page_id":NUMBER,
+ "page_title":STRING,
+ "page_namespace":NUMBER,
+ "rev_id":NUMBER,
+ "parent_id":NUMBER,
+ "timestamp":NUMBER,
+ "user":STRING,
+ "user_id":NUMBER,
+ "comment":STRING,
+ "text":STRING
+}
+</code>
+</pre>
 
 ==============
 #### Copyright####
