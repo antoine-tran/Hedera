@@ -5,6 +5,6 @@ package org.hedera.util;
  * output from Cloud9, checks the continuous entity IDs and IDs of
  * anchor texts, and repacks everything into continuous id ranges
  */
-public class RepackAnchorMaps {
+public class VectorizeAnchorMap {
 
 }
