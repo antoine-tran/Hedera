@@ -74,7 +74,7 @@ Hedera supports basic tasks that are pretty much required for almost all text mi
 either work directly with raw dump files in XML format, or with processed JSON ones.
 
 
-#### Working with Articles####
+##### 1. Working with Articles#####
 Wikipedia revision history dumps includes pages of all types (articles, talks, User pages, discussions, etc. Full list [here](http://en.wikipedia.org/wiki/Wikipedia:Namespace))
 
 
