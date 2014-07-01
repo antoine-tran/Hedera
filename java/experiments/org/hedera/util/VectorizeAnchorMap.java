@@ -29,6 +29,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MapFileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
@@ -61,7 +62,7 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 	 * keyed by anchors as an array of integers. Values for each anchor
 	 * is a list of entity ids */
 	private final static class MyMapper extends Mapper<IntWritable, HMapSIW, 
-	IntArrayListWritable, IntArrayListWritable> {
+			IntArrayListWritable, IntArrayListWritable> {
 
 		private final IntArrayListWritable anchorId = new IntArrayListWritable();
 		private final IntArrayListWritable entities = new IntArrayListWritable();
@@ -229,13 +230,14 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 		job.setNumReduceTasks(1);
 
 		FileInputFormat.setInputPaths(job, input);
+		
 		FileOutputFormat.setOutputPath(job, new Path(output));
 
 		job.getConfiguration().set(DICTIONARY_OPTION, dictionary);
 		job.getConfiguration().set(PREPROCESSING, preprocessing);
 
 		job.setInputFormatClass(SequenceFileInputFormat.class);
-		job.setOutputFormatClass(MapFileOutputFormat.class);
+		job.setOutputFormatClass(TextOutputFormat.class);
 
 		job.setMapOutputKeyClass(IntArrayListWritable.class);
 		job.setMapOutputValueClass(IntArrayListWritable.class);
