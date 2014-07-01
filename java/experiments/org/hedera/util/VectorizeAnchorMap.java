@@ -22,7 +22,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -40,7 +39,6 @@ import org.clueweb.util.AnalyzerFactory;
 
 import edu.umd.cloud9.io.map.HMapSIW;
 
-import tl.lin.data.array.IntArrayWritable;
 import tl.lin.lucene.AnalyzerUtils;
 import tuan.hadoop.conf.JobConfig;
 import tuan.hadoop.io.IntArrayListWritable;
@@ -57,12 +55,12 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 	public static final String DICTIONARY_OPTION = "dictionary";
 	public static final String PREPROCESSING = "preprocessing";
 
-	private Analyzer analyzer;
+	private static Analyzer analyzer;
 
 	/** We convert the cloud9 anchor mappings into inverted-index style
 	 * keyed by anchors as an array of integers. Values for each anchor
 	 * is a list of entity ids */
-	private final class MyMapper extends Mapper<IntWritable, HMapSIW, 
+	private final static class MyMapper extends Mapper<IntWritable, HMapSIW, 
 	IntArrayListWritable, IntArrayListWritable> {
 
 		private final IntArrayListWritable anchorId = new IntArrayListWritable();
@@ -116,7 +114,7 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 		}
 	}
 
-	private final class MyReducer extends Reducer<IntArrayListWritable, IntArrayListWritable,
+	private final static class MyReducer extends Reducer<IntArrayListWritable, IntArrayListWritable,
 			IntArrayListWritable, IntArrayListWritable> {
 		
 		private final IntArrayListWritable keyOut = new IntArrayListWritable();
