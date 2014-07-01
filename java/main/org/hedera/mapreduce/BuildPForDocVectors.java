@@ -296,10 +296,10 @@ public class BuildPForDocVectors extends JobConfig implements Tool {
 	 * Dispatches command-line arguments to the tool via the <code>ToolRunner</code>.
 	 */
 	public static void main(String[] args) throws Exception {
-		/*LOG.info("Running " + BuildPForDocVectors.class.getCanonicalName() + " with args "
+		LOG.info("Running " + BuildPForDocVectors.class.getCanonicalName() + " with args "
         		+ Arrays.toString(args));
-    	ToolRunner.run(new BuildPForDocVectors(), args);*/
-		long a = 512l * 1024l * 1024l * 1024l * 1024l;
-		System.out.println(a);
+    	ToolRunner.run(new BuildPForDocVectors(), args);
+		// long a = 512l * 1024l * 1024l * 1024l * 1024l;
+		// System.out.println(a);
 	}
 }
