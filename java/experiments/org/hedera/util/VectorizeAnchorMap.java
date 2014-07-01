@@ -109,7 +109,9 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 
 				if (!skipped) {
 					toIntArrayWritable(anchorId, lst.toIntArray(), lst.size());
-					context.write(anchorId, entities);
+					if (!anchorId.isEmpty()) {
+						context.write(anchorId, entities);
+					}
 				}
 			}
 		}
