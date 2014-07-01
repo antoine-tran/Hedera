@@ -135,10 +135,6 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 			context.write(keyOut, valOut);
 		}
 	}
-	
-	
-	private static final FastPFOR P4 = new FastPFOR();
-	private static final VariableByte VB = new VariableByte();
 
 	public static void toIntArrayWritable(IntArrayListWritable ints, int[] termids, int length) {
 		// Remember, the number of terms to serialize is length; the array might be longer.
@@ -148,28 +144,7 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 				length = 0;
 			}
 
-			IntWrapper inPos = new IntWrapper(0);
-			IntWrapper outPos = new IntWrapper(1);
-
-			int[] out = new int[length + 1];
-			out[0] = length;
-
-			if (length < 128) {
-				VB.compress(termids, inPos, length, out, outPos);
-				ints.set(out, outPos.get());
-
-				return;
-			}
-
-			P4.compress(termids, inPos, (length/128)*128, out, outPos);
-
-			if (length % 128 == 0) {
-				ints.set(out, outPos.get());
-				return;
-			}
-
-			VB.compress(termids, inPos, length % 128, out, outPos);
-			ints.set(out, outPos.get());
+			ints.set(termids, length);
 		} catch (Exception e) {
 			e.printStackTrace();
 			ints.set(new int[] {}, 0);
