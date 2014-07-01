@@ -1,9 +1,9 @@
 package org.hedera.util;
 
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -11,19 +11,32 @@ import me.lemire.integercompression.FastPFOR;
 import me.lemire.integercompression.IntWrapper;
 import me.lemire.integercompression.VariableByte;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MapFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.clueweb.dictionary.DefaultFrequencySortedDictionary;
 import org.clueweb.util.AnalyzerFactory;
+
 
 import edu.umd.cloud9.io.map.HMapSIW;
 
@@ -115,19 +128,12 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			
 			keyOut.set(k.toArray(), k.size());
+			valOut.clear();
 			
 			for (IntArrayListWritable entities : v) {
-				entities.sort(true);
-				if (valOut.size() == 0) {
-					valOut.set(entities.toArray(), entities.size());
-				}
-				else for (int id : entities.toArray()) {
-					int i = valOut.indexOf(id);
-					if (i == -1) {
-						valOut.add(id);
-					}
-				}
+				valOut.addAll(entities.toArray(), entities.size());
 			}
+			context.write(keyOut, valOut);
 		}
 	}
 	
@@ -171,9 +177,83 @@ public class VectorizeAnchorMap extends JobConfig implements Tool {
 		}
 	}
 
+	public static final String INPUT_OPTION = "input";
+	public static final String OUTPUT_OPTION = "output";
+	
+	@SuppressWarnings("static-access")
 	@Override
 	public int run(String[] args) throws Exception {
-		// TODO Auto-generated method stub
+		Options options = new Options();
+
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("input path").create(INPUT_OPTION));
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("output path").create(OUTPUT_OPTION));
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("dictionary").create(DICTIONARY_OPTION));
+		options.addOption(OptionBuilder.withArgName("string " + AnalyzerFactory.getOptions()).hasArg()
+				.withDescription("preprocessing").create(PREPROCESSING));
+		
+		CommandLine cmdline;
+		CommandLineParser parser = new GnuParser();
+		try {
+			cmdline = parser.parse(options, args);
+		} catch (ParseException exp) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp(this.getClass().getName(), options);
+			ToolRunner.printGenericCommandUsage(System.out);
+			System.err.println("Error parsing command line: " + exp.getMessage());
+			return -1;
+		}
+
+		if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION)
+				|| !cmdline.hasOption(DICTIONARY_OPTION) || !cmdline.hasOption(PREPROCESSING)) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp(this.getClass().getName(), options);
+			ToolRunner.printGenericCommandUsage(System.out);
+			return -1;
+		}
+
+		String input = cmdline.getOptionValue(INPUT_OPTION);
+		String output = cmdline.getOptionValue(OUTPUT_OPTION);
+		String dictionary = cmdline.getOptionValue(DICTIONARY_OPTION);
+		String preprocessing = cmdline.getOptionValue(PREPROCESSING);
+		
+		Job job = create("Hedera: " + VectorizeAnchorMap.class
+				.getSimpleName() + ":" + input, VectorizeAnchorMap.class);
+
+		LOG.info("Tool name: " + VectorizeAnchorMap.class.getSimpleName());
+		LOG.info(" - input: " + input);
+		LOG.info(" - output: " + output);
+		LOG.info(" - dictionary: " + dictionary);
+		LOG.info(" - preprocessing: " + preprocessing);
+
+		job.setNumReduceTasks(1);
+
+		FileInputFormat.setInputPaths(job, input);
+		FileOutputFormat.setOutputPath(job, new Path(output));
+
+		job.getConfiguration().set(DICTIONARY_OPTION, dictionary);
+		job.getConfiguration().set(PREPROCESSING, preprocessing);
+
+		job.setInputFormatClass(SequenceFileInputFormat.class);
+		job.setOutputFormatClass(MapFileOutputFormat.class);
+
+		job.setMapOutputKeyClass(IntArrayListWritable.class);
+		job.setMapOutputValueClass(IntArrayListWritable.class);
+		job.setOutputKeyClass(IntArrayListWritable.class);
+		job.setOutputValueClass(IntArrayListWritable.class);
+
+		job.setMapperClass(MyMapper.class);
+		job.setReducerClass(MyReducer.class);
+		job.setCombinerClass(MyReducer.class);
+
+		FileSystem.get(getConf()).delete(new Path(output), true);
+
+		long startTime = System.currentTimeMillis();
+		job.waitForCompletion(true);
+		LOG.info("Job Finished in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds");
+
 		return 0;
 	}
 
