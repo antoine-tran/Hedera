@@ -86,7 +86,6 @@ public class WikiFullRevisionJsonInputFormat
 		
 		private LineRecordReader reader = new LineRecordReader();
 
-		private final Text curLine = new Text();
 		private final FullRevision value = new FullRevision();
 		private final JsonParser parser = new JsonParser();
 
