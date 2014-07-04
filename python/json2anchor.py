@@ -9,7 +9,7 @@ Output anchor in format (separated by TAB)
 [timestamp] [source ID] [revision ID] [previous revision ID] [source title] [anchor text] [target title]
 """
 
-from mrjob import MRJob
+from mrjob.job import MRJob
 
 # Enable boto logging for EMR debug
 import logging
