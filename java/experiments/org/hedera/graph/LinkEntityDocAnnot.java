@@ -1,10 +1,7 @@
 package org.hedera.graph;
 
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.FullRevision;
 
 import tuan.hadoop.conf.JobConfig;
 
