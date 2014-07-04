@@ -24,7 +24,7 @@ import json
 
 class MRAnchorText(MRJob):
 
-    def get_links(text):
+    def get_links(self,text):
         start = 0
         res = list()
         while True:
