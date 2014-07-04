@@ -59,7 +59,7 @@ class MRAnchorText(MRJob):
             if not anchor:
                 anchor = content
 
-            res.add((anchor,content))
+            res.append((anchor,content))
 
             start = end + 1
 
