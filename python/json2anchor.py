@@ -76,7 +76,7 @@ class MRAnchorText(MRJob):
         else:
             parid = 0
         text = obj['text']
-        anchors = get_links(text)
+        anchors = self.get_links(text)
         for (a,t) in anchors:
             str = '%d\t%d\t%d\t%d\t%s\t%s\t%s'
             yield (timestamp,str)
