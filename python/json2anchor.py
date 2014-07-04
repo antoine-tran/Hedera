@@ -13,7 +13,7 @@ from mrjob.job import MRJob
 
 # Enable boto logging for EMR debug
 import logging
-loggin.basicConfig(filename='boto.log',level=logging.INFO)
+logging.basicConfig(filename='boto.log',level=logging.INFO)
 
 # Settings for running at the cluster
 import os
