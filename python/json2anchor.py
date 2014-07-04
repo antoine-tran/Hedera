@@ -83,7 +83,7 @@ class MRAnchorText(MRJob):
 
     def reducer(self, pid, lines):
         for line in lines:
-            yield line
+            yield (_,line)
 
 if __name__ == '__main__':
     MRAnchorText.run()
