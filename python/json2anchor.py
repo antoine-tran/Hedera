@@ -25,7 +25,6 @@ import json
 
 class MRAnchorText(MRJob):
 
-    
     OUTPUT_PROTOCOL = RawValueProtocol
 
     # Get anchor texts from the Wiki content
