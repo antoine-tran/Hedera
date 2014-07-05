@@ -73,7 +73,6 @@ class MRAnchorText(MRJob):
     def mapper(self, pid, line):
         obj = json.loads(line)
         pid = long(obj['page_id'])
-        title = obj['page_title']
         timestamp = long(obj['timestamp'])
         revid = long(obj['rev_id'])
         if 'parent_id' in obj:
@@ -83,7 +82,7 @@ class MRAnchorText(MRJob):
         text = obj['text']
         anchors = self.get_links(text)
         for (a,t) in anchors:
-            str = '%d%d\t%d\t%d\t%s\t%s\t%s' % (timestamp,pid,revid,parid,title,a,t)
+            str = '%d%d\t%d\t%d\t%s\t%s' % (timestamp,pid,revid,parid,a,t)
             yield (timestamp,str)
 
     def reducer(self, pid, lines):
