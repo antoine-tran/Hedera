@@ -10,6 +10,7 @@ Output anchor in format (separated by TAB)
 """
 
 from mrjob.job import MRJob
+from mrjob.protocol import RawProtocol
 
 # Enable boto logging for EMR debug
 import logging
@@ -24,6 +25,9 @@ import json
 
 class MRAnchorText(MRJob):
 
+    OUTPUT_PROTOCOL = RawProtocol
+
+    # Get anchor texts from the Wiki content
     def get_links(self,text):
         start = 0
         res = list()
