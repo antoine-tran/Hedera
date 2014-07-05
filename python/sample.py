@@ -39,4 +39,4 @@ class MRSampleRevisions(MRJob):
             yield (None,line)
 
 if __name__ == '__main__':
-    MRSampleRevision.run()
+    MRSampleRevisions.run()
