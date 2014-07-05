@@ -175,7 +175,8 @@ public class WikiFullRevisionJsonInputFormat
 				String comment = obj.get("comment").getAsString();
 				value.setComment(comment);
 				
-				byte[] text = obj.get("text").getAsString().getBytes(StandardCharsets.UTF_8);
+				byte[] text = obj.get("text").getAsString()
+						.getBytes(StandardCharsets.UTF_8);
 				value.loadText(text, 0, text.length);
 										
 				return true;
