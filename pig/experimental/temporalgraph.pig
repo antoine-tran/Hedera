@@ -14,7 +14,7 @@ REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
 REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 
-%DECLARE BASEDIR 'hdfs://master.hadoop:8020'
+%DECLARE BASEDIR 'hdfs://master.ib:8020'
 
 SET default_parallel 999
 SET mapred.output.compress 'true';
