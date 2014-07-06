@@ -3,6 +3,8 @@
 Extract the mapping of wikipedia page id - title from the revision dumps
 """
 from mrjob.job import MRJob
+from mrjob.protocol import RawValueProtocol
+
 import re
 
 import logging
@@ -14,12 +16,12 @@ import os
 # os.environ['HADOOP_HOME']='/opt/cloudera/parcels/CDH'
 # os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.26/lib/hadoop-0.20-mapreduce'
 
-WORD_RE = re.compile(r"[\w']+")
-
 import json
 
 class MRTitle2Id(MRJob):
 
+    OUTPUT_PROTOCOL = RawValueProtocol
+    
     def mapper(self, pid, line):
         obj = json.loads(line)
         pid = int(obj['page_id'])
