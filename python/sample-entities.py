@@ -41,7 +41,8 @@ class MRSampleEntityRevisions(MRJob):
         super(MRSampleEntityRevisions, self).load_options(args)
         seedfile = self.options.seed_file
         self.seeds = set()
-        with open(seedfile,'r') as f:
+        print seedfile
+        with open(seedfile[0],'r') as f:
             for line in f:
                 self.seeds.add(long(line.rstrip()))
         
