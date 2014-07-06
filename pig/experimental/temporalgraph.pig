@@ -20,9 +20,9 @@ SET default_parallel 999
 SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 
-idmap = LOAD '$BASEDIR/user/tuan.tran/tmp/id-titles-map/part-*.bz2' AS (pageid:long,title:chararray);
+idmap = LOAD '$BASEDIR/$INPUTMAP' AS (pageid:long,title:chararray);
 
-anchor = LOAD '$BASEDIR/user/tuan.tran/tmp/anchor-text-sampled-from-seed-method1-2011/part-*' AS (ts:long,pid:long,revision:long,parent:long,anchor:chararray,target:chararray);
+anchor = LOAD '$BASEDIR/$INPUTANCHOR' AS (ts:long,pid:long,revision:long,parent:long,anchor:chararray,target:chararray);
 
 -- reduce the size of anchors
 sanchor = FOREACH anchor GENERATE (ts,pid,target);
