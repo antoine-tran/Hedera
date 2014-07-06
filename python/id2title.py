@@ -13,8 +13,8 @@ logging.basicConfig(filename='boto.log',level=logging.DEBUG)
 
 # set up classpath
 import os
-# os.environ['HADOOP_HOME']='/opt/cloudera/parcels/CDH'
-# os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.26/lib/hadoop-0.20-mapreduce'
+os.environ['HADOOP_HOME']='/opt/cloudera/parcels/CDH'
+os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.26/lib/hadoop-0.20-mapreduce'
 
 import json
 
