@@ -6,7 +6,7 @@ Extract temporal anchor text from
 JSON dumps of Wikipedia revisions
 
 Output anchor in format (separated by TAB)
-[timestamp] [source ID] [revision ID] [previous revision ID] [source title] [anchor text] [target title]
+[timestamp] [source ID] [revision ID] [previous revision ID] [anchor text] [target title]
 """
 
 from mrjob.job import MRJob
