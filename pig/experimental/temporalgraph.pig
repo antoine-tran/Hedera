@@ -28,6 +28,6 @@ anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,parent:long,anchor:ch
 -- sanchor = FOREACH anchor GENERATE (ts,pid,target);
 
 matchanchor = JOIN idmap BY title, anchor BY target;
-pmatchanchor = FOREACH matchanchor GENERATE (ts,pid,pageid);
+pmatchanchor = FOREACH matchanchor GENERATE ts,pid,pageid;
 
 STORE pmatchanchor INTO '$BASEDIR/$output' USING PigStorage('\t');
