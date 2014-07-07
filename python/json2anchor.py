@@ -25,7 +25,7 @@ import json
 
 class MRAnchorText(MRJob):
 
-    OUTPUT_PROTOCOL = RawValueProtocol
+    # OUTPUT_PROTOCOL = RawValueProtocol
 
     # Get anchor texts from the Wiki content
     def get_links(self,text):
@@ -86,7 +86,7 @@ class MRAnchorText(MRJob):
 
     def reducer(self, pid, lines):
         for line in lines:
-            yield (None,line)
+            yield (pid,line)
 
 if __name__ == '__main__':
     MRAnchorText.run()

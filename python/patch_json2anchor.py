@@ -25,6 +25,13 @@ os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.
 
 class MRAnchorFix(MRJob):
 
+    def isnumber(self,txt):
+        try:
+            long(txt)
+            return True
+        except ValueError:
+            return False
+        
     INPUT_PROTOCOL = RawProtocol
     INTERNAL_PROTOCOL = RawProtocol
     OUTPUT_PROTOCOL = RawValueProtocol
@@ -32,9 +39,13 @@ class MRAnchorFix(MRJob):
     def mapper(self,pid,line):
         # Patch fix: the first 13 characters in pid is timestamp
         ts = pid[:12]
-        pageid = pid[12:]
-        line = pageid + '\t' + line        
-        yield (ts,line)
+
+        # Skip mal-formed anchors
+        if self.isnumber(ts):
+            pageid = pid[12:]
+            line = pageid + '\t' + line      
+            yield (ts,line)
+            
 
     def reducer(self,tsid,lines):
         for line in lines:
