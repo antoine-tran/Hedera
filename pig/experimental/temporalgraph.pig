@@ -25,9 +25,9 @@ idmap = LOAD '$BASEDIR/$inputmap' AS (pageid:long,title:chararray);
 anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,revision:long,parent:long,anchor:chararray,target:chararray);
 
 -- reduce the size of anchors
-sanchor = FOREACH anchor GENERATE (ts,pid,target);
+-- sanchor = FOREACH anchor GENERATE (ts,pid,target);
 
-matchanchor = JOIN idmap BY title, sanchor BY target;
+matchanchor = JOIN idmap BY title, anchor BY target;
 pmatchanchor = FOREACH matchanchor GENERATE (ts,pid,pageid);
 
 STORE pmatchanchor INTO '$BASEDIR/$output';
