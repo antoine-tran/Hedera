@@ -7,7 +7,7 @@ import tuan.hadoop.conf.JobConfig;
 /** This tool builds the annotation of entities for each
  * document vector based on the proximity heuristics
  * 
- * - Input: anchor / entity mapping, seed words, proximity 
+ * - Input: anchor / entity mapping, seed entities, proximity 
  * distance, entity repacked id list, repacked doc id list,
  * dictionary
  * 
