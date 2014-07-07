@@ -18,7 +18,7 @@ REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 
 SET default_parallel 999
 SET mapred.output.compress 'true';
-SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
+SET mapred.output.compression.codec 'com.hadoop.compression.lzo.LzoCodec';
 
 idmap = LOAD '$BASEDIR/$inputmap' AS (pageid:long,title:chararray);
 
