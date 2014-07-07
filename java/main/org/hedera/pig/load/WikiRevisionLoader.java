@@ -66,7 +66,7 @@ public class WikiRevisionLoader extends LoadFunc implements LoadMetadata {
 
 				long pageId = content.getPageId();
 				long revId = content.getRevisionId();
-				long parentId = content.getPageId();
+				long parentId = content.getParentId();
 				long ts = content.getTimestamp();
 				String user = content.getUser();
 				long userId = content.getUserId();
