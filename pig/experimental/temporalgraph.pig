@@ -22,7 +22,7 @@ SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 
 idmap = LOAD '$BASEDIR/$inputmap' AS (pageid:long,title:chararray);
 
-anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,revision:long,parent:long,anchor:chararray,target:chararray);
+anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,revision:long,parent:long,anchor:chararray,target:chararray);
 
 -- reduce the size of anchors
 -- sanchor = FOREACH anchor GENERATE (ts,pid,target);
