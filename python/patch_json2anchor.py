@@ -30,10 +30,9 @@ class MRAnchorFix(MRJob):
     OUTPUT_PROTOCOL = RawValueProtocol
     
     def mapper(self,pid,line):
-
         # Patch fix: the first 13 characters in pid is timestamp
         ts = pid[:12]
-        pageid = ts[12:]
+        pageid = pid[12:]
         line = pageid + '\t' + line        
         yield (ts,line)
 
