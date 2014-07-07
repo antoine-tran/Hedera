@@ -81,7 +81,7 @@ class MRAnchorText(MRJob):
         text = obj['text']
         anchors = self.get_links(text)
         for (a,t) in anchors:
-            str = '%d%d\t%d\t%d\t%s\t%s' % (timestamp,pid,revid,parid,a,t)
+            str = '%d\t%d\t%d\t%d\t%s\t%s' % (timestamp,pid,revid,parid,a,t)
             yield (timestamp,str)
 
     def reducer(self, pid, lines):
