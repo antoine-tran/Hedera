@@ -30,4 +30,4 @@ anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,parent:long,anchor:ch
 matchanchor = JOIN idmap BY title, anchor BY target;
 pmatchanchor = FOREACH matchanchor GENERATE (ts,pid,pageid);
 
-STORE pmatchanchor INTO '$BASEDIR/$output';
+STORE pmatchanchor INTO '$BASEDIR/$output' USING CSVExcelStorage('\t','NO_MULTILINE');
