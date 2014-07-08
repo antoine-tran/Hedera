@@ -30,7 +30,6 @@ import org.hedera.io.RevisionHeader;
 import org.hedera.io.input.WikiRevisionHeaderInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 
-import tl.lin.data.pair.PairOfIntLong;
 import tl.lin.data.pair.PairOfLongs;
 import tuan.hadoop.conf.JobConfig;
 
@@ -41,7 +40,6 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 	private static final class MyMapper extends 
 			Mapper<LongWritable, RevisionHeader, LongWritable, PairOfLongs> {
 		
-		private final LongWritable keyOut = new LongWritable();
 		private final PairOfLongs val = new PairOfLongs();
 		
 		@Override
@@ -49,9 +47,8 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			
 			// Emit timestamp as key, (revision, parent) as value
-			keyOut.set(value.getTimestamp());
 			val.set(value.getRevisionId(), value.getParentId());
-			context.write(keyOut, val);
+			context.write(key, val);
 		}
 	}
 	
@@ -180,8 +177,8 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 		// set up seeds
 		if (seedPath != null) getConf().set(WikiRevisionInputFormat.SEED_FILE, seedPath);
 
-		Job job = create(BasicComputeTermStats.class.getSimpleName() + ":" + input,
-				BasicComputeTermStats.class);
+		Job job = create(SampleRevisionPair.class.getSimpleName() + ":" + input,
+				SampleRevisionPair.class);
 
 	    job.setNumReduceTasks(reduceNo);
 
