@@ -74,6 +74,7 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 	
 	public static final String INPUT_OPTION = "input";
 	public static final String OUTPUT_OPTION = "output";
+	public static final String SEED_OPTION = "seedfile";
 	private static final String REDUCE_OPTION = "reduceNo";
 
 	// All begin and end time are in ISOTimeFormat
@@ -96,6 +97,9 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 				.withDescription("end time").create(END_TIME_OPTION));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
 				.withDescription("end time").create(REDUCE_OPTION));
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("seed file").create(SEED_OPTION));
+
 
 		CommandLine cmdline;
 		CommandLineParser parser = new GnuParser();
@@ -130,6 +134,11 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 				ToolRunner.printGenericCommandUsage(System.out);
 				System.err.println("Invalid reduce No. : " + reduceNoStr);
 			}
+		}
+		
+		String seedPath = null;
+		if (cmdline.hasOption(SEED_OPTION)) {
+			seedPath = cmdline.getOptionValue(SEED_OPTION);
 		}
 
 		long begin = 0, end = Long.MAX_VALUE;
@@ -167,6 +176,9 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 		// set up range
 		getConf().setLong(REVISION_BEGIN_TIME, begin);
 		getConf().setLong(REVISION_END_TIME, end);
+		
+		// set up seeds
+		if (seedPath != null) getConf().set(WikiRevisionInputFormat.SEED_FILE, seedPath);
 
 		Job job = create(BasicComputeTermStats.class.getSimpleName() + ":" + input,
 				BasicComputeTermStats.class);
