@@ -21,6 +21,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.log4j.Logger;
 import org.hedera.io.RevisionHeader;
 
 import com.twitter.elephantbird.util.TaskHeartbeatThread;
@@ -33,6 +34,7 @@ import com.twitter.elephantbird.util.TaskHeartbeatThread;
  * time span */
 public class WikiRevisionHeaderInputFormat extends
 		WikiRevisionInputFormat<LongWritable, RevisionHeader> {
+	private static final Logger LOG = Logger.getLogger(WikiRevisionHeaderInputFormat.class);
 	
 	@Override
 	public RecordReader<LongWritable, RevisionHeader> createRecordReader(
@@ -121,8 +123,13 @@ public class WikiRevisionHeaderInputFormat extends
 							new InputStreamReader(fs.open(status.getPath())));
 					String line = null;
 					while ((line = reader.readLine()) != null) {
-						long i = Long.parseLong(line);
-						entities.add(i);
+						int i = line.indexOf('\t');
+						try {
+							long id = Long.parseLong(line.substring(0, i));
+							entities.add(id);
+						} catch (NumberFormatException e) {
+							LOG.warn("Invalid format: " + line);
+						}
 					}
 				}
 			}		
