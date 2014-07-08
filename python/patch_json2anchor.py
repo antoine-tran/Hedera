@@ -38,11 +38,11 @@ class MRAnchorFix(MRJob):
     
     def mapper(self,pid,line):
         # Patch fix: the first 13 characters in pid is timestamp
-        ts = pid[:12]
+        ts = pid[:13]
 
         # Skip mal-formed anchors
         if self.isnumber(ts):
-            pageid = pid[12:]
+            pageid = pid[13:]
             line = pageid + '\t' + line      
             yield (ts,line)
             
