@@ -191,10 +191,10 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 	    job.setInputFormatClass(WikiRevisionHeaderInputFormat.class);
 	    job.setOutputFormatClass(TextOutputFormat.class);
 
-	    job.setMapOutputKeyClass(Text.class);
+	    job.setMapOutputKeyClass(LongWritable.class);
 	    job.setMapOutputValueClass(PairOfIntLong.class);
-	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(PairOfIntLong.class);
+	    job.setOutputKeyClass(LongWritable.class);
+	    job.setOutputValueClass(Text.class);
 
 	    job.setMapperClass(MyMapper.class);
 	    job.setReducerClass(MyReducer.class);
