@@ -20,7 +20,7 @@ DEFINE Unix2ISO org.apache.pig.piggybank.evaluation.datetime.convert.UnixToISO()
 
 SET default_parallel 999
 SET mapred.output.compress 'true';
-SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.Bzip2Codec';
+SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 
 idmap1 = LOAD '$BASEDIR/$inputmap' AS (pageid1:long,title1:chararray);
 idmap2 = LOAD '$BASEDIR/$inputmap' AS (pageid2:long,title2:chararray);
