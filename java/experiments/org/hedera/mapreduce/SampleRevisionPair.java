@@ -192,7 +192,7 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 	    job.setOutputFormatClass(TextOutputFormat.class);
 
 	    job.setMapOutputKeyClass(LongWritable.class);
-	    job.setMapOutputValueClass(PairOfIntLong.class);
+	    job.setMapOutputValueClass(PairOfLongs.class);
 	    job.setOutputKeyClass(LongWritable.class);
 	    job.setOutputValueClass(Text.class);
 
