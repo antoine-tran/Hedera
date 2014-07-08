@@ -14,7 +14,7 @@ REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
 REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 
-DEFINE Unix2ISO org.apache.pig.piggybank.evaluation.datetime.convert.UnixToISO(); 
+DEFINE Unix2Elastic org.hedere.pig.eval.UnixToElastic(); 
 
 %DECLARE BASEDIR 'hdfs://master.ib:8020/user/tuan.tran'
 
@@ -32,6 +32,6 @@ manchor = JOIN idmap1 BY title1, tanchor BY target;
 -- This exploits the old bug in Json2Anchor script, in which parentID and pageID are identical
 nanchor = JOIN idmap2 BY pageid2, manchor BY pid;
 
-res = FOREACH nanchor GENERATE Unix2ISO(ts),pid,revid,title2,pageid1,title1,anchor;
+res = FOREACH nanchor GENERATE Unix2Elastic(ts),pid,revid,title2,pageid1,title1,anchor;
 
 STORE res INTO '$BASEDIR/$output' USING PigStorage('\t');
