@@ -115,7 +115,7 @@ public class WikiRevisionHeaderInputFormat extends
 			if (path != null) {
 				entities = new TLongHashSet();
 				FileSystem fs = FileSystem.get(conf);
-				FileStatus[] statuses = fs.listStatus(new Path(path));
+				FileStatus[] statuses = fs.globStatus(new Path(path));
 				for (FileStatus status : statuses) {
 					BufferedReader reader = new BufferedReader(
 							new InputStreamReader(fs.open(status.getPath())));
