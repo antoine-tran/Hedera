@@ -445,7 +445,7 @@ public class WikiRevisionPageInputFormat extends
 						}
 					}
 
-					// Flag 16 can be the signal of a new record inside one old page
+					// Flag 18 can be the signal of a new record inside one old page
 					else if (flag == 18) {
 						int curMatch = 0;				
 						if ((i < END_PAGE.length && b == END_PAGE[i]) 

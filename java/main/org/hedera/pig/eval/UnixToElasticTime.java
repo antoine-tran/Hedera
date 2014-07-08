@@ -18,8 +18,8 @@ import org.joda.time.format.DateTimeFormatter;
 public class UnixToElasticTime extends EvalFunc<String> {
 
 	private static final DateTimeFormatter TIME_FORMAT 
-			= DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss");
-	
+	= DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss");
+
 	@Override
 	public String exec(Tuple input) throws IOException {
 
@@ -29,33 +29,32 @@ public class UnixToElasticTime extends EvalFunc<String> {
 
 		// Set the time to default or the output is in UTC
 		DateTimeZone.setDefault(DateTimeZone.UTC);
-		
+
 		return TIME_FORMAT.print(DataType.toLong(input.get(0)));
 	}
-	
-	 @Override
-	 
-	     public Schema outputSchema(Schema input) {
-	 
-	         return new Schema(new Schema.FieldSchema(getSchemaName(this.getClass().getName().toLowerCase(), input), DataType.CHARARRAY));
-	 
-	     }
-	 
-	  
-	 
-	     @Override
-	 
-	     public List getArgToFuncMapping() throws FrontendException {
-	 
-	         List funcList = new ArrayList();
-	 
-	         funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, DataType.LONG))));
-	 
-	  
-	 
-	         return funcList;
-	 
-	     }
+
+	@Override
+	public Schema outputSchema(Schema input) {
+
+		return new Schema(new Schema.FieldSchema(getSchemaName(this.getClass().getName().toLowerCase(), input), DataType.CHARARRAY));
+
+	}
+
+
+
+	@Override
+
+	public List getArgToFuncMapping() throws FrontendException {
+
+		List funcList = new ArrayList();
+
+		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, DataType.LONG))));
+
+
+
+		return funcList;
+
+	}
 
 
 }
