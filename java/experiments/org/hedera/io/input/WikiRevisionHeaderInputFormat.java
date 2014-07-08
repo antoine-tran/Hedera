@@ -326,7 +326,7 @@ public class WikiRevisionHeaderInputFormat extends
 						}
 					}
 					
-					else if (revisionSkipped && flag >= 6 && flag != 19) {
+					else if (revisionSkipped && flag >= 13 && flag != 18) {
 						if (b == END_REVISION[i]) {
 							i++;
 						} else i = 0;
