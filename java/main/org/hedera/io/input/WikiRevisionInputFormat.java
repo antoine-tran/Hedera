@@ -205,7 +205,7 @@ extends FileInputFormat<KEYIN, VALUEIN> {
 			// 2014-06-06: Tuan _ I have to manually increase the file split size
 			// here to cope with Wikipedia Revision .bz2 file - the decompressor
 			// takes too long to run
-			long goalSize = totalSize / 317;
+			long goalSize = totalSize / 3;
 			
 			for (FileStatus file : remainingFiles) {
 				long blockSize = file.getBlockSize();
