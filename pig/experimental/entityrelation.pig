@@ -23,7 +23,7 @@ SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'com.hadoop.compression.lzo.LzoCodec';
 
 idmap1 = LOAD '$BASEDIR/$inputmap' AS (pageid1:long,title1:chararray);
-idmap2 = LOAD '$BASEDIRE/$inputmap' AS (pageid2:long,title2:chararray);
+idmap2 = LOAD '$BASEDIR/$inputmap' AS (pageid2:long,title2:chararray);
 
 anchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,parent:long,anchor:chararray,target:chararray);
 
