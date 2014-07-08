@@ -77,6 +77,9 @@ extends FileInputFormat<KEYIN, VALUEIN> {
 
 	public static final String REVISION_BEGIN_TIME = "org.hedera.input.begintime";
 	public static final String REVISION_END_TIME = "org.hedera.input.begintime";
+	
+	// Seed entity id for extraction
+	public static final String SEED_FILE = "org.hedera.seed.path";
 
 	protected CompressionCodecFactory compressionCodecs = null;
 

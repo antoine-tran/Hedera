@@ -1,12 +1,21 @@
 package org.hedera.io.input;
 
 import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -84,7 +93,12 @@ public class WikiRevisionHeaderInputFormat extends
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();		
 		private DataOutputBuffer parBuf = new DataOutputBuffer();		
 		
+		private boolean revisionSkipped = false;
+		
 		private TaskAttemptContext context;
+		
+		// big array of seed entities (around 200 MB in memory)
+		private TLongSet entities;
 
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
@@ -92,6 +106,27 @@ public class WikiRevisionHeaderInputFormat extends
 			super.initialize(input, tac);
 			value = new RevisionHeader(); 
 			this.context = tac;
+			Configuration conf = tac.getConfiguration();
+			
+			
+			// if seed ids are specified, limit
+			String path = conf.get(SEED_FILE);
+			
+			if (path != null) {
+				entities = new TLongHashSet();
+				FileSystem fs = FileSystem.get(conf);
+				FileStatus[] statuses = fs.listStatus(new Path(path));
+				for (FileStatus status : statuses) {
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(fs.open(status.getPath())));
+					String line = null;
+					while ((line = reader.readLine()) != null) {
+						long i = Long.parseLong(line);
+						entities.add(i);
+					}
+				}
+			}		
+			revisionSkipped = false;
 		}
 
 		private void resetEverything() {			
@@ -104,6 +139,7 @@ public class WikiRevisionHeaderInputFormat extends
 			nsBuf.reset();
 			pageTitle.reset();
 			skipped = false;
+			revisionSkipped = false;
 			revOrPage = -1;
 			parOrTs = -1;
 		}
@@ -114,11 +150,11 @@ public class WikiRevisionHeaderInputFormat extends
 				resetEverything();
 			} 
 			else if (flag == 18) {
-				if (!skipped)
+				if (!skipped || !revisionSkipped)
 					return STATE.STOP_TRUE;
 			}			
 			else if (flag == 15) {
-				if (!skipped) {
+				if (!skipped || !revisionSkipped) {
 					String parIdStr = new String(parBuf.getData(), 0, parBuf.getLength() 
 							- END_PARENT_ID.length);
 					long parId = Long.parseLong(parIdStr);
@@ -127,17 +163,17 @@ public class WikiRevisionHeaderInputFormat extends
 				parBuf.reset();
 			}
 			else if (flag == 13) {
-				if (!skipped) {
+				if (!skipped || !revisionSkipped) {
 					String ts = new String(timestampBuf.getData(), 0, timestampBuf.getLength() 
 							- END_TIMESTAMP.length);
 					long timestamp = TIME_FORMAT.parseMillis(ts);
-					skipped = (timestamp < minTime || timestamp >= maxTime);
+					revisionSkipped = (timestamp < minTime || timestamp >= maxTime);
 					value.setTimestamp(timestamp);
 				}
 				timestampBuf.reset();
 			}
 			else if (flag == 11) {
-				if (!skipped) {
+				if (!skipped || !revisionSkipped) {
 					String idStr = new String(revBuf.getData(), 0, revBuf.getLength()
 							- END_ID.length);
 					long revId = Long.parseLong(idStr);
@@ -146,12 +182,18 @@ public class WikiRevisionHeaderInputFormat extends
 				revBuf.reset();
 			}
 			else if (flag == 8) {
-				if (!skipped) {
+				if (!skipped || !revisionSkipped) {
 					String idStr = new String(keyBuf.getData(), 0, keyBuf.getLength()
 							- END_ID.length);
 					long pageId = Long.parseLong(idStr);
-					key.set(pageId);
-					value.setPageId(pageId);
+					if (entities != null && !entities.contains(pageId)) {
+						skipped = true;
+						keyBuf.reset();
+					}
+					else {
+						key.set(pageId);
+						value.setPageId(pageId);	
+					}					
 				}
 				keyBuf.reset();
 			}
@@ -280,6 +322,16 @@ public class WikiRevisionHeaderInputFormat extends
 						} else i = 0;
 						if (i >= END_PAGE.length) {
 							flag = 19;
+							return true;
+						}
+					}
+					
+					else if (revisionSkipped && flag >= 6 && flag != 19) {
+						if (b == END_REVISION[i]) {
+							i++;
+						} else i = 0;
+						if (i >= END_REVISION.length) {
+							flag = 18;
 							return true;
 						}
 					}

@@ -35,8 +35,8 @@ import tl.lin.data.pair.PairOfLongs;
 import tuan.hadoop.conf.JobConfig;
 
 /** A mini patch that extracts the list of (revisionID, parentID) from the revision sets */
-public class RevisionPair extends JobConfig implements Tool {
-	private static final Logger LOG = Logger.getLogger(RevisionPair.class);
+public class SampleRevisionPair extends JobConfig implements Tool {
+	private static final Logger LOG = Logger.getLogger(SampleRevisionPair.class);
 
 	private static final class MyMapper extends 
 			Mapper<LongWritable, RevisionHeader, LongWritable, PairOfLongs> {
@@ -198,7 +198,7 @@ public class RevisionPair extends JobConfig implements Tool {
 	
 	public static void main(String[] args) {
 		try {
-			ToolRunner.run(new RevisionPair(), args);
+			ToolRunner.run(new SampleRevisionPair(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
