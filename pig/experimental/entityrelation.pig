@@ -25,13 +25,13 @@ SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 idmap1 = LOAD '$BASEDIR/$inputmap' AS (pageid1:long,title1:chararray);
 idmap2 = LOAD '$BASEDIR/$inputmap' AS (pageid2:long,title2:chararray);
 
-tanchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,parent:long,anchor:chararray,target:chararray);
+tanchor = LOAD '$BASEDIR/$inputanchor' AS (ts:long,pid:long,revid:long,parent:long,anchor:chararray,target:chararray);
 
 manchor = JOIN idmap1 BY title1, tanchor BY target;
 
 -- This exploits the old bug in Json2Anchor script, in which parentID and pageID are identical
 nanchor = JOIN idmap2 BY pageid2, manchor BY pid;
 
-res = FOREACH nanchor GENERATE Unix2ISO(ts),pid,title2,pageid1,title1,anchor;
+res = FOREACH nanchor GENERATE Unix2ISO(ts),pid,revid,title2,pageid1,title1,anchor;
 
 STORE res INTO '$BASEDIR/$output' USING PigStorage('\t');
