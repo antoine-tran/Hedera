@@ -16,7 +16,7 @@ REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 
 %DECLARE BASEDIR 'hdfs://master.ib:8020/user/tuan.tran'
 
-SET default_parallel 999
+SET default_parallel 24
 SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 
