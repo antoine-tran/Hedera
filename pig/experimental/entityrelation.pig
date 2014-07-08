@@ -14,7 +14,7 @@ REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
 REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 
-DEFINE Unix2Elastic org.hedere.pig.eval.UnixToElasticTime(); 
+DEFINE Unix2Elastic org.hedera.pig.eval.UnixToElasticTime(); 
 
 %DECLARE BASEDIR 'hdfs://master.ib:8020/user/tuan.tran'
 
