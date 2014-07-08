@@ -18,7 +18,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.SplittableCompressionCodec;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
@@ -35,6 +38,11 @@ import com.twitter.elephantbird.util.TaskHeartbeatThread;
 public class WikiRevisionHeaderInputFormat extends
 		WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 	private static final Logger LOG = Logger.getLogger(WikiRevisionHeaderInputFormat.class);
+	
+	@Override
+	public boolean isSplitable(JobContext context, Path file) {
+		return false;
+	}
 	
 	@Override
 	public RecordReader<LongWritable, RevisionHeader> createRecordReader(
