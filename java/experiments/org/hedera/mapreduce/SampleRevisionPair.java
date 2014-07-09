@@ -168,7 +168,8 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 		LOG.info(" - output: " + output);	
 		LOG.info(" - begin: " + begin);
 		LOG.info(" - end: " + end);
-
+		
+		setMapperSize("-Xmx5120m");
 
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
