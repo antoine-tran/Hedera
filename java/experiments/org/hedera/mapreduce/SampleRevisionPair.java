@@ -165,7 +165,10 @@ public class SampleRevisionPair extends JobConfig implements Tool {
 
 		LOG.info("Tool name: " + BasicComputeTermStats.class.getSimpleName());
 		LOG.info(" - input: " + input);
-		LOG.info(" - output: " + output);		
+		LOG.info(" - output: " + output);	
+		LOG.info(" - begin: " + begin);
+		LOG.info(" - end: " + end);
+
 
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
