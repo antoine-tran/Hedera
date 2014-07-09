@@ -335,6 +335,8 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 		LOG.info(" - preprocessing: " + preprocessing);
 
 		getConf().set(PREPROCESSING, preprocessing);
+		
+		setMapperSize("-Xmx5120m");
 
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
