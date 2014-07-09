@@ -103,7 +103,7 @@ WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 		private TaskAttemptContext context;
 
 		// big array of seed entities (around 200 MB in memory)
-		private TLongSet entities;
+		private TLongSet entities = null;
 
 		@Override
 		public void initialize(InputSplit input, TaskAttemptContext tac)
@@ -115,7 +115,7 @@ WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 
 
 			// if seed ids are specified, limit
-			String path = conf.get(SEED_FILE);
+			/* String path = conf.get(SEED_FILE);
 
 			if (path != null) {
 				entities = new TLongHashSet();
@@ -136,7 +136,7 @@ WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 						}
 					}
 				}
-			}		
+			}*/	
 			revisionSkipped = false;
 		}
 
