@@ -31,14 +31,14 @@ import com.twitter.elephantbird.util.TaskHeartbeatThread;
  * it skips the non-article pages, and limits to a given
  * time span */
 public class WikiRevisionHeaderInputFormat extends
-		WikiRevisionInputFormat<LongWritable, RevisionHeader> {
+WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 	private static final Logger LOG = Logger.getLogger(WikiRevisionHeaderInputFormat.class);
-	
+
 	@Override
 	public boolean isSplitable(JobContext context, Path file) {
 		return false;
 	}
-	
+
 	@Override
 	public RecordReader<LongWritable, RevisionHeader> createRecordReader(
 			InputSplit input, TaskAttemptContext context) throws IOException,
@@ -97,11 +97,11 @@ public class WikiRevisionHeaderInputFormat extends
 		private DataOutputBuffer revBuf = new DataOutputBuffer();			
 		private DataOutputBuffer timestampBuf = new DataOutputBuffer();		
 		private DataOutputBuffer parBuf = new DataOutputBuffer();		
-		
+
 		private boolean revisionSkipped = false;
-		
+
 		private TaskAttemptContext context;
-		
+
 		// big array of seed entities (around 200 MB in memory)
 		private TLongSet entities;
 
@@ -112,26 +112,27 @@ public class WikiRevisionHeaderInputFormat extends
 			value = new RevisionHeader(); 
 			this.context = tac;
 			Configuration conf = tac.getConfiguration();
-			
-			
+
+
 			// if seed ids are specified, limit
 			String path = conf.get(SEED_FILE);
-			
+
 			if (path != null) {
 				entities = new TLongHashSet();
 				FileSystem fs = FileSystem.get(conf);
 				FileStatus[] statuses = fs.globStatus(new Path(path));
 				for (FileStatus status : statuses) {
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(fs.open(status.getPath())));
-					String line = null;
-					while ((line = reader.readLine()) != null) {
-						int i = line.indexOf('\t');
-						try {
-							long id = Long.parseLong(line.substring(0, i));
-							entities.add(id);
-						} catch (NumberFormatException e) {
-							LOG.warn("Invalid format: " + line);
+					try (BufferedReader reader = new BufferedReader(
+							new InputStreamReader(fs.open(status.getPath())))) {
+						String line = null;
+						while ((line = reader.readLine()) != null) {
+							int i = line.indexOf('\t');
+							try {
+								long id = Long.parseLong(line.substring(0, i));
+								entities.add(id);
+							} catch (NumberFormatException e) {
+								LOG.warn("Invalid format: " + line);
+							}
 						}
 					}
 				}
@@ -321,7 +322,7 @@ public class WikiRevisionHeaderInputFormat extends
 							return true;
 						}
 					}
-					
+
 					// when passing the namespace and we realize that 
 					// this is not an article, and that the option of skipping
 					// non-article pages is on, we simply skip everything till
@@ -335,7 +336,7 @@ public class WikiRevisionHeaderInputFormat extends
 							return true;
 						}
 					}
-					
+
 					else if (revisionSkipped && flag >= 13 && flag != 18) {
 						if (b == END_REVISION[i]) {
 							i++;
@@ -472,7 +473,7 @@ public class WikiRevisionHeaderInputFormat extends
 							return true;
 						}
 					}	
-					
+
 					// Flag 18 can be the signal of a new record inside one old page
 					else if (flag == 18) {
 						int curMatch = 0;				
