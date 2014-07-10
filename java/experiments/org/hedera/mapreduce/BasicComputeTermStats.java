@@ -140,12 +140,12 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 				try {
 					
 					long timestamp = doc.getTimestamp();
-					if (timestamp < begin || timestamp >= end) {
+					/*if (timestamp < begin || timestamp >= end) {
 						LOG.info("Skipping " + revisionId + " due to invalid timestamp: ["
 								+ begin + ", " + end + "]");
 						context.getCounter(Records.SKIPPED).increment(1);
 						return;
-					}
+					}*/
 					
 					String content = new String(doc.getText(), StandardCharsets.UTF_8);
 
