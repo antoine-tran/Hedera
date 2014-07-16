@@ -15,7 +15,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-/** Use Jodatime to convert string of format 'YYYYMMdd' to 'YYYYMMddHH' */
+/** Use Jodatime to convert string of format 'YYYYMMddHH' to 'YYYYMMdd' */
 public class YYYYMMddHHToYYYYMMdd  extends EvalFunc<String> {
 	
 	private static final DateTimeFormatter OUTPUT_TIME_FORMAT 
