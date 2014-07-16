@@ -50,12 +50,10 @@ public class YYYYMMddHHToYYYYMMdd  extends EvalFunc<String> {
 
 
 	@Override
-
 	public List getArgToFuncMapping() throws FrontendException {
-
 		List funcList = new ArrayList();
-
-		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, DataType.LONG))));
+		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, 
+				DataType.CHARARRAY))));
 
 
 
