@@ -49,7 +49,8 @@ public class UnixToYYYYMMdd extends EvalFunc<String>  {
 
 		List funcList = new ArrayList();
 
-		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, DataType.LONG))));
+		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, 
+				DataType.CHARARRAY))));
 
 
 
