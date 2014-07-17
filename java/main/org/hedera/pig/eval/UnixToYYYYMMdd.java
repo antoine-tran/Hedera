@@ -15,7 +15,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 /** Use Joda Time to convert the unix epoch to 'yyyyMMdd'*/
-public class UnixToyyyyMMdd extends EvalFunc<String>  {
+public class UnixToYYYYMMdd extends EvalFunc<String>  {
 	
 	private static final DateTimeFormatter TIME_FORMAT 
 	= DateTimeFormat.forPattern("YYYYMMdd");

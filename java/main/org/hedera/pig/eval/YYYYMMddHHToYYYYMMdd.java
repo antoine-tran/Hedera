@@ -44,19 +44,13 @@ public class YYYYMMddHHToYYYYMMdd  extends EvalFunc<String> {
 
 		return new Schema(new Schema.FieldSchema(getSchemaName(this.getClass().getName().toLowerCase(), input), 
 				DataType.CHARARRAY));
-
 	}
-
-
 
 	@Override
 	public List getArgToFuncMapping() throws FrontendException {
 		List funcList = new ArrayList();
 		funcList.add(new FuncSpec(this.getClass().getName(), new Schema(new Schema.FieldSchema(null, 
 				DataType.CHARARRAY))));
-
-
-
 		return funcList;
 
 	}
