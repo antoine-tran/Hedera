@@ -20,7 +20,10 @@ os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.
 import json
 
 # Set up begin and end time
+# 2011-01-01
 begin = 1293840001000
+
+# 2013-07-12
 end = 1373673599000
 
 class MRSampleRevisions(MRJob):
