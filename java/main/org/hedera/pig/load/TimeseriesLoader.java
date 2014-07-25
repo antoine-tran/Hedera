@@ -84,7 +84,7 @@ public class TimeseriesLoader extends LoadFunc implements LoadMetadata {
 			if (hasNext) {
 				LongWritable key = reader.getCurrentKey();
 				Text content = reader.getCurrentValue();				
-				return tuples.newTupleNoCopy(Arrays.asList(key,content));
+				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content));
 			}
 		} catch (InterruptedException e) {
 			throw new IOException(e);
