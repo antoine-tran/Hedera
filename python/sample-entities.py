@@ -39,19 +39,19 @@ class MRSampleEntityRevisions(MRJob):
     # Read the seed file into one shared set
     def load_options(self,args):
         super(MRSampleEntityRevisions, self).load_options(args)
-        seedfile = self.options.seed_file
-        self.seeds = set()
-        with open(seedfile[0],'r') as f:
-            for line in f:
-                self.seeds.add(long(line.rstrip()))
+        # seedfile = self.options.seed_file
+        # self.seeds = set()
+        # with open(seedfile[0],'r') as f:
+        #    for line in f:
+        #        self.seeds.add(long(line.rstrip()))
         
     def mapper(self, pid, line):
         obj = json.loads(line)
         timestamp = long(obj['timestamp'])
         if timestamp >= begin and timestamp < end:
             pageid = long(obj['page_id'])
-            if pageid in self.seeds:
-                yield (None,line)
+            # if pageid in self.seeds:
+            yield (None,line)
 
     def reducer(self, pid, lines):
         for line in lines:
