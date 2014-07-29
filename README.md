@@ -1,7 +1,7 @@
 Hedera
 ======
 
-A Hadoop software toolkit for working with very large versioned document collections such as Wikipedia Revision History. [Project website here](https://github.com/antoine-tran/Cloud9)
+A Hadoop software toolkit for working with very large versioned document collections such as Wikipedia Revision History. [Project website here](http://antoine-tran.github.io/hedera)
 
 #### Disclaimer ####
 The tool is currently pretty much in active development phase :), meaning that it can
