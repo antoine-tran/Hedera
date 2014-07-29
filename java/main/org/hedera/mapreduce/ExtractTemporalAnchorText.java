@@ -12,7 +12,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.hedera.io.RevisionDiffOld;
+import org.hedera.io.RevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 import org.mortbay.log.Log;
@@ -24,7 +24,7 @@ import difflib.Delta;
 import edu.umd.cloud9.io.pair.PairOfLongs;
 import tuan.hadoop.conf.JobConfig;
 import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
-import static org.hedera.io.RevisionDiffOld.opt2byte; 
+import static org.hedera.io.RevisionDiff.opt2byte; 
 
 /**
  * This jobs extract temporal anchor text from Wikipedia revisions 
@@ -35,7 +35,7 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
 	// Algorithm:
 	// emit (id, rev diff) --> ((rev id, timestamp), text)
-	private static final class MyMapper extends Mapper<LongWritable, RevisionDiffOld, 
+	private static final class MyMapper extends Mapper<LongWritable, RevisionDiff, 
 	PairOfLongs, Text> {
 
 		private PairOfLongs keyOut = new PairOfLongs();
@@ -52,7 +52,7 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		}
 
 		@Override
-		protected void map(LongWritable key, RevisionDiffOld value,
+		protected void map(LongWritable key, RevisionDiff value,
 				Context context) throws IOException, InterruptedException {
 
 			// skip non-article pages
