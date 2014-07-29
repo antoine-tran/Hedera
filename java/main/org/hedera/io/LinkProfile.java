@@ -123,6 +123,7 @@ public class LinkProfile extends RevisionHeader {
 		}
 	}
 
+	@Override
 	public void clear() {
 		super.clear();
 		this.links = null;

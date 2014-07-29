@@ -248,6 +248,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 	/**
 	 * Runs this tool.
 	 */
+	@Override
 	@SuppressWarnings("static-access")
 	public int run(String[] args) throws Exception {
 		Options options = new Options();

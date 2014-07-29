@@ -1,7 +1,5 @@
 package org.wikimedia.pig.load;
 
-import static org.junit.Assert.*;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 public class TestWikipediaRevisionPairLoader {
 	private static final String START_PAGE_TAG = "<page>";

@@ -2,14 +2,12 @@ package other;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 
 import org.junit.Test;
 
 import difflib.Delta;
-import difflib.DiffAlgorithm;
 import difflib.DiffUtils;
 
 public class TestDiffPatch {

@@ -24,7 +24,6 @@ import com.twitter.elephantbird.util.TaskHeartbeatThread;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.END_PAGE;
 import static org.hedera.io.input.WikiRevisionInputFormat.START_REVISION;
-import static org.hedera.io.input.WikiRevisionInputFormat.END_TEXT;
 
 public abstract class RevisionETLReader<KEYIN, VALUEIN, 
 META extends CloneableObject<META>>  extends RecordReader<KEYIN, VALUEIN> {

@@ -27,6 +27,7 @@ public class Revision extends RevisionHeader {
 		System.arraycopy(buffer, offset, text, 0, len);
 	}
 
+	@Override
 	public void clear() {
 		super.clear();
 		this.text = null;

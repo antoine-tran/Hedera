@@ -7,7 +7,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -18,7 +17,6 @@ import org.hedera.io.etl.RevisionBOWInputFormat;
 import org.hedera.io.input.WikiRevisionInputFormat;
 
 import edu.umd.cloud9.io.array.ArrayListOfLongsWritable;
-import edu.umd.cloud9.io.pair.PairOfLongs;
 import edu.umd.cloud9.util.map.MapKI.Entry;
 import tuan.hadoop.conf.JobConfig;
 

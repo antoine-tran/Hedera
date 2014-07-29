@@ -75,6 +75,7 @@ public class RevisionHeader implements Writable,
 		this.pageTitle = null;
 	}
 	
+	@Override
 	public void clone(RevisionHeader obj) {
 		this.pageId = obj.pageId;
 		this.namespace = obj.namespace;

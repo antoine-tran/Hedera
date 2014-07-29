@@ -40,7 +40,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -179,6 +178,7 @@ public class BuildVByteDocVectors extends JobConfig implements Tool {
 	/**
 	 * Runs this tool.
 	 */
+	@Override
 	@SuppressWarnings("static-access")
 	public int run(String[] args) throws Exception {
 		Options options = new Options();
