@@ -4,8 +4,14 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 
 import java.io.IOException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.io.LongWritable;
-
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -24,10 +30,14 @@ import tuan.hadoop.conf.JobConfig;
 
 public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
+	public static final String INPUT_OPTION = "input";
+	public static final String OUTPUT_OPTION = "output";
+	public static final String REDUCENO = "reduce";
+
 	private static final Logger LOG = Logger.getLogger(FastExtractTemporalAnchorText.class);
-	
+
 	private static final long MAX_KEY_RANGE = 10000000l;
-	
+
 	private static final class MyMapper extends Mapper<LongWritable,
 	LinkProfile, LongWritable, Text> {
 
@@ -84,20 +94,20 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 					// re-balance the key to avoid bottleneck in reduce phase
 					long k = System.currentTimeMillis() / MAX_KEY_RANGE;
 					keyOut.set(k);
-					
+
 					context.write(keyOut, valOut);
 				}
 			}
 		}
 
 	}
-	
+
 	private static final class MyReducer extends 
-			Reducer<LongWritable, Text, NullWritable, Text> {
+	Reducer<LongWritable, Text, NullWritable, Text> {
 
 		NullWritable k = NullWritable.get();
-		
-		
+
+
 		@Override
 		protected void reduce(LongWritable key, Iterable<Text> vals, Context context)
 				throws IOException, InterruptedException {
@@ -109,10 +119,40 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
-		String inputDir = args[1];
-		String outputDir = args[2];
-		String name = args[0];
-		int reduceNo = Integer.parseInt(args[3]);
+
+		Options options = new Options();
+
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("input path").create(INPUT_OPTION));
+		options.addOption(OptionBuilder.withArgName("path").hasArg()
+				.withDescription("output path").create(OUTPUT_OPTION));
+		options.addOption(OptionBuilder.withArgName("num").hasArg()
+				.withDescription("number of reducer").create(REDUCENO));
+
+		CommandLine cmdline;
+		CommandLineParser parser = new GnuParser();
+		try {
+			cmdline = parser.parse(options, args);
+		} catch (ParseException exp) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp(this.getClass().getName(), options);
+			ToolRunner.printGenericCommandUsage(System.out);
+			System.err.println("Error parsing command line: " + exp.getMessage());
+			return -1;
+		}
+
+		if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION) ||
+				!cmdline.hasOption(REDUCENO)) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp(this.getClass().getName(), options);
+			ToolRunner.printGenericCommandUsage(System.out);
+			return -1;
+		}
+
+
+		String inputDir = cmdline.getOptionValue(INPUT_OPTION);
+		String outputDir = cmdline.getOptionValue(OUTPUT_OPTION);
+		int reduceNo = Integer.parseInt(cmdline.getOptionValue(REDUCENO));
 
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
@@ -120,7 +160,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		// skip non-article
 		getConf().setBoolean(WikiRevisionInputFormat.SKIP_NON_ARTICLES, true);
 
-		Job job = setup("Hedera: " + name,
+		Job job = setup("Hedera: Fast extraction of temporal anchor texts" ,
 				FastExtractTemporalAnchorText.class, inputDir, outputDir,
 				RevisionLinkInputFormat.class, TextOutputFormat.class,
 				LongWritable.class, Text.class,
