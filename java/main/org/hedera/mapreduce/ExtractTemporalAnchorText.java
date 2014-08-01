@@ -27,7 +27,13 @@ import static org.hedera.io.input.WikiRevisionInputFormat.TIME_FORMAT;
 import static org.hedera.io.RevisionDiff.opt2byte; 
 
 /**
- * This jobs extract temporal anchor text from Wikipedia revisions 
+ * This jobs extract temporal anchor text from Wikipedia revisions. Command line arguments:
+ * [INPUTDIR] [OUTPUTDIR] [reduce No]
+ * 
+ * corresponding to the input directory of the XML revision history dumps files (in HDFS for
+ * example), the output directory of extracted text, and the number of concurrent reducers
+ * to be run
+ * 
  * @author tuan
  *
  */
