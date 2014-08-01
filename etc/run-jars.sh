@@ -6,7 +6,7 @@
 LIB=$(pwd)/libhedera
 
 # path to your jar file here. Default is the maven artifact in your local repo
-export JAR_PATH = ~/.m2/repository/de/l3s/hedera/0.1-SNAPSHOT/hedera-0.1-SNAPSHOT.jar
+export JAR_PATH = "~/.m2/repository/de/l3s/hedera/0.1-SNAPSHOT/hedera-0.1-SNAPSHOT.jar"
 
 for jarf in $LIB/*.jar
 do
