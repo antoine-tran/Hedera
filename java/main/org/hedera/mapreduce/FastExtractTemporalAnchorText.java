@@ -127,7 +127,7 @@ public class FastExtractTemporalAnchorText extends JobConfig implements Tool {
 		options.addOption(OptionBuilder.withArgName("path").hasArg()
 				.withDescription("output path").create(OUTPUT_OPTION));
 		options.addOption(OptionBuilder.withArgName("num").hasArg()
-				.withDescription("number of reducer").create(REDUCENO));
+				.withDescription("number of reducers").create(REDUCENO));
 
 		CommandLine cmdline;
 		CommandLineParser parser = new GnuParser();
