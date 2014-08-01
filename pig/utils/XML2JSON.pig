@@ -26,7 +26,7 @@ SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 
 -- load Wikipedia compressed XML dump
-%DECLARE INPUT 'enwiki-latest-pages-meta-history*.xml*';
+-- %DECLARE INPUT 'enwiki-latest-pages-meta-history*.xml*';
 
 SET org.hedera.input.onlyarticle true;
 wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.WikiRevisionLoader AS (page_id:long, page_title:chararray, page_namespace:int, rev_id:int, parent_id:int, timestamp:long, user:chararray,
