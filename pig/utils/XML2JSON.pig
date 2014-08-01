@@ -34,5 +34,4 @@ wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.WikiRevisionLoader AS (p
 --sample_wiki = LIMIT wiki 3;
 --dump sample_wiki;
 --STORE wiki INTO '$OUTPUT';
-STORE wiki
-    INTO '$OUTPUT'  USING JsonStorage();
+STORE wiki INTO '$OUTPUT' USING JsonStorage();

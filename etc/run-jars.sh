@@ -3,7 +3,7 @@
 # the documentation on http://antoine-tran.github.io/hedera/wikirevision.html
 
 #!/bin/sh
-LIB=$(pwd)/lib
+LIB=$(pwd)/libhedera
 
 # path to your jar file here. Default is the maven artifact in your local repo
 JAR_PATH = ~/.m2/repository/de/l3s/hedera/0.1-SNAPSHOT/hedera-0.1-SNAPSHOT.jar
