@@ -4,6 +4,13 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -39,6 +46,10 @@ import static org.hedera.io.RevisionDiff.opt2byte;
  */
 public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 
+	  public static final String INPUT_OPTION = "input";
+	  public static final String OUTPUT_OPTION = "output";
+	  public static final String REDUCENO = "reduce";
+	
 	// Algorithm:
 	// emit (id, rev diff) --> ((rev id, timestamp), text)
 	private static final class MyMapper extends Mapper<LongWritable, RevisionDiff, 
@@ -203,11 +214,43 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 		}
 	}
 
+	@SuppressWarnings("static-access")
 	@Override
 	public int run(String[] args) throws Exception {
-		String inputDir = args[0];
-		String outputDir = args[1];
-		int reduceNo = Integer.parseInt(args[2]);
+		
+		Options options = new Options();
+
+	    options.addOption(OptionBuilder.withArgName("path").hasArg()
+	        .withDescription("input path").create(INPUT_OPTION));
+	    options.addOption(OptionBuilder.withArgName("path").hasArg()
+	        .withDescription("output path").create(OUTPUT_OPTION));
+	    options.addOption(OptionBuilder.withArgName("num").hasArg()
+	        .withDescription("number of reducer").create(REDUCENO));
+
+	    CommandLine cmdline;
+	    CommandLineParser parser = new GnuParser();
+	    try {
+	      cmdline = parser.parse(options, args);
+	    } catch (ParseException exp) {
+	      HelpFormatter formatter = new HelpFormatter();
+	      formatter.printHelp(this.getClass().getName(), options);
+	      ToolRunner.printGenericCommandUsage(System.out);
+	      System.err.println("Error parsing command line: " + exp.getMessage());
+	      return -1;
+	    }
+
+	    if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION) ||
+	        !cmdline.hasOption(REDUCENO)) {
+	      HelpFormatter formatter = new HelpFormatter();
+	      formatter.printHelp(this.getClass().getName(), options);
+	      ToolRunner.printGenericCommandUsage(System.out);
+	      return -1;
+	    }
+		
+		
+		String inputDir = cmdline.getOptionValue(INPUT_OPTION);
+		String outputDir = cmdline.getOptionValue(OUTPUT_OPTION);
+		int reduceNo = Integer.parseInt(cmdline.getOptionValue(REDUCENO));
 		
 		// this job sucks big memory
 		setMapperSize("-Xmx5120m");
