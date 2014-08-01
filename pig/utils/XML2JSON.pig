@@ -35,5 +35,5 @@ wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.WikiRevisionLoader AS (p
 --dump sample_wiki;
 --STORE wiki INTO '$OUTPUT';
 STORE wiki
-    INTO '$OUTPUT$BATCH.json
+    INTO '$OUTPUT.json
     USING JsonStorage();
