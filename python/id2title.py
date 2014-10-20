@@ -21,19 +21,27 @@ logging.basicConfig(filename='boto.log',level=logging.DEBUG)
 # set up classpath
 import os
 os.environ['HADOOP_HOME']='/opt/cloudera/parcels/CDH'
-os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH-4.6.0-1.cdh4.6.0.p0.26/lib/hadoop-0.20-mapreduce'
+os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH/lib/hadoop-0.20-mapreduce'
 
 import json
 
 class MRTitle2Id(MRJob):
 
     OUTPUT_PROTOCOL = RawValueProtocol
+
+    JOBCONF = {
+        'mapreduce.job.name':'Build id-title mapping',
+        'mapred.child.java.opts':'-Xmx5100m',
+        'mapreduce.map.memory.mb':'5100',
+        'mapreduce.reduce.memory.mb':'5100',
+        'mapreduce.map.java.opts':'-Xmx5100m',
+        'mapreduce.reduce.java.opts':'-Xmx5120m'
+    }
     
     def mapper(self, pid, line):
         obj = json.loads(line)
         pid = int(obj['page_id'])
         title = obj['page_title']
-        # yield (pid, line)
         yield (pid,title)
 
     def combiner(self, pid, title):
