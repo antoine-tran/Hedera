@@ -101,7 +101,7 @@ public class BasicComputeTermStats extends JobConfig implements Tool {
 
 	private static final int MAX_TOKEN_LENGTH = 64;       // Throw away tokens longer than this.
 	private static final int MIN_DF_DEFAULT = 100;        // Throw away terms with df less than this.
-	private static final long MAX_DOC_LENGTH = 512l * 1024l * 1024l * 1024l * 1024l; ; // Skip document if long than this.
+	private static final long MAX_DOC_LENGTH = 512l * 1024l * 1024l * 1024l * 1024l; ; // Skip document if too long
 	private static final int MIN_DOC_LENGTH = 10; // Skip document if shorter than this.
 
 	private static class MyMapper extends
