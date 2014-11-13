@@ -80,7 +80,7 @@ class MRAnchorText(MRJob):
 
         return res
         
-    def mapper(self, pid, line):
+    def mapper(self, empty, line):
         obj = json.loads(line)
         pid = long(obj['page_id'])
         timestamp = long(obj['timestamp'])
