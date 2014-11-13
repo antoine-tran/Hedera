@@ -6,7 +6,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class CatHdfs {
   public static void main(String... args) throws Exception {

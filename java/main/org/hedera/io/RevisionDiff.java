@@ -20,7 +20,8 @@ import difflib.InsertDelta;
  * @author tuan
  * @deprecated this object is too cumbersome. Use RevisionDiff instead
  */
-public class RevisionDiffOld extends RevisionHeader {
+@Deprecated
+public class RevisionDiff extends RevisionHeader {
 
 	private LinkedList<Delta> diffs;
 
@@ -42,6 +43,7 @@ public class RevisionDiffOld extends RevisionHeader {
 		diffs.add(d);
 	}
 	
+	@Override
 	public void clear() {
 		super.clear();
 		this.diffs.clear();

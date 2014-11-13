@@ -1,7 +1,7 @@
 Working with Wikipedia Revision History dumps
 ======
 
-(This documentation is still in progress and will be incrementally added soon)
+(Disclaimer: This documentation is still in progress and will be incrementally added soon)
 
 Working with Wikipedia in Hedera is fairly easy. To load the datasets in Pig, simply register the library and call its various methods in package <code>org.hedera.pig.eval</code>. A new EvalFunc can also be developed by inheriting the <code>PageFunc</code> abstract class.
 

@@ -19,9 +19,7 @@ package org.hedera.util;
 import java.io.*;
 
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.Progressable;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
 
 import com.twitter.elephantbird.util.TaskHeartbeatThread;

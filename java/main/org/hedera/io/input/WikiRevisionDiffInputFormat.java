@@ -9,11 +9,10 @@ import java.util.List;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.hedera.io.RevisionDiffOld;
+import org.hedera.io.RevisionDiff;
 
 import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
@@ -22,10 +21,10 @@ import difflib.DiffUtils;
 import difflib.Patch;
 
 public class WikiRevisionDiffInputFormat 
-		extends WikiRevisionInputFormat<LongWritable, RevisionDiffOld> {
+		extends WikiRevisionInputFormat<LongWritable, RevisionDiff> {
 	
 	@Override
-	public RecordReader<LongWritable, RevisionDiffOld> createRecordReader(
+	public RecordReader<LongWritable, RevisionDiff> createRecordReader(
 			InputSplit input, TaskAttemptContext context) throws IOException,
 			InterruptedException {
 		return new DiffReader(); 
@@ -60,7 +59,7 @@ public class WikiRevisionDiffInputFormat
 	// 17 - just passed the </text> tag
 	// 18 - just passed the </revision>
 	// 19 - just passed the </page>
-	public static class DiffReader extends WikiRevisionReader<RevisionDiffOld> {
+	public static class DiffReader extends WikiRevisionReader<RevisionDiff> {
 
 		// Extra flags:
 		//
@@ -104,7 +103,7 @@ public class WikiRevisionDiffInputFormat
 		public void initialize(InputSplit input, TaskAttemptContext tac)
 				throws IOException, InterruptedException {
 			super.initialize(input, tac);
-			value = new RevisionDiffOld(); 
+			value = new RevisionDiff(); 
 			this.context = tac;
 		}
 

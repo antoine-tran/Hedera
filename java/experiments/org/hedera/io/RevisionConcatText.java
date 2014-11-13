@@ -10,8 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.hadoop.io.Writable;
-
 /**
  * This represents the concatenated bag of words for a set of Wikipedia revisions
  * belonging to the same page within a specific time interval. Every deleted, modifed,
@@ -74,6 +72,7 @@ public class RevisionConcatText extends Revision {
 		return sb.toString();
 	}
 	
+	@Override
 	public void loadText(byte[] b, int offset, int len) {
 		super.loadText(b, offset, len);
 		this.lastRevision = new LinkedList<>();
@@ -86,6 +85,7 @@ public class RevisionConcatText extends Revision {
 		patches.add(word);
 	}
 	
+	@Override
 	public void clear() {
 		super.clear();
 		patches = null;

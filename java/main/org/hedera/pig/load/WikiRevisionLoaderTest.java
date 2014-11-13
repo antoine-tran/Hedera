@@ -20,7 +20,7 @@ import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.hedera.io.RevisionDiffOld;
+import org.hedera.io.RevisionDiff;
 import org.hedera.io.input.WikiRevisionDiffInputFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -31,7 +31,7 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 	
 	private static final WikiRevisionDiffInputFormat INPUT_FORMAT = new WikiRevisionDiffInputFormat();
 
-	protected RecordReader<LongWritable, RevisionDiffOld> reader;
+	protected RecordReader<LongWritable, RevisionDiff> reader;
 
 	// a cached object that defines the output schema of a Wikipedia page. Use volatile to fix
 	// the infamous double-checked locking issue, and to make access to this object thread-safe
@@ -67,7 +67,7 @@ public class WikiRevisionLoaderTest extends LoadFunc implements LoadMetadata {
 			if (reader.nextKeyValue()) {
 				LongWritable key = reader.getCurrentKey();
 				//Text content = reader.getCurrentValue();
-				RevisionDiffOld r = reader.getCurrentValue();
+				RevisionDiff r = reader.getCurrentValue();
 				String content = r.getPageTitle();
 				return tuples.newTupleNoCopy(Arrays.asList(key.get(),content));	
 				/*Document doc = Jsoup.parse(content.toString(), "");				

@@ -53,7 +53,8 @@ public class ExtractRevisionIds extends JobConfig implements Tool {
 				LongWritable.class, PairOfLongs.class, 
 				LongWritable.class, Text.class,
 				Mapper.class, MyReducer.class, reduceNo);
-
+		
+		
 		job.waitForCompletion(true);
 		return 0;
 	}
