@@ -11,7 +11,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -21,11 +20,17 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import tl.lin.data.array.ArrayListOfIntsWritable;
 import tuan.hadoop.conf.JobConfig;
 
 /** 
  * This program filters from pageviews EZ dumps (http://dumps.wikimedia.org/other/pagecounts-ez)
- * and extracts only English Wikipedia articles
+ * and extracts only English Wikipedia articles. Then it converts all time series into
+ * a normal time series in daily scales. Days without views are represented by zeros
+ * 
+ * The current version works month-wise.
+ * 
+ * TODO: Add hour-scale time series conversion option
  */
 public class PreprocessEZPageviews extends JobConfig implements Tool {
 
@@ -35,14 +40,17 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 	public static final String END_TIME_OPT = "end";
 	public static final String HDFS_BEGIN_TIME = "wikipedia.begin.time";
 	public static final String HDFS_END_TIME = "wikipedia.end.time";
+
+	private static final String DAY_OF_MONTH = "day.Of.Month";
+	private static final String MONTH_AS_INT = "month.As.Int";
+
 	private static final DateTimeFormatter dtfMonth = DateTimeFormat.forPattern("YYYY-mm"); 
 	private static final DateTimeFormatter dtfMonthPrinter = DateTimeFormat.forPattern("YYYYmm");
-	private static final DateTimeFormatter dtfDate = DateTimeFormat.forPattern("YYYY-mm-DD");
 
 	@SuppressWarnings("static-access")
 	@Override
 	/**
-	 * Extra options: Seed file path, begin time, end time
+	 * Extra options: Seed file path
 	 * 
 	 */
 	public Options options() {
@@ -57,48 +65,42 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 	}
 
 	private static final class MyMapper 
-	extends Mapper<LongWritable, Text, Text, Text> {
+	extends Mapper<LongWritable, Text, Text, ArrayListOfIntsWritable> {
 		private Text key = new Text();
-		private Text value = new Text();
-		private DateTime month, begin, end;
+		private ArrayListOfIntsWritable value = null;
 
 		public void setup(Context context) throws IOException, InterruptedException {
 
-			// cache the seeds
 			Configuration conf = context.getConfiguration();
-			String filename = ((FileSplit) context.getInputSplit()).getPath().getName();
-			int i = filename.indexOf("pagecounts-");
-			int j = filename.indexOf("-ge",i+11);
-			if (j < 0) return;
-			month = dtfMonth.parseDateTime(filename.substring(i+11,j));	
+			int daysOfMonth = conf.getInt(DAY_OF_MONTH, 30);
+			int monthAsInt = conf.getInt(MONTH_AS_INT, 0);
 
-			String beginTime = conf.get(HDFS_BEGIN_TIME);	
-			if (beginTime != null) {
-				begin = dtfDate.parseDateTime(beginTime);
-				LOG.info(begin);
-			}
-
-			String endTime = conf.get(HDFS_END_TIME);
-			if (endTime != null) {
-				end = dtfDate.parseDateTime(endTime);
-				LOG.info(end);
-			}
+			// initialize the count value
+			value = new ArrayListOfIntsWritable(daysOfMonth + 2);
+			value.set(0, monthAsInt);
 		}
 
 		@Override
 		protected void map(LongWritable keyIn, Text valueIn, Context context)
 				throws IOException, InterruptedException {
-			
+
 			// Skip comments			
 			String line = valueIn.toString();
 			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
 					|| line.charAt(2) != '.' 
-					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) return;
+					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) {
+				return;
+			}
 			int i = line.indexOf(' ');
 			int j = line.indexOf(' ', i+1);
+
+			/*
+			 * =================================================================
+			 * Process the title
+			 * =================================================================
+			 */
 			String title = line.substring(i+1, j);
-			String compactTs = line.substring(j+1);
 			try {
 				title = URLDecoder.decode(title, "UTF-8");
 			} catch (Exception e) {
@@ -188,19 +190,218 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 			title = title.replace(' ', '_');
 
 			key.set(title);
-			value.set(dtfMonthPrinter.print(month) + compactTs);
+
+
+			/*
+			 * =================================================================
+			 * Process the time series
+			 * =================================================================
+			 */
+			int k = line.indexOf(' ', j+1);
+			int total = Integer.parseInt(line.substring(j+1, k));
+
+			String compactTs = line.substring(k+1);
+
+			// reset the time series 
+			resetTimeseries(value);
+			value.set(1, total);
+
+			// decode the time series
+			int idx = 0;
+
+			while (idx >= 0) {
+				int nextIdx = compactTs.indexOf(',',idx+1);
+				if (nextIdx < 0) {
+					break;
+				}
+
+				// everything from idx to nextIdx is for one day
+				extractViewsForOneDay(compactTs, idx, nextIdx);
+
+				idx = nextIdx;
+			}
 			context.write(key,value);
+		}
+
+		/** return the zero-based index of the day */
+		private static int decodeDay(char dayChr) {
+			if (dayChr >= 'A' && dayChr < 'Z') {
+				return (dayChr - 'A');
+			}
+			else if (dayChr == '[') {
+				return 26;
+			}
+			else if (dayChr == '\\') {
+				return 27;
+			}
+			else if (dayChr == ']') {
+				return 28;
+			}
+			else if (dayChr == '^') {
+				return 29;
+			}
+			else if (dayChr == '_') {
+				return 30;
+			}
+			else {
+				throw new IllegalArgumentException(
+						"Unknown day: " + dayChr);
+			}
+		}
+
+		/** return the zero-based index of the hour in a day */
+		private static int decodeHour(char chr) {
+			if (chr >= 'A' && chr < 'Z') {
+				return (chr - 'A');
+			}
+			else {
+				throw new IllegalArgumentException(
+						"Unknown hour: " + chr);
+			}
+		}
+
+		private void extractViewsForOneDay(CharSequence compactTs, 
+				int begin, int nextBegin) {
+
+			// first character is the day index
+			int dayIdx = decodeDay(compactTs.charAt(begin));
+
+			// heuristic, maximum number of views per hour is 999
+			int hourIdx = -1;
+			int hourView = 0;
+			int dayView = 0;
+
+			for (int i = dayIdx + 1; i < nextBegin; i++) {
+				char chr = compactTs.charAt(i);
+				if (chr >= '0' && chr <= '9') {
+					hourView += hourView * 10 + (chr - '0');
+				}
+				else {
+					if (hourIdx >= 0) {
+
+						// TODO: separate the hour processing option here
+						dayView += hourView;
+					}
+					hourIdx = decodeHour(chr);
+					hourView = 0;					
+				}
+			}
+			
+			// last hour slot
+			if (hourIdx >= 0 && hourView > 0) {
+				dayView += hourView;
+			}
+
+			value.set(dayIdx + 2, dayView);
 		}
 	}
 
+	private static class MyCombiner extends Reducer<Text, ArrayListOfIntsWritable, 
+	Text, ArrayListOfIntsWritable> {
+
+		private ArrayListOfIntsWritable value = null;
+
+		public void setup(Context context) throws IOException, InterruptedException {
+
+			Configuration conf = context.getConfiguration();
+			int daysOfMonth = conf.getInt(DAY_OF_MONTH, 30);
+			int monthAsInt = conf.getInt(MONTH_AS_INT, 0);
+
+			// initialize the count value
+			value = new ArrayListOfIntsWritable(daysOfMonth + 2);
+			value.set(0, monthAsInt);
+		}
+
+		@Override
+		protected void reduce(Text k, Iterable<ArrayListOfIntsWritable> lists, 
+				Context context) throws IOException, InterruptedException {
+
+			resetTimeseries(value);
+
+			/* All time series must have the same length */
+			for (ArrayListOfIntsWritable ts : lists) {
+				for (int i = 1; i < ts.size(); i++) {
+					int cnt = ts.get(i);
+					cnt += value.get(i);
+					value.add(i, cnt);
+				}
+			}
+			context.write(k, value);
+		}
+	}
+
+	private static class MyReducer extends Reducer<Text, ArrayListOfIntsWritable, 
+			Text, Text> {
+
+		private ArrayListOfIntsWritable value = null;
+		private Text output = new Text();
+		private int daysOfMonth;
+		
+		public void setup(Context context) throws IOException, InterruptedException {
+
+			Configuration conf = context.getConfiguration();
+			daysOfMonth = conf.getInt(DAY_OF_MONTH, 30);
+			int monthAsInt = conf.getInt(MONTH_AS_INT, 0);
+
+			// initialize the count value
+			value = new ArrayListOfIntsWritable(daysOfMonth + 2);
+			value.set(0, monthAsInt);
+		}
+
+		@Override
+		protected void reduce(Text k, Iterable<ArrayListOfIntsWritable> lists, 
+				Context context) throws IOException, InterruptedException {
+
+			resetTimeseries(value);
+
+			/* All time series must have the same length */
+			for (ArrayListOfIntsWritable ts : lists) {
+				for (int i = 1; i < ts.size(); i++) {
+					int cnt = ts.get(i);
+					cnt += value.get(i);
+					value.add(i, cnt);
+				}
+			}
+			
+			// 7 characters for the month value, plus the total, which often have 4-5 digits
+			StringBuilder sb = new StringBuilder(daysOfMonth * 2 + 12);
+			for (int v : value) {
+				sb.append(v);
+				sb.append('\t');
+			}
+			output.set(sb.toString());
+			context.write(k, output);
+		}
+	}
+
+	private static void resetTimeseries(ArrayListOfIntsWritable value) {
+		for (int i = 1; i < value.size(); i++) {
+			value.set(i, 0);
+		}
+	}	
+
 	@Override
 	public int run(String[] args) throws Exception {
+
+		// Input is a single file of monthly page view
+		// cache the seeds
+		int i = input.indexOf("pagecounts-");
+		int j = input.indexOf("-ge",i+11);
+		if (j < 0) return -1;
+
+		DateTime month = dtfMonth.parseDateTime(input.substring(i+11,j));	
+		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
+		int daysOfMonth = month.dayOfMonth().getMaximumValue();
+
 		// Extra command line options
 		Job job = setup(TextInputFormat.class, TextOutputFormat.class, 
+				Text.class, ArrayListOfIntsWritable.class, 
 				Text.class, Text.class, 
-				Text.class, Text.class, 
-				MyMapper.class, Reducer.class, args);
-		
+				MyMapper.class, MyCombiner.class, MyReducer.class, args);
+
+		job.getConfiguration().setInt(DAY_OF_MONTH, daysOfMonth);
+		job.getConfiguration().setInt(MONTH_AS_INT, monthAsInt);
+
 		job.getConfiguration().set("mapreduce.map.memory.mb", "4096");
 		job.getConfiguration().set("mapreduce.reduce.memory.mb", "4096");
 		job.getConfiguration().set("mapreduce.map.java.opts", "-Xmx4096m");
@@ -223,9 +424,6 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 		return 0;
 	}
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		try {
 			ToolRunner.run(new PreprocessEZPageviews(), args);
