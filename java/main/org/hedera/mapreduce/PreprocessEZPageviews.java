@@ -88,9 +88,13 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 		@Override
 		protected void map(LongWritable keyIn, Text valueIn, Context context)
 				throws IOException, InterruptedException {
+			
+			// Skip comments			
 			String line = valueIn.toString();
-			if (line.charAt(0) != 'e' || line.charAt(1) != 'n' 
-					|| line.charAt(2) != '.' || line.charAt(3) != 'z') return;
+			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
+					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
+					|| line.charAt(2) != '.' 
+					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) return;
 			int i = line.indexOf(' ');
 			int j = line.indexOf(' ', i+1);
 			String title = line.substring(i+1, j);
@@ -196,6 +200,12 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 				Text.class, Text.class, 
 				Text.class, Text.class, 
 				MyMapper.class, Reducer.class, args);
+		
+		job.getConfiguration().set("mapreduce.map.memory.mb", "4096");
+		job.getConfiguration().set("mapreduce.reduce.memory.mb", "4096");
+		job.getConfiguration().set("mapreduce.map.java.opts", "-Xmx4096m");
+		job.getConfiguration().set("mapreduce.reduce.java.opts", "-Xmx4096m");
+		job.getConfiguration().set("mapreduce.job.user.classpath.first", "true");		
 
 		// register the extra options
 		if (command.hasOption(BEGIN_TIME_OPT))
@@ -223,5 +233,4 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 			e.printStackTrace();
 		}
 	}
-
 }
