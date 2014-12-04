@@ -38,8 +38,17 @@ public class AggregateEZPageview {
 		FileWriter writer = new FileWriter(args[1]);
 		Writer o = new BufferedWriter(writer);
 		for (String line : FileUtility.readLines(args[0])) {
+			if (line.isEmpty()) {
+				continue;
+			}
 			int i = line.indexOf('\t');
+			if (i < 0) {
+				continue;
+			}
 			i = line.indexOf('\t',i+1);
+			if (i < 0) {
+				continue;
+			}
 			String titleAndMonth = line.substring(0,i);
 			if (prevTitle != null && !prevTitle.equals(titleAndMonth)) {
 				StringBuilder sb = new StringBuilder();
