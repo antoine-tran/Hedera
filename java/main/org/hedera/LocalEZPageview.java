@@ -12,7 +12,11 @@ public class LocalEZPageview {
 				value.setSize(33);
 		value.set(0, 201112);
 		
+		int lineCnt = 0;
 		for (String line : FileUtility.readLines(args[0])) {
+			if (++lineCnt % 10000 == 0) {
+				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
+			}
 			if (line.length() < 4) continue;
 			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
@@ -200,7 +204,7 @@ public class LocalEZPageview {
 			int begin, int end, ArrayListOfIntsWritable value) {
 
 		// first character is the day index
-		int dayIdx = decodeDay(compactTs.charAt(begin));
+		int dayIdx = decodeDay(compactTs.charAt(begin));	
 
 		// heuristic, maximum number of views per hour is 999
 		int hourIdx = -1;
