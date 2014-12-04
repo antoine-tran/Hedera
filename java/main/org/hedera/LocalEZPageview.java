@@ -1,9 +1,12 @@
 package org.hedera;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.net.URLDecoder;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -30,6 +33,11 @@ public class LocalEZPageview {
 		else {
 			is = bis;
 		}
+		
+		long begin = System.currentTimeMillis();
+		
+		FileWriter writer = new FileWriter(args[1]);
+		Writer o = new BufferedWriter(writer);
 		
 		for (String line : FileUtility.readLines(is,null)) {
 			/*if (++lineCnt % 1000000 == 0) {
@@ -130,7 +138,7 @@ public class LocalEZPageview {
 			}
 
 			title = title.replace(' ', '_');
-			System.out.print(title);
+			o.write(title);
 
 			/*
 			 * =================================================================
@@ -167,8 +175,12 @@ public class LocalEZPageview {
 				sb.append(value.get(m));				
 			}
 			
-			System.out.println(sb.toString());
+			// System.out.println(sb.toString());
+			o.write(sb.toString());
+			o.write("\n");
 		}
+		
+		o.close();
 		is.close();		
 		fis.close();
 	}
