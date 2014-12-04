@@ -8,8 +8,9 @@ import tuan.io.FileUtility;
 public class LocalEZPageview {
 
 	public static void main(String[] args) {
-		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable(32);
-		value.set(0, 201309);
+		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
+				value.setSize(33);
+		value.set(0, 201112);
 		
 		for (String line : FileUtility.readLines(args[0])) {
 			if (line.length() < 4) continue;
@@ -32,6 +33,7 @@ public class LocalEZPageview {
 				title = URLDecoder.decode(title, "UTF-8");
 			} catch (Exception e) {
 				e.printStackTrace();
+				continue;
 			}
 			if (title.length() > 50) continue;
 
@@ -84,7 +86,8 @@ public class LocalEZPageview {
 			int tmpIdx = 0;
 
 			// heuristics: Normalize titles based on:
-			// - Cut off the trailing anchor (following the #), or query string (following the &)
+			// - Cut off the trailing anchor (following the #), or query string
+			// (following the &)
 			// - Cut off the leading and trailing quotes (double or triple)
 			if ((tmpIdx = title.indexOf('#')) > 0) {
 				title = title.substring(0, tmpIdx);
@@ -152,7 +155,7 @@ public class LocalEZPageview {
 	
 	/** return the zero-based index of the day */
 	private static int decodeDay(char dayChr) {
-		if (dayChr >= 'A' && dayChr < 'Z') {
+		if (dayChr >= 'A' && dayChr <= 'Z') {
 			return (dayChr - 'A');
 		}
 		else if (dayChr == '[') {
@@ -178,7 +181,7 @@ public class LocalEZPageview {
 
 	/** return the zero-based index of the hour in a day */
 	private static int decodeHour(char chr) {
-		if (chr >= 'A' && chr < 'Z') {
+		if (chr >= 'A' && chr <= 'Z') {
 			return (chr - 'A');
 		}
 		else {
@@ -194,7 +197,7 @@ public class LocalEZPageview {
 	}
 	
 	private static void extractViewsForOneDay(CharSequence compactTs, 
-			int begin, int nextBegin, ArrayListOfIntsWritable value) {
+			int begin, int end, ArrayListOfIntsWritable value) {
 
 		// first character is the day index
 		int dayIdx = decodeDay(compactTs.charAt(begin));
@@ -204,10 +207,10 @@ public class LocalEZPageview {
 		int hourView = 0;
 		int dayView = 0;
 
-		for (int i = dayIdx + 1; i < nextBegin; i++) {
+		for (int i = begin + 1; i < end; i++) {
 			char chr = compactTs.charAt(i);
 			if (chr >= '0' && chr <= '9') {
-				hourView += hourView * 10 + (chr - '0');
+				hourView = hourView * 10 + (chr - '0');
 			}
 			else {
 				if (hourIdx >= 0) {
