@@ -286,7 +286,7 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 					hourView = 0;					
 				}
 			}
-			
+
 			// last hour slot
 			if (hourIdx >= 0 && hourView > 0) {
 				dayView += hourView;
@@ -331,12 +331,12 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 	}
 
 	private static class MyReducer extends Reducer<Text, ArrayListOfIntsWritable, 
-			Text, Text> {
+	Text, Text> {
 
 		private ArrayListOfIntsWritable value = null;
 		private Text output = new Text();
 		private int daysOfMonth;
-		
+
 		public void setup(Context context) throws IOException, InterruptedException {
 
 			Configuration conf = context.getConfiguration();
@@ -362,7 +362,7 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 					value.add(i, cnt);
 				}
 			}
-			
+
 			// 7 characters for the month value, plus the total, which often have 4-5 digits
 			StringBuilder sb = new StringBuilder(daysOfMonth * 2 + 12);
 			for (int v : value) {
@@ -383,6 +383,14 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 	@Override
 	public int run(String[] args) throws Exception {
 
+
+
+		// Extra command line options
+		Job job = setup(TextInputFormat.class, TextOutputFormat.class, 
+				Text.class, ArrayListOfIntsWritable.class, 
+				Text.class, Text.class, 
+				MyMapper.class, MyCombiner.class, MyReducer.class, args);
+
 		// Input is a single file of monthly page view
 		// cache the seeds
 		int i = input.indexOf("pagecounts-");
@@ -392,12 +400,6 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 		DateTime month = dtfMonth.parseDateTime(input.substring(i+11,j));	
 		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
 		int daysOfMonth = month.dayOfMonth().getMaximumValue();
-
-		// Extra command line options
-		Job job = setup(TextInputFormat.class, TextOutputFormat.class, 
-				Text.class, ArrayListOfIntsWritable.class, 
-				Text.class, Text.class, 
-				MyMapper.class, MyCombiner.class, MyReducer.class, args);
 
 		job.getConfiguration().setInt(DAY_OF_MONTH, daysOfMonth);
 		job.getConfiguration().setInt(MONTH_AS_INT, monthAsInt);
