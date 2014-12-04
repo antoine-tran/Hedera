@@ -11,7 +11,7 @@ public class LocalEZPageview {
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable(32);
 		value.set(0, 201309);
 		
-		for (String line : FileUtility.readLines(args[1])) {
+		for (String line : FileUtility.readLines(args[0])) {
 			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
 					|| line.charAt(2) != '.' 
