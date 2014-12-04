@@ -29,7 +29,7 @@ public class LocalEZPageview {
 
 
 		DateTime month = dtfMonth.parseDateTime(args[2]);
-		int dayOfMonth = month.dayOfMonth().getMaximumValue();
+		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
 
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
 		value.setSize(dayOfMonth + 2);
@@ -156,6 +156,9 @@ public class LocalEZPageview {
 				title = title.substring(5, title.length());
 			}
 
+			if (title.isEmpty()) {
+				continue;
+			}
 			char chr = title.charAt(0);
 			if (chr >= 'a' && chr <= 'z') {
 				char CHR = (char) (chr - 32);
