@@ -9,8 +9,8 @@ public class LocalEZPageview {
 
 	public static void main(String[] args) {
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
-				value.setSize(33);
-		value.set(0, 201112);
+				value.setSize(32);
+		value.set(0, 201209);
 		
 		int lineCnt = 0;
 		for (String line : FileUtility.readLines(args[0])) {
