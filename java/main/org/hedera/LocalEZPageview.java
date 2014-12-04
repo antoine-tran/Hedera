@@ -14,7 +14,7 @@ public class LocalEZPageview {
 		
 		int lineCnt = 0;
 		for (String line : FileUtility.readLines(args[0])) {
-			if (++lineCnt % 10000 == 0) {
+			if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
 			}
 			if (line.length() < 4) continue;
