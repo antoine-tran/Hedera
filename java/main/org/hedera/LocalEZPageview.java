@@ -180,6 +180,8 @@ public class LocalEZPageview {
 			o.write("\n");
 		}
 		
+		System.out.println("Finished in " + (System.currentTimeMillis() - begin) / 1000 + " seconds.");
+		
 		o.close();
 		is.close();		
 		fis.close();
