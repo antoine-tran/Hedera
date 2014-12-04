@@ -17,7 +17,7 @@ public class LocalEZPageview {
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
 					|| line.charAt(2) != '.' 
 					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) {
-				return;
+				continue;
 			}
 			int i = line.indexOf(' ');
 			int j = line.indexOf(' ', i+1);
@@ -33,7 +33,7 @@ public class LocalEZPageview {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			if (title.length() > 50) return;
+			if (title.length() > 50) continue;
 
 			// heuristics:
 			// Remove non-articles, Main page, index.html
@@ -79,7 +79,7 @@ public class LocalEZPageview {
 					title.startsWith("hr:") ||
 					title.startsWith("hu:") ||
 					title.startsWith("simple:")) {
-				return;
+				continue;
 			}
 			int tmpIdx = 0;
 
