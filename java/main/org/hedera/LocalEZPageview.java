@@ -1,18 +1,37 @@
 package org.hedera;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLDecoder;
+
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import tl.lin.data.array.ArrayListOfIntsWritable;
 import tuan.io.FileUtility;
 
 public class LocalEZPageview {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
 		value.setSize(32);
 		value.set(0, 201209);
 
-		for (String line : FileUtility.readLines(args[0])) {
+		InputStream is = null;
+		
+		FileInputStream fis = new FileInputStream(args[0]);
+		BufferedInputStream bis = new BufferedInputStream(fis);
+		
+		
+		if (args[0].endsWith(".bz2")) {
+			is = new BZip2CompressorInputStream(bis);
+		}
+		else {
+			is = bis;
+		}
+		
+		for (String line : FileUtility.readLines(is,null)) {
 			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
 			}*/
@@ -150,6 +169,8 @@ public class LocalEZPageview {
 			
 			System.out.println(sb.toString());
 		}
+		is.close();		
+		fis.close();
 	}
 
 	/** return the zero-based index of the day */
