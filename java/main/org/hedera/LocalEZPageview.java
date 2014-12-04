@@ -9,9 +9,9 @@ public class LocalEZPageview {
 
 	public static void main(String[] args) {
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
-				value.setSize(32);
+		value.setSize(32);
 		value.set(0, 201209);
-		
+
 		for (String line : FileUtility.readLines(args[0])) {
 			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
@@ -41,49 +41,39 @@ public class LocalEZPageview {
 			if (title.length() > 50) continue;
 
 			// heuristics:
-			// Remove non-articles, Main page, index.html
-			if (title.startsWith("Category:") ||
-					title.startsWith("File:") ||
-					title.startsWith("Wikipedia:") ||
-					title.startsWith("Wikipedia/") ||
-					title.startsWith("Wikipedia#") ||
-					title.startsWith("User:") ||
-					title.startsWith("Special:") ||
-					title.startsWith("Portal:") ||
-					title.startsWith("Portal_talk:") ||
-					title.startsWith("Talk:") ||
-					title.startsWith("/Talk:") ||
-					title.startsWith("Help:") ||
-					title.startsWith("Template:") ||
-					title.startsWith("Translate:") ||
-					title.startsWith("http://") ||
-					title.startsWith("https://") ||
-					title.startsWith("//upload") ||
-					title.startsWith("/File:") ||
-					title.endsWith(".html") ||
-					title.endsWith("HTML") ||
-					title.endsWith(".jpg") ||
-					title.endsWith(".txt") ||
-					title.endsWith(".TXT") ||
-					title.endsWith(".JPG") ||
-					title.endsWith(".gif") ||
-					title.endsWith(".GIF") ||
-					title.endsWith(".css") ||
-					title.endsWith(".CSS") ||
-					title.endsWith(".bmp") ||
-					title.endsWith(".php") ||
-					title.endsWith(".BMP") ||
-					title.endsWith(".svg") ||
-					title.endsWith(".SVG") ||
-					title.endsWith(".OGG") ||
-					title.endsWith(".ogg") ||
-					title.endsWith(".ogv") ||
-					title.endsWith(".webm") ||
+			if (title.startsWith("Category:") || title.startsWith("File:")
+					|| title.startsWith("Wikipedia:")
+					|| title.startsWith("Wikipedia/")
+					|| title.startsWith("Wikipedia#")
+					|| title.startsWith("User:")
+					|| title.startsWith("Special:")
+					|| title.startsWith("Portal:")
+					|| title.startsWith("Portal_talk:")
+					|| title.startsWith("Talk:") || title.contains("/Talk:")
+					|| title.startsWith("Help:")
+					|| title.startsWith("Template:")
+					|| title.startsWith("/Template:")					
+					|| title.startsWith("/Template_talk:")
+					|| title.startsWith("Translate:")
+					|| title.startsWith("/Wikipedia_talk:")
+					|| title.startsWith("http://")
+					|| title.startsWith("https://")
+					|| title.startsWith("//upload")
+					|| title.startsWith("/File:") || title.endsWith(".html")
+					|| title.endsWith("HTML") || title.endsWith(".jpg")
+					|| title.endsWith(".txt") || title.endsWith(".TXT")
+					|| title.endsWith(".JPG") || title.endsWith(".gif")
+					|| title.endsWith(".GIF") || title.endsWith(".css")
+					|| title.endsWith(".CSS") || title.endsWith(".bmp")
+					|| title.endsWith(".php") || title.endsWith(".BMP")
+					|| title.endsWith(".svg") || title.endsWith(".SVG")
+					|| title.endsWith(".OGG") || title.endsWith(".ogg")
+					|| title.endsWith(".ogv") || title.endsWith(".webm")
+					||
 
 					// different language & projects
-					title.startsWith("hr:") ||
-					title.startsWith("hu:") ||
-					title.startsWith("simple:")) {
+					title.startsWith("hr:") || title.startsWith("hu:")
+					|| title.startsWith("simple:")) {
 				continue;
 			}
 			int tmpIdx = 0;
@@ -151,11 +141,17 @@ public class LocalEZPageview {
 
 				idx = nextIdx;
 			}
-			System.out.print("\t");
-			System.out.println(value);
+			
+			StringBuilder sb = new StringBuilder();
+			for (int m = 0; m < value.size(); m++) {
+				sb.append("\t");
+				sb.append(value.get(m));				
+			}
+			
+			System.out.println(sb.toString());
 		}
 	}
-	
+
 	/** return the zero-based index of the day */
 	private static int decodeDay(char dayChr) {
 		if (dayChr >= 'A' && dayChr <= 'Z') {
@@ -198,7 +194,7 @@ public class LocalEZPageview {
 			value.set(i, 0);
 		}
 	}
-	
+
 	private static void extractViewsForOneDay(CharSequence compactTs, 
 			int begin, int end, ArrayListOfIntsWritable value) {
 
