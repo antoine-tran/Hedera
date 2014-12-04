@@ -12,6 +12,7 @@ public class LocalEZPageview {
 		value.set(0, 201309);
 		
 		for (String line : FileUtility.readLines(args[0])) {
+			if (line.length() < 4) continue;
 			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
 					|| line.charAt(2) != '.' 
