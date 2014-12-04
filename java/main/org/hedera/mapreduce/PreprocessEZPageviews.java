@@ -165,14 +165,19 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 			// - Cut off the trailing anchor (following the #), or query string
 			// (following the &)
 			// - Cut off the leading and trailing quotes (double or triple)
+			// - Cut off the leading and trailing "_"
+			// Capitalize the first character
 			if ((tmpIdx = title.indexOf('#')) > 0) {
 				title = title.substring(0, tmpIdx);
 			}
 			if ((tmpIdx = title.indexOf('&')) > 0) {
 				title = title.substring(0, tmpIdx);
 			}
-			if (title.startsWith("#")) {
+			if (title.startsWith("#") || title.startsWith("_")) {
 				title = title.substring(1, title.length());
+			}
+			if (title.endsWith("_")) {
+				title = title.substring(0, title.length()-1);
 			}
 			if (title.startsWith("'''") && title.endsWith("'''")) {
 				if (title.length() > 3) {
@@ -190,6 +195,12 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 				title = title.substring(5, title.length());
 			}
 
+			char chr = title.charAt(0);
+			if (chr >= 'a' && chr <= 'z') {
+				char CHR = (char) (chr - 32);
+				title = CHR + title.substring(1,title.length());
+			}
+			
 			title = title.replace(' ', '_');
 			key.set(title);
 
