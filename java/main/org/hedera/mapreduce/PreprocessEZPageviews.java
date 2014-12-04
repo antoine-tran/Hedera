@@ -1,4 +1,5 @@
 package org.hedera.mapreduce;
+// package de.l3s.streamcorpus.mapreduce;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -215,8 +216,8 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 					break;
 				}
 
-				// everything from idx to nextIdx is for one day
-				extractViewsForOneDay(compactTs, idx, nextIdx);
+				// everything from idx+1 to nextIdx is for one day
+				extractViewsForOneDay(compactTs, idx+1, nextIdx);
 
 				idx = nextIdx;
 			}
