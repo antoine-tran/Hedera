@@ -116,7 +116,7 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 			try {
 				title = URLDecoder.decode(title, "UTF-8");
 			} catch (Exception e) {
-				LOG.error("Error: " + line, e);
+				// LOG.error("Error: " + line, e);
 				return;
 			}
 			if (title.length() > 50)
