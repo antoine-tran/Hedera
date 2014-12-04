@@ -10,16 +10,33 @@ import java.io.Writer;
 import java.net.URLDecoder;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import tl.lin.data.array.ArrayListOfIntsWritable;
 import tuan.io.FileUtility;
 
+/** Handle the pagecounts-ez dumps in local mode */
 public class LocalEZPageview {
+	
+	private static final DateTimeFormatter dtfMonth = DateTimeFormat
+			.forPattern("YYYY-mm");
+	private static final DateTimeFormatter dtfMonthPrinter = DateTimeFormat
+			.forPattern("YYYYmm");
 
 	public static void main(String[] args) throws IOException {
+		
+		
+		DateTime month = dtfMonth.parseDateTime(args[2]);
+		int dayOfMonth = month.dayOfMonth().getMaximumValue();
+		
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
-		value.setSize(32);
-		value.set(0, 201209);
+		value.setSize(dayOfMonth + 2);
+		
+		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
+		
+		value.set(0, monthAsInt);
 
 		InputStream is = null;
 		
