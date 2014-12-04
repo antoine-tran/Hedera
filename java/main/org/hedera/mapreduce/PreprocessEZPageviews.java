@@ -1,5 +1,4 @@
 package org.hedera.mapreduce;
-// package de.l3s.streamcorpus.mapreduce;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -189,9 +188,7 @@ public class PreprocessEZPageviews extends JobConfig implements Tool {
 			}
 
 			title = title.replace(' ', '_');
-
 			key.set(title);
-
 
 			/*
 			 * =================================================================
