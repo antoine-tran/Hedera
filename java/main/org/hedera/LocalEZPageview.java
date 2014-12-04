@@ -12,11 +12,10 @@ public class LocalEZPageview {
 				value.setSize(32);
 		value.set(0, 201209);
 		
-		int lineCnt = 0;
 		for (String line : FileUtility.readLines(args[0])) {
-			if (++lineCnt % 1000000 == 0) {
+			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
-			}
+			}*/
 			if (line.length() < 4) continue;
 			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
 					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
@@ -36,7 +35,7 @@ public class LocalEZPageview {
 			try {
 				title = URLDecoder.decode(title, "UTF-8");
 			} catch (Exception e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 				continue;
 			}
 			if (title.length() > 50) continue;
