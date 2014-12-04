@@ -11,5 +11,7 @@ public class AggregateEZPageview {
 	/** Input files are supposed to be sorted */
 	public static void main(String[] args) {
 		
+		String prevTitle = null;
+		
 	}
 }

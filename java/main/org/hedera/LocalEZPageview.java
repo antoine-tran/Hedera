@@ -19,43 +19,43 @@ import tuan.io.FileUtility;
 
 /** Handle the pagecounts-ez dumps in local mode */
 public class LocalEZPageview {
-	
+
 	private static final DateTimeFormatter dtfMonth = DateTimeFormat
 			.forPattern("YYYY-mm");
 	private static final DateTimeFormatter dtfMonthPrinter = DateTimeFormat
 			.forPattern("YYYYmm");
 
 	public static void main(String[] args) throws IOException {
-		
-		
+
+
 		DateTime month = dtfMonth.parseDateTime(args[2]);
 		int dayOfMonth = month.dayOfMonth().getMaximumValue();
-		
+
 		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
 		value.setSize(dayOfMonth + 2);
-		
+
 		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
-		
+
 		value.set(0, monthAsInt);
 
 		InputStream is = null;
-		
+
 		FileInputStream fis = new FileInputStream(args[0]);
 		BufferedInputStream bis = new BufferedInputStream(fis);
-		
-		
+
+
 		if (args[0].endsWith(".bz2")) {
 			is = new BZip2CompressorInputStream(bis);
 		}
 		else {
 			is = bis;
 		}
-		
+
 		long begin = System.currentTimeMillis();
-		
+
 		FileWriter writer = new FileWriter(args[1]);
 		Writer o = new BufferedWriter(writer);
-		
+
 		for (String line : FileUtility.readLines(is,null)) {
 			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
@@ -126,32 +126,40 @@ public class LocalEZPageview {
 			// - Cut off the trailing anchor (following the #), or query string
 			// (following the &)
 			// - Cut off the leading and trailing quotes (double or triple)
+			// - Cut off the leading and trailing "_"
+			// Capitalize the first character
 			if ((tmpIdx = title.indexOf('#')) > 0) {
 				title = title.substring(0, tmpIdx);
 			}
 			if ((tmpIdx = title.indexOf('&')) > 0) {
 				title = title.substring(0, tmpIdx);
 			}
-			if (title.startsWith("#")) {
+			if (title.startsWith("#") || title.startsWith("_")) {
 				title = title.substring(1, title.length());
+			}
+			if (title.endsWith("_")) {
+				title = title.substring(0, title.length()-1);
 			}
 			if (title.startsWith("'''") && title.endsWith("'''")) {
 				if (title.length() > 3) {
 					title = title.substring(3, title.length() - 3);
 				}
-			}
-			else if (title.startsWith("''") && title.endsWith("''")) {
+			} else if (title.startsWith("''") && title.endsWith("''")) {
 				if (title.length() > 2) {
 					title = title.substring(2, title.length() - 2);
-				}	
-			}
-			else if (title.startsWith("\"") && title.endsWith("\"")) {
-				if (title.length() > 1) { 
+				}
+			} else if (title.startsWith("\"") && title.endsWith("\"")) {
+				if (title.length() > 1) {
 					title = title.substring(1, title.length() - 1);
 				}
-			}
-			else if (title.startsWith("wiki/")) {
+			} else if (title.startsWith("wiki/")) {
 				title = title.substring(5, title.length());
+			}
+
+			char chr = title.charAt(0);
+			if (chr >= 'a' && chr <= 'z') {
+				char CHR = (char) (chr - 32);
+				title = CHR + title.substring(1,title.length());
 			}
 
 			title = title.replace(' ', '_');
@@ -185,20 +193,20 @@ public class LocalEZPageview {
 
 				idx = nextIdx;
 			}
-			
+
 			StringBuilder sb = new StringBuilder();
 			for (int m = 0; m < value.size(); m++) {
 				sb.append("\t");
 				sb.append(value.get(m));				
 			}
-			
+
 			// System.out.println(sb.toString());
 			o.write(sb.toString());
 			o.write("\n");
 		}
-		
+
 		System.out.println("Finished in " + (System.currentTimeMillis() - begin) / 1000 + " seconds.");
-		
+
 		o.close();
 		is.close();		
 		fis.close();
