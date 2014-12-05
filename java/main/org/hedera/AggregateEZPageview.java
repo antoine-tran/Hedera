@@ -40,11 +40,11 @@ public class AggregateEZPageview {
 				continue;
 			}
 			line = line.trim();
-			int i = line.indexOf('\t');
+			int i = line.indexOf(' ');
 			if (i < 0) {
 				continue;
 			}
-			i = line.indexOf('\t',i+1);
+			i = line.indexOf(' ',i+1);
 			if (i < 0) {
 				continue;
 			}
@@ -53,7 +53,7 @@ public class AggregateEZPageview {
 				StringBuilder sb = new StringBuilder();
 				sb.append(prevTitle);
 				for (int item : value) {
-					sb.append('\t');
+					sb.append(' ');
 					sb.append(item);
 				}
 				sb.append('\n');
@@ -63,7 +63,7 @@ public class AggregateEZPageview {
 				}
 			}
 			for (int j = 0, k = i, tmp = k; j < value.length && tmp >= 0; j++) {
-				tmp = line.indexOf('\t',k+1);
+				tmp = line.indexOf(' ',k+1);
 				if (tmp < 0) break;
 				try {
 					value[j] += Integer.parseInt(line.substring(k+1,tmp));
@@ -79,7 +79,7 @@ public class AggregateEZPageview {
 			StringBuilder sb = new StringBuilder();
 			sb.append(prevTitle);
 			for (int item : value) {
-				sb.append('\t');
+				sb.append(' ');
 				sb.append(item);
 			}
 			sb.append('\n');

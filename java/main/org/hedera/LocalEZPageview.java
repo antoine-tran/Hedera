@@ -141,17 +141,20 @@ public class LocalEZPageview {
 				title = title.substring(0, title.length()-1);
 			}
 			if (title.startsWith("'''") && title.endsWith("'''")) {
-				if (title.length() > 3) {
+				if (title.length() > 6) {
 					title = title.substring(3, title.length() - 3);
 				}
+				else continue;
 			} else if (title.startsWith("''") && title.endsWith("''")) {
-				if (title.length() > 2) {
+				if (title.length() > 4) {
 					title = title.substring(2, title.length() - 2);
 				}
+				else continue;
 			} else if (title.startsWith("\"") && title.endsWith("\"")) {
-				if (title.length() > 1) {
+				if (title.length() > 2) {
 					title = title.substring(1, title.length() - 1);
 				}
+				else continue;
 			} else if (title.startsWith("wiki/")) {
 				title = title.substring(5, title.length());
 			}
@@ -201,7 +204,7 @@ public class LocalEZPageview {
 
 			StringBuilder sb = new StringBuilder();
 			for (int m = 0; m < value.size(); m++) {
-				sb.append("\t");
+				sb.append(' ');
 				sb.append(value.get(m));				
 			}
 
@@ -276,6 +279,12 @@ public class LocalEZPageview {
 			if (chr >= '0' && chr <= '9') {
 				hourView = hourView * 10 + (chr - '0');
 			}
+			
+			// some hour count is missing
+			else if (chr == '?') {
+				// Do nothing, just move on
+			}
+			
 			else {
 				if (hourIdx >= 0) {
 
