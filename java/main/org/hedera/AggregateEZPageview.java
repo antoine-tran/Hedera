@@ -65,9 +65,11 @@ public class AggregateEZPageview {
 					value[j] = 0;
 				}
 			}
-			for (int j = 0, k = i, tmp = k; j < value.length; j++, k = tmp) {
+			for (int j = 0, k = i, tmp = k; j < value.length && tmp >= 0; j++) {
 				tmp = line.indexOf('\t',k+1);
+				if (tmp < 0) break;
 				value[j] += Integer.parseInt(line.substring(k+1,tmp));
+				k = tmp;
 			}
 			prevTitle = titleAndMonth;
 		}
