@@ -155,6 +155,8 @@ public class LocalEZPageview {
 			} else if (title.startsWith("wiki/")) {
 				title = title.substring(5, title.length());
 			}
+			
+			title = title.trim();
 
 			if (title.isEmpty()) {
 				continue;
