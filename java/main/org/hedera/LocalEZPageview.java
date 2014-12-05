@@ -167,7 +167,7 @@ public class LocalEZPageview {
 				title = CHR + title.substring(1,title.length());
 			}
 
-			title = title.replace(' ', '_');
+			title = title.replace("\\s+", "_");
 			o.write(title);
 
 			/*
