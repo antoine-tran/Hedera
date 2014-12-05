@@ -41,6 +41,7 @@ public class AggregateEZPageview {
 			if (line.isEmpty()) {
 				continue;
 			}
+			line = line.trim();
 			int i = line.indexOf('\t');
 			if (i < 0) {
 				continue;
