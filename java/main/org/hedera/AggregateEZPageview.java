@@ -31,8 +31,6 @@ public class AggregateEZPageview {
 		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
 
 		int[] value = new int[dayOfMonth + 1];
-
-		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
 		
 		String prevTitle = null;
 		FileWriter writer = new FileWriter(args[1]);
@@ -54,8 +52,6 @@ public class AggregateEZPageview {
 			if (prevTitle != null && !prevTitle.equals(titleAndMonth)) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(prevTitle);
-				sb.append('\t');
-				sb.append(monthAsInt);
 				for (int item : value) {
 					sb.append('\t');
 					sb.append(item);
@@ -82,8 +78,6 @@ public class AggregateEZPageview {
 		if (prevTitle != null) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(prevTitle);
-			sb.append('\t');
-			sb.append(monthAsInt);
 			for (int item : value) {
 				sb.append('\t');
 				sb.append(item);
