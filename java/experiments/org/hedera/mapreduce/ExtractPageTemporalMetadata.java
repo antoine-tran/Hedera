@@ -94,7 +94,7 @@ public class ExtractPageTemporalMetadata extends JobConfig implements Tool {
 				input, output, 
 				WikiRevisionHeaderJsonInputFormat.class,
 				TextOutputFormat.class,
-				LongWritable.class, RevisionHeader.class, 
+				LongWritable.class, LongWritable.class, 
 				LongWritable.class, LongWritable.class,
 				CreationMapper.class, LongMinReducer.class, LongMinReducer.class,
 				1);
