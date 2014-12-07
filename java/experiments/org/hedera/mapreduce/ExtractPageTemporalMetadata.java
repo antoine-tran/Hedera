@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.hedera.io.RevisionHeader;
 import org.hedera.io.input.WikiRevisionHeaderJsonInputFormat;
 
@@ -123,5 +124,13 @@ public class ExtractPageTemporalMetadata extends JobConfig implements Tool {
 		}
 		
 		return 0;
+	}
+	
+	public static void main(String[] args) {
+		try {
+			ToolRunner.run(new ExtractPageTemporalMetadata(), args);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
