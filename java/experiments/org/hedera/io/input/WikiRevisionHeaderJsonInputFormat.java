@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.hedera.io.RevisionHeader;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ import com.google.gson.JsonParser;
  * @author tuan
  */
 public class WikiRevisionHeaderJsonInputFormat 
-extends WikiRevisionInputFormat<LongWritable, RevisionHeader> {
+		extends FileInputFormat<LongWritable, RevisionHeader> {
 
 	protected CompressionCodecFactory compressionCodecs = null;
 
@@ -84,9 +85,6 @@ extends WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 			Configuration conf = context.getConfiguration();
 			conf.setLong("mapreduce.input.fileinputformat.split.maxsize", 
 					DEFAULT_MAX_BLOCK_SIZE);
-			skipNonArticles = conf.getBoolean(SKIP_NON_ARTICLES, true);
-			minTime = conf.getLong(REVISION_BEGIN_TIME, 0);
-			maxTime = conf.getLong(REVISION_END_TIME, Long.MAX_VALUE);
 		}
 
 		@Override
