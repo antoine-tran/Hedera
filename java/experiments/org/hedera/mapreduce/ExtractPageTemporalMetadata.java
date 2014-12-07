@@ -54,7 +54,7 @@ public class ExtractPageTemporalMetadata extends JobConfig implements Tool {
 	private static final class LongMinReducer<T> 
 			extends Reducer<T, LongWritable, T, LongWritable> {
 
-		private final LongWritable value = new LongWritable(0L);
+		private final LongWritable value = new LongWritable(Long.MAX_VALUE);
 		
 		@Override
 		protected void reduce(T k, Iterable<LongWritable> vals, Context c)
