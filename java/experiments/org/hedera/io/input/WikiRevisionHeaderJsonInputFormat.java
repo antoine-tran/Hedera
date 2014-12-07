@@ -1,11 +1,4 @@
-/**
- * 
- */
 package org.hedera.io.input;
-
-import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_BEGIN_TIME;
-import static org.hedera.io.input.WikiRevisionInputFormat.REVISION_END_TIME;
-import static org.hedera.io.input.WikiRevisionInputFormat.SKIP_NON_ARTICLES;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,31 +14,24 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-import org.hedera.io.FullRevision;
+import org.hedera.io.RevisionHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-/**
- * Provide a converter of Json revisions to FullRevision object
- * 
- * The following code is inspired by the source code of
- * Manning book, "Hadoop in Practice", source:
- * https://github.com/alexholmes/hadoop-book 
- * 
+/** 
+ * A variant of WikiRevisionHeaderInputFormat that 
+ * works with the Json dumps 
  * @author tuan
- * @author alexholmes
- *
  */
-public class WikiFullRevisionJsonInputFormat 
-		extends FileInputFormat<LongWritable, FullRevision> {
+public class WikiRevisionHeaderJsonInputFormat 
+extends WikiRevisionInputFormat<LongWritable, RevisionHeader> {
 
 	protected CompressionCodecFactory compressionCodecs = null;
-	
+
 	public void configure(Configuration conf) {
 		if (compressionCodecs == null)
 			compressionCodecs = new CompressionCodecFactory(conf);
@@ -63,17 +49,17 @@ public class WikiFullRevisionJsonInputFormat
 	}
 
 	@Override
-	public RecordReader<LongWritable, FullRevision> createRecordReader(
-			InputSplit input, TaskAttemptContext tac) throws IOException,
-			InterruptedException {
-		return new JsonRevisionReader();
+	public RecordReader<LongWritable, RevisionHeader> createRecordReader(
+			InputSplit input, TaskAttemptContext context)
+					throws IOException, InterruptedException {
+		return new JsonRevisionHeaderReader();
 	}
+	
+	public static class JsonRevisionHeaderReader 
+			extends RecordReader<LongWritable, RevisionHeader> {
 
-	public static class JsonRevisionReader 
-			extends RecordReader<LongWritable, FullRevision> {
-		
 		private static final Logger LOG =
-				LoggerFactory.getLogger(JsonRevisionReader
+				LoggerFactory.getLogger(JsonRevisionHeaderReader
 						.class);
 
 		protected static long DEFAULT_MAX_BLOCK_SIZE = 134217728l;
@@ -87,7 +73,7 @@ public class WikiFullRevisionJsonInputFormat
 		
 		private LineRecordReader reader = new LineRecordReader();
 
-		private final FullRevision value = new FullRevision();
+		private final RevisionHeader value = new RevisionHeader();
 		private final JsonParser parser = new JsonParser();
 
 		@Override
@@ -115,7 +101,7 @@ public class WikiFullRevisionJsonInputFormat
 		}
 
 		@Override
-		public FullRevision getCurrentValue() throws IOException,
+		public RevisionHeader getCurrentValue() throws IOException,
 		InterruptedException {
 			return value;
 		}
@@ -140,8 +126,8 @@ public class WikiFullRevisionJsonInputFormat
 		}
 
 		public boolean decodeLineToJson(JsonParser parser, Text line,
-				FullRevision value) {
-			// LOG.info("Got string '{}'", line);
+				RevisionHeader value) {
+			
 			try {
 				JsonObject obj =
 						(JsonObject) parser.parse(line.toString());
@@ -166,25 +152,15 @@ public class WikiFullRevisionJsonInputFormat
 				
 				long timestamp = obj.get("timestamp").getAsLong();
 				value.setTimestamp(timestamp);
-				
-				String user = obj.get("user").getAsString();
-				value.setUser(user);
-				
-				long userId = obj.get("user_id").getAsLong();
-				value.setUserId(userId);
-				
-				String comment = obj.get("comment").getAsString();
-				value.setComment(comment);
-				
-				byte[] text = obj.get("text").getAsString()
-						.getBytes(StandardCharsets.UTF_8);
-				value.loadText(text, 0, text.length);
-										
+													
 				return true;
 			} catch (Exception e) {
 				LOG.warn("Could not json-decode string: " + line, e);
 				return false;
 			} 
 		}
+		
 	}
 }
+
+
