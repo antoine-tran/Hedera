@@ -59,7 +59,7 @@ public class ExtractPageTemporalMetadata extends JobConfig implements Tool {
 		@Override
 		protected void reduce(T k, Iterable<LongWritable> vals, Context c)
 				throws IOException, InterruptedException {
-			value.set(0L);
+			value.set(Long.MAX_VALUE);
 			for (LongWritable item : vals) {
 				if (value.compareTo(item) > 0) {
 					value.set(item.get());
