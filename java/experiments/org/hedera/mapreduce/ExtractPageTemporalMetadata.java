@@ -42,8 +42,8 @@ public class ExtractPageTemporalMetadata extends JobConfig implements Tool {
 		@Override
 		protected void map(LongWritable key, RevisionHeader header,
 				Context context) throws IOException, InterruptedException {
-			long revisionId = header.getRevisionId();
-			valOut.set(revisionId);
+			long revisionTime = header.getTimestamp();
+			valOut.set(revisionTime);
 			long pageId = header.getPageId();
 			keyOut.set(pageId);
 			
