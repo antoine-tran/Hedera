@@ -53,7 +53,7 @@ public class EntityCoocurrenceInDisambiguation extends JobConfig implements Tool
 	};
 
 	// Input: Wikipedia page, output: a word in the title of the disambiguation, list of pages
-	private static final class DisambMapper extends Mapper<LongWritable, WikipediaPage, 
+	private static final class DisambMapper extends Mapper<IntWritable, WikipediaPage, 
 	PairOfStringInt, Text> {
 
 		private static final PairOfStringInt KEYPAIR = new PairOfStringInt();
@@ -64,7 +64,7 @@ public class EntityCoocurrenceInDisambiguation extends JobConfig implements Tool
 		// Basic algorithm
 		// Emit message 1 : key = (link target article name, 0), value = (link target docid);
 		// Emit message 2 : key = (link target article name, 1), value = (label); 
-		protected void map(LongWritable key, WikipediaPage p, Context context) 
+		protected void map(IntWritable key, WikipediaPage p, Context context) 
 				throws IOException, InterruptedException {
 
 			context.getCounter(PageTypes.TOTAL).increment(1);
