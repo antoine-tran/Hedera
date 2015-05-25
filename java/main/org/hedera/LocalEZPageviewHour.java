@@ -29,9 +29,10 @@ public class LocalEZPageviewHour {
 
 		DateTime month = dtfMonth.parseDateTime(args[2]);
 		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
+		int hourOfMonth = dayOfMonth * 24;
 
 		ArrayListOfInts value = new ArrayListOfInts((33) * 3 / 2 + 2);
-		value.setSize(dayOfMonth + 2);
+		value.setSize(hourOfMonth + 2);
 
 		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
 
@@ -286,9 +287,7 @@ public class LocalEZPageviewHour {
 			
 			else {
 				if (hourIdx >= 0) {
-
-					// TODO: separate the hour processing option here
-					dayView += hourView;
+					value.set(dayIdx*24 + 2 + hourIdx, hourView);
 				}
 				hourIdx = decodeHour(chr);
 				hourView = 0;					
@@ -297,9 +296,8 @@ public class LocalEZPageviewHour {
 
 		// last hour slot
 		if (hourIdx >= 0 && hourView > 0) {
-			dayView += hourView;
+			value.set(dayIdx*24 + 2 + hourIdx, hourView);			
 		}
-
-		value.set(dayIdx + 2, dayView);
+		// value.set(dayIdx + 2, dayView);
 	}
 }
