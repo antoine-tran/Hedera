@@ -9,7 +9,7 @@
 # Example sh match_wikistats.sh pagecounts-2013-12-ge.bz2 2013-12 title2id.20140502
 
 # Normalize the EZ page view
-sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageview $1 $1.out $2
+sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageview(Day/Hour) $1 $1.out $2
 
 # Sort by title
 LANG=en_EN sort -k1,1 $1.out > $1.sort
