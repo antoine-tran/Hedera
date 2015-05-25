@@ -16,5 +16,9 @@ set default_parallel 10;
 
 wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
+DESC wiki;
+
+
+
 STORE wiki INTO '$OUTPUT' USING JsonStorage();
 
