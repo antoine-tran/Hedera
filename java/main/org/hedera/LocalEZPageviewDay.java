@@ -14,11 +14,11 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import tl.lin.data.array.ArrayListOfIntsWritable;
+import tl.lin.data.array.ArrayListOfInts;
 import tuan.io.FileUtility;
 
 /** Handle the pagecounts-ez dumps in local mode */
-public class LocalEZPageview {
+public class LocalEZPageviewDay {
 
 	private static final DateTimeFormatter dtfMonth = DateTimeFormat
 			.forPattern("YYYY-mm");
@@ -27,11 +27,10 @@ public class LocalEZPageview {
 
 	public static void main(String[] args) throws IOException {
 
-
 		DateTime month = dtfMonth.parseDateTime(args[2]);
 		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
 
-		ArrayListOfIntsWritable value = new ArrayListOfIntsWritable((33) * 3 / 2 + 2);
+		ArrayListOfInts value = new ArrayListOfInts((33) * 3 / 2 + 2);
 		value.setSize(dayOfMonth + 2);
 
 		int monthAsInt = Integer.parseInt(dtfMonthPrinter.print(month));
@@ -257,14 +256,14 @@ public class LocalEZPageview {
 		}
 	}
 
-	private static void resetTimeseries(ArrayListOfIntsWritable value) {
+	private static void resetTimeseries(ArrayListOfInts value) {
 		for (int i = 1; i < value.size(); i++) {
 			value.set(i, 0);
 		}
 	}
 
 	private static void extractViewsForOneDay(CharSequence compactTs, 
-			int begin, int end, ArrayListOfIntsWritable value) {
+			int begin, int end, ArrayListOfInts value) {
 
 		// first character is the day index
 		int dayIdx = decodeDay(compactTs.charAt(begin));	
