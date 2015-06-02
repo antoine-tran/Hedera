@@ -27,11 +27,12 @@ import tuan.hadoop.conf.JobConfig;
 public class ExtractReferences extends JobConfig implements Tool {
 
 	private static final class MyMapper extends 
-			Mapper<LongWritable, Text, Long, ArrayListWritable<Text>> {
+			Mapper<LongWritable, Text, LongWritable, Text> {
 
 		private JsonParser parser;
 		private static final LongWritable keyOut = new LongWritable();
-		private static final ArrayListWritable<Text> valOut = new ArrayListWritable<Text>();
+		private static final Text valOut = new Text();
+		private static final StringBuilder sb = new StringBuilder();
 		
 		private static final Pattern HTTP_PATTERN = Pattern.compile("http://\\S+?\\s");
 		
@@ -40,23 +41,38 @@ public class ExtractReferences extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			JsonObject obj =
 					(JsonObject) parser.parse(value.toString());
+			
 			long pageId = obj.get("page_id").getAsLong();
-			keyOut.set(pageId);
+			long revisionId = obj.get("rev_id").getAsLong();
+			long timestamp = obj.get("timestamp").getAsLong();
+			
+			keyOut.set(timestamp);
 			String content = obj.get("text").getAsString();
 			
-			extractReferences(content);
-			
-			context.write(pageId, valOut);
+			extractReferences(pageId,revisionId,content, context);
 		}
 		
-		private void extractReferences(String content) {
+		// Scala: Mutability sucks. Me: Scala sucks !!
+		private void extractReferences(long pageId, long revisionId, String content, Context context) 
+				throws IOException, InterruptedException {
 			
 			// clean the output
 			valOut.clear();
+			sb.delete(0, sb.length());
+			sb.append(pageId);
+			sb.append('\t');
+			sb.append(revisionId);
+			sb.append('\t');
 			
+			int offset = sb.length();
+					
 			Matcher m = HTTP_PATTERN.matcher(content);
 			while (m.find()) {
-				valOut.add(new Text(m.group(0)));
+				sb.append(new Text(m.group(0)));
+				valOut.set(sb.toString());
+				context.write(keyOut,valOut);
+				
+				sb.delete(offset, sb.length());
 			}
 		}
 
