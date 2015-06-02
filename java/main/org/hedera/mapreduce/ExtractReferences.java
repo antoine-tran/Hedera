@@ -92,7 +92,7 @@ public class ExtractReferences extends JobConfig implements Tool {
 	@Override
 	public int run(String[] args) throws Exception {
 		Job job = setup(TextInputFormat.class, TextOutputFormat.class, LongWritable.class,
-				ArrayListWritable.class, LongWritable.class, ArrayListWritable.class,
+				Text.class, LongWritable.class, Text.class,
 				MyMapper.class, Reducer.class, args);
 		
 		job.waitForCompletion(true);
