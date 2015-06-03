@@ -72,6 +72,8 @@ public class ExtractDomain extends EvalFunc<String> {
 			return null;
 		} catch (URISyntaxException e) {
 			return null;
+		} catch (IllegalStateException e) {
+			return null;
 		}
 	}
 	
