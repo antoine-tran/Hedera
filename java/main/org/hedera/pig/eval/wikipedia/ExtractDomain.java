@@ -81,6 +81,11 @@ public class ExtractDomain extends EvalFunc<String> {
 	
 	public static void main(String[] args) throws URISyntaxException, UnsupportedEncodingException {
 		
-		System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
+		try {
+			System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
