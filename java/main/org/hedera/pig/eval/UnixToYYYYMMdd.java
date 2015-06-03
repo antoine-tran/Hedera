@@ -32,10 +32,12 @@ public class UnixToYYYYMMdd extends EvalFunc<String>  {
 		
 		try {
 			String s = TIME_FORMAT.print(DataType.toLong(input.get(0)));
+			return s;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
+		
 	}
 
 	@Override
