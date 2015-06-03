@@ -46,28 +46,31 @@ public class ExtractDomain extends EvalFunc<String> {
 			return null;
 		}
 		
-		String path = url.getPath();
-		if (path != null)
-		  path = URLDecoder.decode(path, "UTF-8");
-		String query = url.getQuery();
-		if (query != null)
-		  query = URLDecoder.decode(query, "UTF-8");
-		String fragment = url.getRef();
-		if (fragment != null)
-		  fragment = URLDecoder.decode(fragment, "UTF-8");
 
-		URI uri = new URI(url.getProtocol(), url.getAuthority(), path, query, fragment);
-		
-		String hostname = uri.getHost();
-		if (hostname == null) {
-			return null;
-		}
 		try {
+			String path = url.getPath();
+			if (path != null)
+				path = URLDecoder.decode(path, "UTF-8");
+			String query = url.getQuery();
+			if (query != null)
+				query = URLDecoder.decode(query, "UTF-8");
+			String fragment = url.getRef();
+			if (fragment != null)
+				fragment = URLDecoder.decode(fragment, "UTF-8");
+
+			URI uri = new URI(url.getProtocol(), url.getAuthority(), path, query, fragment);
+
+			String hostname = uri.getHost();
+			if (hostname == null) {
+				return null;
+			}
 			InternetDomainName idn = InternetDomainName.from(hostname);
 			String sld = idn.topPrivateDomain().name();
 			String tld = idn.publicSuffix().name();
 			return sld + "\t" + tld;
 		} catch (IllegalArgumentException e) {
+			return null;
+		} catch (URISyntaxException e) {
 			return null;
 		}
 	}
