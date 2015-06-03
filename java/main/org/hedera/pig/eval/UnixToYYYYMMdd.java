@@ -34,7 +34,7 @@ public class UnixToYYYYMMdd extends EvalFunc<String>  {
 			String s = TIME_FORMAT.print(DataType.toLong(input.get(0)));
 			return s;
 		} catch (Exception e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 			return null;
 		}
 		

@@ -42,7 +42,7 @@ public class ExtractDomain extends EvalFunc<String> {
 		try {
 			url = new URL(u);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 			return null;
 		}
 		
