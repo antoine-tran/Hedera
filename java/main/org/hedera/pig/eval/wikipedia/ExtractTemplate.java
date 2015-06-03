@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.hedera.pig.eval.wikipedia;
 
 import java.util.Arrays;
