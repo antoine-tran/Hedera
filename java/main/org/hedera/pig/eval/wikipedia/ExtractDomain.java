@@ -62,10 +62,14 @@ public class ExtractDomain extends EvalFunc<String> {
 		if (hostname == null) {
 			return null;
 		}
-		InternetDomainName idn =  InternetDomainName.from(hostname);
-		String sld = idn.topPrivateDomain().name();
-		String tld = idn.publicSuffix().name();
-		return sld + "\t" + tld;
+		try {
+			InternetDomainName idn = InternetDomainName.from(hostname);
+			String sld = idn.topPrivateDomain().name();
+			String tld = idn.publicSuffix().name();
+			return sld + "\t" + tld;
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 	
 	@Override
