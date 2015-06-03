@@ -29,8 +29,13 @@ public class UnixToYYYYMMdd extends EvalFunc<String>  {
 
 		// Set the time to default or the output is in UTC
 		DateTimeZone.setDefault(DateTimeZone.UTC);
-
-		return TIME_FORMAT.print(DataType.toLong(input.get(0)));
+		
+		try {
+			String s = TIME_FORMAT.print(DataType.toLong(input.get(0)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
