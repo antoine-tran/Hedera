@@ -36,8 +36,14 @@ public class ExtractDomain extends EvalFunc<String> {
 		}
 	}
 	
-	private static String getDomainName(String u) throws URISyntaxException, UnsupportedEncodingException, MalformedURLException {
-		URL url = new URL(u);
+	private static String getDomainName(String u) throws URISyntaxException, UnsupportedEncodingException {
+		URL url;
+		try {
+			url = new URL(u);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return null;
+		}
 		
 		String path = url.getPath();
 		if (path != null)
@@ -81,11 +87,6 @@ public class ExtractDomain extends EvalFunc<String> {
 	
 	public static void main(String[] args) throws URISyntaxException, UnsupportedEncodingException {
 		
-		try {
-			System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
 	}
 }
