@@ -36,7 +36,8 @@ public class ExtractDomain extends EvalFunc<String> {
 		}
 	}
 	
-	private static String getDomainName(String u) throws URISyntaxException, UnsupportedEncodingException {
+	private static String getDomainName(String u) throws
+			URISyntaxException, UnsupportedEncodingException {
 		URL url;
 		try {
 			url = new URL(u);
@@ -58,6 +59,9 @@ public class ExtractDomain extends EvalFunc<String> {
 		URI uri = new URI(url.getProtocol(), url.getAuthority(), path, query, fragment);
 		
 		String hostname = uri.getHost();
+		if (hostname == null) {
+			return null;
+		}
 		InternetDomainName idn =  InternetDomainName.from(hostname);
 		String sld = idn.topPrivateDomain().name();
 		String tld = idn.publicSuffix().name();
@@ -85,8 +89,11 @@ public class ExtractDomain extends EvalFunc<String> {
 
 	}
 	
-	public static void main(String[] args) throws URISyntaxException, UnsupportedEncodingException {
+	public static void main(String[] args) throws
+			URISyntaxException, UnsupportedEncodingException {
 		
-		System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
+		System.out.println(getDomainName(URLEncoder.encode(
+				"http://www.bbc.co.uk/religion/ethics/torture/" +
+						"ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
 	}
 }
