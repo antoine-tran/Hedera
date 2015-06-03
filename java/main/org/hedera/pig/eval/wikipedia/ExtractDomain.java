@@ -1,8 +1,13 @@
 package org.hedera.pig.eval.wikipedia;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,8 +36,21 @@ public class ExtractDomain extends EvalFunc<String> {
 		}
 	}
 	
-	private static String getDomainName(String u) throws URISyntaxException {
-		URI uri = new URI(u);
+	private static String getDomainName(String u) throws URISyntaxException, UnsupportedEncodingException, MalformedURLException {
+		URL url = new URL(u);
+		
+		String path = url.getPath();
+		if (path != null)
+		  path = URLDecoder.decode(path, "UTF-8");
+		String query = url.getQuery();
+		if (query != null)
+		  query = URLDecoder.decode(query, "UTF-8");
+		String fragment = url.getRef();
+		if (fragment != null)
+		  fragment = URLDecoder.decode(fragment, "UTF-8");
+
+		URI uri = new URI(url.getProtocol(), url.getAuthority(), path, query, fragment);
+		
 		String hostname = uri.getHost();
 		InternetDomainName idn =  InternetDomainName.from(hostname);
 		String sld = idn.topPrivateDomain().name();
@@ -61,9 +79,8 @@ public class ExtractDomain extends EvalFunc<String> {
 
 	}
 	
-	public static void main(String[] args) throws URISyntaxException {
-		URI uri = new URI("http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/net/InternetDomainName.html");
+	public static void main(String[] args) throws URISyntaxException, UnsupportedEncodingException {
 		
-		System.out.println();
+		System.out.println(getDomainName(URLEncoder.encode("http://www.bbc.co.uk/religion/ethics/torture/ethics/wrong_2.shtml|title=Consequentialist","UTF-8")));
 	}
 }
