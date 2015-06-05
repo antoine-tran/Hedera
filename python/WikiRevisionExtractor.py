@@ -720,7 +720,7 @@ class MRClean(MRJob):
         text = obj['text']
         clean = clean(text)
         obj['text'] = clean
-        yield None,line
+        yield None,json.dumps(obj)
 
     def reducer(self,pid,lines):
         for line in lines:
