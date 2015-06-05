@@ -184,7 +184,7 @@ public class Json2Anchor extends JobConfig implements Tool {
 
 	public static void main(String[] args) {
 		try {
-			ToolRunner.run(new ExtractReferences(), args);
+			ToolRunner.run(new Json2Anchor(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
