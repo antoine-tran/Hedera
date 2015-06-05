@@ -345,7 +345,8 @@ def dropSpans(matches, text):
 # Can be nested [[File:..|..[[..]]..|..]], [[Category:...]], etc.
 # We first expand inner ones, than remove enclosing ones.
 #
-wikiLink = re.compile(r'\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
+# wikiLink = re.compile(r'\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
+wikiLink = re.compile('\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
 
 parametrizedLink = re.compile(r'\[\[.*?\]\]')
 
@@ -695,6 +696,7 @@ def main():
     process_data(sys.stdin, output_splitter)
     output_splitter.close()
 
+
 from mrjob.job import MRJob
 from mrjob.protocol import RawProtocol
 from mrjob.protocol import RawValueProtocol
@@ -716,6 +718,7 @@ class MRClean(MRJob):
     OUTPUT_PROTOCOL = RawValueProtocol
 
     def mapper(self,pid,line):
+        print line
         obj = json.loads(line)
         text = obj['text']
         clean = clean(text)
