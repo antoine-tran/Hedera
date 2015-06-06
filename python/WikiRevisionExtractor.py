@@ -713,12 +713,10 @@ os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH/lib/hadoop-0.20-mapr
 
 class MRClean(MRJob):
 
-    INPUT_PROTOCOL = RawProtocol
     INTERNAL_PROTOCOL = RawProtocol
     OUTPUT_PROTOCOL = RawValueProtocol
 
     def mapper(self,pid,line):
-        print line
         obj = json.loads(line)
         text = obj['text']
         clean = clean(text)
@@ -731,5 +729,3 @@ class MRClean(MRJob):
 
 if __name__ == "__main__":
     MRClean.run()
-        
-        
