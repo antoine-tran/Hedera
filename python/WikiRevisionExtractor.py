@@ -719,8 +719,8 @@ class MRClean(MRJob):
     def mapper(self,pid,line):
         obj = json.loads(line)
         text = obj['text']
-        clean = clean(text)
-        obj['text'] = clean
+        cleantext = clean(text)
+        obj['text'] = cleantext
         yield None,json.dumps(obj)
 
     def reducer(self,pid,lines):
