@@ -717,7 +717,8 @@ class MRClean(MRJob):
     OUTPUT_PROTOCOL = RawValueProtocol
 
     def mapper(self,pid,line):
-        global keepLinks = True
+        global keepLinks
+        keepLinks = True
         obj = json.loads(line)
         text = obj['text']
         cleantext = clean(text)
