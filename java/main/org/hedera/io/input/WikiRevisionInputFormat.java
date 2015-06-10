@@ -44,7 +44,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.log4j.Logger;
-import org.hedera.io.RevisionSplits;
+import org.hedera.io.CustomSplits;
 import org.hedera.util.ByteMatcher;
 import org.hedera.util.SeekableInputStream;
 import org.joda.time.format.DateTimeFormatter;
@@ -172,7 +172,7 @@ extends FileInputFormat<KEYIN, VALUEIN> {
 		String mapFile = conf.get(SPLIT_MAPFILE_LOC);
 		MapFile.Reader reader = null;
 		Text key = null;
-		RevisionSplits val = new RevisionSplits();
+		CustomSplits val = new CustomSplits();
 		try {
 			if (mapFile != null) {
 				reader = new MapFile.Reader(new Path(mapFile + "/part-r-00000"), 

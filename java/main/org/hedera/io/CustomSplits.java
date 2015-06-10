@@ -12,8 +12,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-/** represents a list of file splits for one single revision dump file */
-public class RevisionSplits implements Writable {
+/** represents a list of file splits for one single dump file that corresponds to a continuous set of blocks */
+public class CustomSplits implements Writable {
 
 	// path to the file in HDFS
 	private String filePath;
@@ -24,7 +24,7 @@ public class RevisionSplits implements Writable {
 	private LongArrayList lengths;
 	private List<String[]> hosts;
 	
-	public RevisionSplits() {
+	public CustomSplits() {
 		starts = new LongArrayList();
 		lengths = new LongArrayList();
 		hosts = new ArrayList<>();

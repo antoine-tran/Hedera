@@ -35,7 +35,7 @@ import org.apache.hadoop.mapreduce.lib.output.MapFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
-import org.hedera.io.RevisionSplits;
+import org.hedera.io.CustomSplits;
 import org.hedera.io.input.FileNullInputFormat;
 import org.hedera.util.ByteMatcher;
 import org.hedera.util.SeekableInputStream;
@@ -81,10 +81,10 @@ public class IndexSplits extends JobConfig implements Tool {
 	// as inherited from Yusuke Matsubara's StreamWikiDumpInputFormat getSplits()
 	// method
 	private static final class MyMapper extends Mapper<Text, NullWritable,
-	Text, RevisionSplits> {
+	Text, CustomSplits> {
 
 		private final Text keyOut = new Text();
-		private final RevisionSplits valOut = new RevisionSplits();
+		private final CustomSplits valOut = new CustomSplits();
 		private CompressionCodecFactory compressionCodecs = null;
 		private int splitSize;
 
@@ -314,9 +314,9 @@ public class IndexSplits extends JobConfig implements Tool {
 
 		// set mapreduce classes
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(RevisionSplits.class);
+		job.setMapOutputValueClass(CustomSplits.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(RevisionSplits.class);
+		job.setOutputValueClass(CustomSplits.class);
 		job.setOutputFormatClass(MapFileOutputFormat.class);
 		job.setMapperClass(MyMapper.class);
 		job.setReducerClass(Reducer.class);
