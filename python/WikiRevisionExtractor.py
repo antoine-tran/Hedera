@@ -345,7 +345,8 @@ def dropSpans(matches, text):
 # Can be nested [[File:..|..[[..]]..|..]], [[Category:...]], etc.
 # We first expand inner ones, than remove enclosing ones.
 #
-wikiLink = re.compile(r'\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
+# wikiLink = re.compile(r'\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
+wikiLink = re.compile('\[\[([^[]*?)(?:\|([^[]*?))?\]\](\w*)')
 
 parametrizedLink = re.compile(r'\[\[.*?\]\]')
 
@@ -695,6 +696,7 @@ def main():
     process_data(sys.stdin, output_splitter)
     output_splitter.close()
 
+
 from mrjob.job import MRJob
 from mrjob.protocol import RawProtocol
 from mrjob.protocol import RawValueProtocol
@@ -711,22 +713,21 @@ os.environ['HADOOP_MAPRED_HOME']='/opt/cloudera/parcels/CDH/lib/hadoop-0.20-mapr
 
 class MRClean(MRJob):
 
-    INPUT_PROTOCOL = RawProtocol
     INTERNAL_PROTOCOL = RawProtocol
     OUTPUT_PROTOCOL = RawValueProtocol
 
     def mapper(self,pid,line):
+        global keepLinks
+        keepLinks = True
         obj = json.loads(line)
         text = obj['text']
-        clean = clean(text)
-        obj['text'] = clean
-        yield None,line
+        cleantext = clean(text)
+        obj['text'] = cleantext
+        yield None,json.dumps(obj)
 
-    def reducer(self,pid,lines):
+    """def reducer(self,pid,lines):
         for line in lines:
-            yield pid,line
+            yield None,line"""
 
 if __name__ == "__main__":
     MRClean.run()
-        
-        
