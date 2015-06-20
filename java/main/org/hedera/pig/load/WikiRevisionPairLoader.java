@@ -129,7 +129,7 @@ public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 	}
 
 	@Override
-	public ResourceSchema getSchema(String arg0, Job arg1) throws IOException {
+	public ResourceSchema getSchema(String loc, Job job) throws IOException {
 		ResourceSchema s = schema;
 		if (s == null) {
 			synchronized (this) {
@@ -143,7 +143,7 @@ public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 	}
 
 	@Override
-	public ResourceStatistics getStatistics(String arg0, Job arg1)
+	public ResourceStatistics getStatistics(String loc, Job job)
 			throws IOException {
 		return null;
 	}
@@ -153,6 +153,5 @@ public class WikiRevisionPairLoader extends LoadFunc implements LoadMetadata {
 	}
 	
 	protected void defineSchema() throws FrontendException {
-		// TODO: define schema here
 	}
 }
