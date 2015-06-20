@@ -29,8 +29,7 @@ SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 -- %DECLARE INPUT 'enwiki-latest-pages-meta-history*.xml*';
 
 SET org.hedera.input.onlyarticle true;
-wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.WikiRevisionLoader AS (page_id:long, page_title:chararray, page_namespace:int, rev_id:int, parent_id:int, timestamp:long, user:chararray,
-                                                                                user_id:long, comment:chararray, text:chararray);
+wiki = LOAD '$BASEDIR/$INPUT' USING org.hedera.pig.load.WikiRevisionLoader AS (page_id:long, page_title:chararray, page_namespace:int, rev_id:int, parent_id:int, timestamp:long, user:chararray,user_id:long, cuuomment:chararray, text:chararray);
 --sample_wiki = LIMIT wiki 3;
 --dump sample_wiki;
 --STORE wiki INTO '$OUTPUT';
