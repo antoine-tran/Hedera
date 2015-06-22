@@ -141,7 +141,7 @@ public class Json2Anchor extends JobConfig implements Tool {
 			if (anchor == null) {
 				anchor = text;
 			}
-			links.add(new Link(anchor, text));
+			links.add(new Link(anchor, text, start+2));
 
 			start = end + 1;
 		}
@@ -150,12 +150,27 @@ public class Json2Anchor extends JobConfig implements Tool {
 	}
 
 	public static class Link {
+		private int offset;
 		private String anchor;
 		private String target;
 
 		private Link(String anchor, String target) {
 			this.anchor = anchor;
 			this.target = target;
+		}
+
+		private Link(String anchor, String target, int offset) {
+			this.anchor = anchor;
+			this.target = target;
+			this.offset = offset;
+		}
+
+		public void setOffset(int offset) {
+			this.offset = offset;
+		}
+
+		public int getOffset() {
+			return offset;
 		}
 
 		public String getAnchorText() {
