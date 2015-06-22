@@ -70,6 +70,8 @@ public class Json2Anchor extends JobConfig implements Tool {
 				sb.append(l.getTarget());
 				sb.append('\t');
 				sb.append(l.getAnchorText());
+				sb.append('\t');
+				sb.append(l.getOffset());
 				valOut.set(sb.toString());
 				context.write(keyOut,valOut);
 				sb.delete(offset, sb.length());
