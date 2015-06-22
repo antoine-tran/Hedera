@@ -31,7 +31,7 @@ public class CountAnchor extends JobConfig implements Tool {
                 throws IOException, InterruptedException {
             String line = value.toString();
             String[] cols = line.split("\t");
-            KEY_OUT.set(cols[4]);
+            KEY_OUT.set(cols[cols.length - 1]);
             context.write(KEY_OUT,VAL_OUT);
         }
     }
