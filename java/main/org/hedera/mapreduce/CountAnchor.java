@@ -30,9 +30,10 @@ public class CountAnchor extends JobConfig implements Tool {
         protected void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
             String line = value.toString();
-            String[] cols = line.split("\t");
-            KEY_OUT.set(cols[cols.length - 1]);
-            context.write(KEY_OUT,VAL_OUT);
+            int i = line.lastIndexOf('\t');
+            String anchor = line.substring(i+1);
+            KEY_OUT.set(anchor);
+            context.write(KEY_OUT, VAL_OUT);
         }
     }
 
