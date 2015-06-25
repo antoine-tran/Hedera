@@ -104,7 +104,7 @@ public class MaxTimestamp extends JobConfig implements Tool {
 
     public static void main(String[] args) {
         try {
-            ToolRunner.run(new CountAnchor(), args);
+            ToolRunner.run(new MaxTimestamp(), args);
         } catch (Exception e) {
             e.printStackTrace();
         }
