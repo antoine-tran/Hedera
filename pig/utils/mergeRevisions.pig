@@ -13,7 +13,7 @@ REGISTER '$LIBDIR/elephant-bird-hadoop-compat-4.1.jar';
 REGISTER '$LIBDIR/hedera-0.1-SNAPSHOT.jar'
 
 set default_parallel 10;
-set job.name "Merge revisions to make Philipp happy";
+set job.name 'Merge revisions to make Philipp happy';
 
 wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
