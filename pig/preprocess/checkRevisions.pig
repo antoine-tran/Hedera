@@ -22,6 +22,10 @@ REGISTER '$LIBDIR/ahocorasick-0.2.2.jar'
 REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
 REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 REGISTER '$LIBDIR/piggybank-0.12.1.jar'
+REGISTER '$LIBDIR/elephant-bird-core-4.6.jar';
+REGISTER '$LIBDIR/elephant-bird-pig-4.6.jar';
+REGISTER '$LIBDIR/elephant-bird-hadoop-compat-4.6.jar';
+
 SET default_parallel 1
 SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
