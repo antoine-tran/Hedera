@@ -28,9 +28,9 @@ REGISTER '$LIBDIR/json-simple-1.1.1.jar'
 SET default_parallel 10;
 SET job.name 'Merge revisions to make Philipp happy';
 
-wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad') AS ({page_id:long,page_title:chararray,page_namespace:int,rev_id:long,parent_id:long,timestamp:long,user:chararray,user_id:long,comment:chararray,text:chararray});
+wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad'); -- AS ({page_id:long,page_title:chararray,page_namespace:int,rev_id:long,parent_id:long,timestamp:long,user:chararray,user_id:long,comment:chararray,text:chararray});
 
 DESCRIBE wiki;
 
-STORE wiki INTO '$OUTPUT' USING JsonStorage();
+-- STORE wiki INTO '$OUTPUT' USING JsonStorage();
 
