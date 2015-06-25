@@ -30,9 +30,11 @@ SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
 SET job.name 'Merge revisions to make Philipp happy';
 
-wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad') AS (m:map[{(page_id:long,page_title:chararray,page_namespace:int,rev_id:long,parent_id:long,timestamp:long,user:chararray,user_id:long,comment:chararray,text:chararray)}]);
+-- wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad') AS (m:map[{(page_id:long,page_title:chararray,page_namespace:int,rev_id:long,parent_id:long,timestamp:long,user:chararray,user_id:long,comment:chararray,text:chararray)}]);
+
+wiki = LOAD '$BASEDIR/$INPUT' AS (line:chararray);
 
 DESCRIBE wiki;
 
-STORE wiki INTO '$OUTPUT' USING JsonStorage();
+STORE wiki INTO '$OUTPUT';
 
