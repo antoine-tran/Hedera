@@ -95,7 +95,7 @@ public class MaxTimestamp extends JobConfig implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         Job job = setup(TextInputFormat.class, NullOutputFormat.class,
-                Text.class, LongWritable.class,
+                LongWritable.class, LongWritable.class,
                 NullWritable.class, NullWritable.class,
                 MyMapper.class, MyReducer.class,MyCombiner.class, args);
         job.waitForCompletion(true);
