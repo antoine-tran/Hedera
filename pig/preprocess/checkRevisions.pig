@@ -25,6 +25,7 @@ REGISTER '$LIBDIR/piggybank-0.12.1.jar'
 REGISTER '$LIBDIR/elephant-bird-core-4.6.jar';
 REGISTER '$LIBDIR/elephant-bird-pig-4.6.jar';
 REGISTER '$LIBDIR/elephant-bird-hadoop-compat-4.6.jar';
+REGISTER '$LIBDIR/json-simple-1.1.1.jar';
 
 SET default_parallel 1
 SET mapred.output.compress 'true';
