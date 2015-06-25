@@ -17,9 +17,7 @@ set job.name 'Merge revisions to make Philipp happy';
 
 wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
-DESC wiki;
-
-
+DESCRIBE wiki;
 
 STORE wiki INTO '$OUTPUT' USING JsonStorage();
 
