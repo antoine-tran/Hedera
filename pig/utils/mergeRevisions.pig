@@ -23,6 +23,7 @@ REGISTER '$LIBDIR/commons-cli-1.2.jar'
 REGISTER '$LIBDIR/ahocorasick-0.2.2.jar'
 REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
 REGISTER '$LIBDIR/fastutil-6.5.15.jar'
+REGISTER '$LIBDIR/json-simple-1.1.1.jar'
 
 SET default_parallel 10;
 SET job.name 'Merge revisions to make Philipp happy';
