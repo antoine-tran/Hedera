@@ -76,7 +76,7 @@ extends FileInputFormat<KEYIN, VALUEIN> {
 	public static final String SKIP_REDIRECT = "org.hedera.input.noredirects"; 
 
 	public static final String REVISION_BEGIN_TIME = "org.hedera.input.begintime";
-	public static final String REVISION_END_TIME = "org.hedera.input.begintime";
+	public static final String REVISION_END_TIME = "org.hedera.input.endtime";
 	
 	// Seed entity id for extraction
 	public static final String SEED_FILE = "org.hedera.seed.path";
