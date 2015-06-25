@@ -44,4 +44,4 @@ wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader
 gwiki = GROUP wiki ALL;
 wiki_max = FOREACH gwiki GENERATE MAX(wiki.m#'timestamp');
 
-DUMP wiki_max;
+STORE wiki_max INTO '$OUTPUT' USING JsonStorage();
