@@ -32,5 +32,5 @@ wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader
 
 DESCRIBE wiki;
 
--- STORE wiki INTO '$OUTPUT' USING JsonStorage();
+STORE wiki INTO '$OUTPUT' USING JsonStorage();
 
