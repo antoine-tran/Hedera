@@ -10,10 +10,22 @@
 REGISTER '$LIBDIR/elephant-bird-core-4.1.jar';
 REGISTER '$LIBDIR/elephant-bird-pig-4.1.jar';
 REGISTER '$LIBDIR/elephant-bird-hadoop-compat-4.1.jar';
+REGISTER '$LIBDIR/guava-15.0.jar'
+REGISTER '$LIBDIR/javax.inject-1.jar'
+REGISTER '$LIBDIR/bliki-core-3.0.19.jar'
+REGISTER '$LIBDIR/cloud9-1.5.0.jar'
+REGISTER '$LIBDIR/diffutils-1.2.1.jar'
+REGISTER '$LIBDIR/stanford-corenlp-1.3.4.jar'
 REGISTER '$LIBDIR/hedera-0.1-SNAPSHOT.jar'
+REGISTER '$LIBDIR/jsoup-1.7.3.jar'
+REGISTER '$LIBDIR/joda-time-2.3.jar'
+REGISTER '$LIBDIR/commons-cli-1.2.jar'
+REGISTER '$LIBDIR/ahocorasick-0.2.2.jar'
+REGISTER '$LIBDIR/dsiutils-2.0.15.jar'
+REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 
-set default_parallel 10;
-set job.name 'Merge revisions to make Philipp happy';
+SET default_parallel 10;
+SET job.name 'Merge revisions to make Philipp happy';
 
 wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
