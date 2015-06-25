@@ -42,6 +42,7 @@ wiki = LOAD '$BASEDIR/$INPUT' USING com.twitter.elephantbird.pig.load.JsonLoader
 
 -- Get the maximum timestamp from old revisions dataset
 gwiki = GROUP wiki ALL;
-wiki_max = FOREACH gwiki GENERATE MAX(wiki.m#'timestamp');
+wiki_max = FOREACH gwiki GENERATE MAX(wiki.$0.map#'timestamp');
 
-STORE wiki_max INTO '$OUTPUT' USING JsonStorage();
+-- STORE wiki_max INTO '$OUTPUT' USING JsonStorage();
+DUMP wiki_max;
