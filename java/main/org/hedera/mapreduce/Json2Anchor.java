@@ -52,7 +52,8 @@ public class Json2Anchor extends JobConfig implements Tool {
 		}
 
 		// Scala: Mutability sucks. Me: Scala sucks !!
-		private void extractAnchor(long pageId, long revisionId, String content, Context context) 
+		private void extractAnchor(long pageId, long revisionId,
+								   String content, Context context)
 				throws IOException, InterruptedException {
 
 			// clean the output
@@ -72,6 +73,10 @@ public class Json2Anchor extends JobConfig implements Tool {
 				sb.append(l.getAnchorText());
 				sb.append('\t');
 				sb.append(l.getOffset());
+				sb.append('\t');
+				sb.append(l.getPreContext());
+				sb.append('\t');
+				sb.append(l.getPostContext());
 				valOut.set(sb.toString());
 				context.write(keyOut,valOut);
 				sb.delete(offset, sb.length());
@@ -109,6 +114,9 @@ public class Json2Anchor extends JobConfig implements Tool {
 			}
 
 			String text = page.substring(start + 2, end);
+			String preContext = page.substring(Math.max(start-20, 0), start);
+			String postContext = page.substring(Math.min(end+2,page.length()),
+					Math.min(end+22,page.length()));
 			String anchor = null;
 
 			// skip empty links
@@ -143,7 +151,10 @@ public class Json2Anchor extends JobConfig implements Tool {
 			if (anchor == null) {
 				anchor = text;
 			}
-			links.add(new Link(anchor, text, start+2));
+			Link link = new Link(anchor, text, start+2);
+			link.setPreContext(preContext);
+			link.setPostContext(postContext);
+			links.add(link);
 
 			start = end + 1;
 		}
@@ -155,6 +166,8 @@ public class Json2Anchor extends JobConfig implements Tool {
 		private int offset;
 		private String anchor;
 		private String target;
+		private String preContext;
+		private String postContext;
 
 		private Link(String anchor, String target) {
 			this.anchor = anchor;
@@ -185,6 +198,22 @@ public class Json2Anchor extends JobConfig implements Tool {
 
 		public String toString() {
 			return String.format("[target: %s, anchor: %s]", target, anchor);
+		}
+
+		public void setPreContext(String p) {
+			this.preContext = p;
+		}
+
+		public void setPostContext(String c) {
+			this.postContext = c;
+		}
+
+		public String getPreContext() {
+			return preContext;
+		}
+
+		public String getPostContext() {
+			return postContext;
 		}
 	}
 	
