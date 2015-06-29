@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2014 Anh Tuan Tran - ttran@L3S.de
+/** Copyright (c) 2014 Anh Tuan Tran - ttran@L3S.de
  * Pig scripts to extract various information from Wikipedia revision history. Project details: http://antoine-tran.github.io/hedera
  *
  *=================================================
@@ -24,6 +23,7 @@ REGISTER '$LIBDIR/fastutil-6.5.15.jar'
 SET default_parallel 999
 SET mapred.output.compress 'true';
 SET mapred.output.compression.codec 'org.apache.hadoop.io.compress.BZip2Codec';
+-- SET org.hedera.input.begintime 1399061411000
 
 -- load Wikipedia compressed XML dump
 -- %DECLARE INPUT 'enwiki-latest-pages-meta-history*.xml*';
