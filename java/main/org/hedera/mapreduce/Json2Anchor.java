@@ -11,7 +11,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -114,9 +113,9 @@ public class Json2Anchor extends JobConfig implements Tool {
 			}
 
 			String text = page.substring(start + 2, end);
-			String preContext = page.substring(Math.max(start-20, 0), start);
+			String preContext = page.substring(Math.max(start-20, 0), start).replace('\n', '.');
 			String postContext = page.substring(Math.min(end+2,page.length()),
-					Math.min(end+22,page.length()));
+					Math.min(end+22,page.length())).replace('\n', '.');
 			String anchor = null;
 
 			// skip empty links
