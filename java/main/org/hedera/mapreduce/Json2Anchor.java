@@ -113,9 +113,9 @@ public class Json2Anchor extends JobConfig implements Tool {
 			}
 
 			String text = page.substring(start + 2, end);
-			String preContext = page.substring(Math.max(start-20, 0), start).replace('\n', '.').replace('\t',' ');
+			String preContext = page.substring(Math.max(start-20, 0), start).replace('\n', ' ').replace('\t',' ');
 			String postContext = page.substring(Math.min(end+2,page.length()),
-					Math.min(end+22,page.length())).replace('\n', '.').replace('\t',' ');
+					Math.min(end+22,page.length())).replace('\n', ' ').replace('\t',' ');
 			String anchor = null;
 
 			// skip empty links
