@@ -85,7 +85,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 	}
 
 	// Encode anchors into freebase-ready format
-	private static final class GroupAnchorMapper extends Mapper<LongWritable, Text,
+	private static final class GroupTitleMapper extends Mapper<LongWritable, Text,
 			Text, Text> {
 
 		private final Text KEY = new Text();
@@ -95,12 +95,9 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			String line = value.toString();
 			int i = line.lastIndexOf('\t');
-			int j = line.indexOf('\t');
-			j = line.indexOf('\t',j+1);
-			j = line.indexOf('\t',j+1);
 			// String encoded = encodeFreebase(line.substring(j + 1, i));
 			try {
-				KEY.set(line.substring(j + 1, i));
+				KEY.set(line.substring(i+1));
 				context.write(KEY, value);
 			}
 			catch (Exception e) {
@@ -126,12 +123,14 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 	}
 
 	@Override
+	// Step 1: Encode titles into Freebase format, has been written in Java
+	// Step 2: Join encoded titles with Freebase label dictionaries to convert
+	// the graphs into freebaseID
 	public int run(String[] args) throws Exception {
 		Job job = setup(TextInputFormat.class, TextOutputFormat.class,
 				Text.class, Text.class, Text.class, Text.class,
-				GroupAnchorMapper.class, EncodeReducer.class, args);
+				GroupTitleMapper.class, EncodeReducer.class, args);
 		job.waitForCompletion(true);
 		return 0;
 	}
-
 }
