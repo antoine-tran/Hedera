@@ -57,8 +57,8 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 	}
 
 	private static void encode(char c, CharArrayList lst) {
-		if (!isAlphanumeric(c) && !in(c,"()_-,.")) {
-			String hex = Integer.toHexString(c);
+		if (!isAlphanumeric(c) && !in(c,"_-")) {
+			String hex = Integer.toHexString(c).toUpperCase();
 			int n = hex.length();
 			lst.add('$');
 			while (n < 4) {
@@ -81,7 +81,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 		for (int i = 0; i < inp.length(); i++) {
 			encode(inp.charAt(i), buffer);
 		}
-		return buffer.toString();
+		return new String(buffer.toCharArray());
 	}
 
 	// Encode anchors into freebase-ready format
@@ -97,11 +97,10 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 			int i = line.lastIndexOf('\t');
 			// String encoded = encodeFreebase(line.substring(j + 1, i));
 			try {
-				KEY.set(line.substring(i+1));
+				KEY.set(line.substring(i+1).trim().replace(' ','_'));
 				context.write(KEY, value);
 			}
 			catch (Exception e) {
-
 			}
 		}
 	}
