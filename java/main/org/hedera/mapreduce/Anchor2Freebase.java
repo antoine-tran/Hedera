@@ -100,12 +100,13 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 			int l = line.indexOf('\t',k+1);
 
 			// String encoded = encodeFreebase(line.substring(j + 1, i));
-			// try {
+			try {
 				KEY.set(line.substring(k + 1, l).replace(' ', '_'));
 				context.write(KEY, value);
-			//}
-			//catch (Exception e) {
-			//}
+			}
+			catch (Exception e) {
+				System.out.println(line);
+			}
 		}
 	}
 
