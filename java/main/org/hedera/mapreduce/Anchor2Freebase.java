@@ -120,7 +120,9 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			String anchor = key.toString();
 			String encoded = encodeFreebase(anchor);
-			KEY.set(encoded);
+			if (encoded != null && encoded.length() > 2)
+				KEY.set(encoded);
+			else KEY.set("WTF");
 			for (Text v : values)
 				context.write(KEY,v);
 		}
