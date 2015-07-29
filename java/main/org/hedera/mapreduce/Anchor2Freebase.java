@@ -5,7 +5,6 @@ package org.hedera.mapreduce;
 
 import java.io.IOException;
 
-import it.unimi.dsi.fastutil.chars.CharArrayList;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -18,6 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import tuan.collections.CharArrayList;
 import tuan.hadoop.conf.JobConfig;
 
 /**
@@ -81,7 +81,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 		for (int i = 0; i < inp.length(); i++) {
 			encode(inp.charAt(i), buffer);
 		}
-		return new String(buffer.toCharArray());
+		return new String(buffer.toArray());
 	}
 
 	// Encode anchors into freebase-ready format
@@ -96,13 +96,13 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			String line = value.toString();
 			int i = line.indexOf('\t');
-			int j = line.indexOf('\t',i+1);
-			int k = line.indexOf('\t',j+1);
+			int j = line.indexOf('\t', i + 1);
+			int k = line.indexOf('\t', j + 1);
 			int l = line.indexOf('\t',k+1);
 
 			// String encoded = encodeFreebase(line.substring(j + 1, i));
 			try {
-				KEY.set(line.substring(k+1,l).replace(' ','_'));
+				KEY.set(line.substring(k + 1, l).replace(' ', '_'));
 				context.write(KEY, value);
 			}
 			catch (Exception e) {
