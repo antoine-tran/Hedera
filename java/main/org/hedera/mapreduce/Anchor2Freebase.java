@@ -85,7 +85,8 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 	}
 
 	// Encode anchors into freebase-ready format
-	private static final class GroupTitleMapper extends Mapper<LongWritable, Text,
+	// Version for incremented anchor data set
+	private static final class GroupTitleMapperNew extends Mapper<LongWritable, Text,
 			Text, Text> {
 
 		private final Text KEY = new Text();
@@ -94,10 +95,14 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 		protected void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
 			String line = value.toString();
-			int i = line.lastIndexOf('\t');
+			int i = line.indexOf('\t');
+			int j = line.indexOf('\t',i+1);
+			int k = line.indexOf('\t',j+1);
+			int l = line.indexOf('\t',k+1);
+
 			// String encoded = encodeFreebase(line.substring(j + 1, i));
 			try {
-				KEY.set(line.substring(i+1).trim().replace(' ','_'));
+				KEY.set(line.substring(k+1,l).replace(' ','_'));
 				context.write(KEY, value);
 			}
 			catch (Exception e) {
@@ -128,7 +133,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 	public int run(String[] args) throws Exception {
 		Job job = setup(TextInputFormat.class, TextOutputFormat.class,
 				Text.class, Text.class, Text.class, Text.class,
-				GroupTitleMapper.class, EncodeReducer.class, args);
+				GroupTitleMapperNew.class, EncodeReducer.class, args);
 		job.waitForCompletion(true);
 		return 0;
 	}
