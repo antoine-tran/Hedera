@@ -99,7 +99,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 			int k = line.indexOf('\t', j + 1);
 			int l = line.indexOf('\t',k+1);
 
-			String encoded = encodeFreebase(line.substring(j + 1, i));
+			// String encoded = encodeFreebase(line.substring(k + 1, l).trim().replace(' ', '_'));
 			try {
 				KEY.set(line.substring(k + 1, l).trim().replace(' ', '_'));
 				context.write(KEY, value);
@@ -119,11 +119,12 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 		protected void reduce(Text key, Iterable<Text> values, Context context)
 				throws IOException, InterruptedException {
 			String anchor = key.toString();
-			String encoded = encodeFreebase(anchor);
-			/*if (encoded != null && encoded.length() > 2)
-				KEY.set(encoded);
-			else KEY.set("WTF");*/
-			KEY.set(anchor);
+			
+			if (anchor != null && anchor.length() > 2) {
+				String encoded = encodeFreebase(anchor);	
+				KEY.set(encoded);			
+			}
+			else KEY.set("WTF");
 			for (Text v : values)
 				context.write(KEY,v);
 		}
