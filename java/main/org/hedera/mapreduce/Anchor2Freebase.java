@@ -49,7 +49,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 		return (c >= a && c <= b);
 	}
 
-	/** Tells whether a char is alphanumeric in the sense of URIs*/
+	/** Tells whether a char is alphanumeric in the sense of URIs */
 	private static boolean isAlphanumeric(char c) {
 		return (in(c, 'a', 'z')
 				|| in(c, 'A', 'Z') || in(c, '0', '9'));
@@ -97,15 +97,18 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 			int i = line.indexOf('\t');
 			int j = line.indexOf('\t', i + 1);
 			int k = line.indexOf('\t', j + 1);
-			int l = line.indexOf('\t',k+1);
+			int l = line.indexOf('\t', k + 1);
 
 			// String encoded = encodeFreebase(line.substring(k + 1, l).trim().replace(' ', '_'));
 			try {
-				KEY.set(line.substring(k + 1, l).trim().replace(' ', '_'));
-				context.write(KEY, value);
+				String t = line.substring(k + 1, l).trim();
+				if (t.length() > 0) {
+					KEY.set(t.replace(' ', '_'));
+					context.write(KEY, value);	
+				}
 			}
 			catch (Exception e) {
-				System.out.println(line);
+				// System.out.println(line);
 			}
 		}
 	}
