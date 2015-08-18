@@ -238,9 +238,7 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 	      System.err.println("Error parsing command line: " + exp.getMessage());
 	      return -1;
 	    }
-	    
-	    File.pathSp
-
+	   
 	    if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION) ||
 	        !cmdline.hasOption(REDUCENO)) {
 	      HelpFormatter formatter = new HelpFormatter();

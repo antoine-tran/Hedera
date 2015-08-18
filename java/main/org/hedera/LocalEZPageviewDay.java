@@ -19,7 +19,7 @@ import tuan.io.FileUtility;
 
 /** Handle the pagecounts-ez dumps in local mode */
 public class LocalEZPageviewDay {
-
+	
 	private static final DateTimeFormatter dtfMonth = DateTimeFormat
 			.forPattern("YYYY-mm");
 	private static final DateTimeFormatter dtfMonthPrinter = DateTimeFormat
