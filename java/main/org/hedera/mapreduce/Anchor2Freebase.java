@@ -123,7 +123,7 @@ public class Anchor2Freebase extends JobConfig implements Tool {
 				throws IOException, InterruptedException {
 			String anchor = key.toString();
 			
-			if (anchor != null && anchor.length() > 2) {
+			if (anchor != null && anchor.length() >= 2) {
 				String encoded = encodeFreebase(anchor);	
 				KEY.set(encoded);			
 			}

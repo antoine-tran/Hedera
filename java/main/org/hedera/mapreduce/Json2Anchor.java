@@ -215,7 +215,7 @@ public class Json2Anchor extends JobConfig implements Tool {
 			return postContext;
 		}
 	}
-	
+		
 	@Override
 	public int run(String[] args) throws Exception {
 		Job job = setup(TextInputFormat.class, TextOutputFormat.class, LongWritable.class,

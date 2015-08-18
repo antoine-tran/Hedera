@@ -238,6 +238,8 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 	      System.err.println("Error parsing command line: " + exp.getMessage());
 	      return -1;
 	    }
+	    
+	    File.pathSp
 
 	    if (!cmdline.hasOption(INPUT_OPTION) || !cmdline.hasOption(OUTPUT_OPTION) ||
 	        !cmdline.hasOption(REDUCENO)) {
@@ -246,7 +248,6 @@ public class ExtractTemporalAnchorText extends JobConfig implements Tool {
 	      ToolRunner.printGenericCommandUsage(System.out);
 	      return -1;
 	    }
-		
 		
 		String inputDir = cmdline.getOptionValue(INPUT_OPTION);
 		String outputDir = cmdline.getOptionValue(OUTPUT_OPTION);
