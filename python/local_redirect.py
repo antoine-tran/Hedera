@@ -9,15 +9,25 @@ import sys,codecs
 from collections import defaultdict
 
 # Input 1: Dictionary, input 2: redirect
-
-# Step 1: Build the chain of redirects
 def redirect_chain(simpleredirectfile,outfile):
-    rleft = 0
-    redirbysrc = defaultdict(str)
-    redirbydest = defaultdict(int)
-    with codecs.open()
+    t2id = defaultdict(int)
+    with codecs.open(simpleredirectfile,'r','utf-8') as reader:
+        for line in reader:
+            i = line.rfind('\t')
+            cs = int(line.rstrip()[i+1:])
+            if cs == -1:
+                j = line.find('\t')
+                t2id[line[j+1:i]] = int(line[:j])
+    with codecs.open(simpleredirectfile,'r','utf-8') as reader:
+        o = codecs.open(outfile,'w','utf-8')
+        for line in reader:
+            i = line.rfind('\t')
+            cs = int(line.rstrip()[i+1:])
+            if cs == 1:
+                j = line.find('\t')
+                if line[j+1:i] in t2id:
+                    o.write('%d\t%d\n' % (int(line[:j]),t2id[line[j+1:i]]))
+        o.close()
 
-with codecs.open(sys.argv[1],'r','utf-8') as reader:
-    for line in reader:
-        i = line.find('\t')
-        
+if __name__ == '__main__':
+    redirect_chain(sys.argv[1],sys.argv[2])
