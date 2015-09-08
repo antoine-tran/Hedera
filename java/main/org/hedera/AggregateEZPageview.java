@@ -27,8 +27,9 @@ public class AggregateEZPageview {
 	 * @throws IOException */
 	public static void main(String[] args) throws IOException {
 		
-		DateTime month = dtfMonth.parseDateTime(args[2]);
-		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
+		// DateTime month = dtfMonth.parseDateTime(args[2]);
+		// int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
+		int dayOfMonth = Integer.parseInt(args[2]);
 
 		int[] value = new int[dayOfMonth + 1];
 		
