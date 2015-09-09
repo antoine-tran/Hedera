@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.net.URLDecoder;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.hedera.util.WikipediaTitleConstants;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -70,7 +71,7 @@ public class LocalEZPageviewDay {
 			if ((line.charAt(0) != lang1.charAt(0) && line.charAt(0) != lang2.charAt(0)) 
 					|| (line.charAt(1) != lang1.charAt(1) && line.charAt(1) != lang2.charAt(1)) 
 					|| line.charAt(2) != '.' 
-					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) {
+					|| (line.charAt(3) != 'z' && line.charAt(3) != 'Z')) {
 				continue;
 			}
 			int i = line.indexOf(' ');
@@ -91,39 +92,7 @@ public class LocalEZPageviewDay {
 			if (title.length() > 50) continue;
 
 			// heuristics:
-			if (title.startsWith("Category:") || title.startsWith("File:")
-					|| title.startsWith("Wikipedia:")
-					|| title.startsWith("Wikipedia/")
-					|| title.startsWith("Wikipedia#")
-					|| title.startsWith("User:")
-					|| title.startsWith("Special:")
-					|| title.startsWith("Portal:")
-					|| title.startsWith("Portal_talk:")
-					|| title.startsWith("Talk:") || title.contains("/Talk:")
-					|| title.startsWith("Help:")
-					|| title.startsWith("Template:")
-					|| title.startsWith("/Template:")					
-					|| title.startsWith("/Template_talk:")
-					|| title.startsWith("Translate:")
-					|| title.startsWith("/Wikipedia_talk:")
-					|| title.startsWith("http://")
-					|| title.startsWith("https://")
-					|| title.startsWith("//upload")
-					|| title.startsWith("/File:") || title.endsWith(".html")
-					|| title.endsWith("HTML") || title.endsWith(".jpg")
-					|| title.endsWith(".txt") || title.endsWith(".TXT")
-					|| title.endsWith(".JPG") || title.endsWith(".gif")
-					|| title.endsWith(".GIF") || title.endsWith(".css")
-					|| title.endsWith(".CSS") || title.endsWith(".bmp")
-					|| title.endsWith(".php") || title.endsWith(".BMP")
-					|| title.endsWith(".svg") || title.endsWith(".SVG")
-					|| title.endsWith(".OGG") || title.endsWith(".ogg")
-					|| title.endsWith(".ogv") || title.endsWith(".webm")
-					||
-
-					// different language & projects
-					title.startsWith("hr:") || title.startsWith("hu:")
-					|| title.startsWith("simple:")) {
+			if (matchNonArticle(title, lang1)) {
 				continue;
 			}
 			int tmpIdx = 0;
@@ -224,6 +193,24 @@ public class LocalEZPageviewDay {
 		o.close();
 		is.close();		
 		fis.close();
+	}
+	
+	private static boolean matchNonArticle(String title, String lang) {
+		boolean matched = false;
+		if (lang.equalsIgnoreCase("en")) {
+			for (String t : WikipediaTitleConstants.ENWIKI_NON_ARTICLE_PREFIX) {
+				matched |= title.startsWith(t);
+			}				
+		}
+		else if (lang.equalsIgnoreCase("de")) {
+			for (String t : WikipediaTitleConstants.DEWIKI_NON_ARTICLE_PREFIX) {
+				matched |= title.startsWith(t);
+			}
+		}
+		for (String t : WikipediaTitleConstants.NON_ARTICLE_SUFFIX) {
+			matched |= title.endsWith(t);
+		}
+		return matched;
 	}
 
 	/** return the zero-based index of the day */
