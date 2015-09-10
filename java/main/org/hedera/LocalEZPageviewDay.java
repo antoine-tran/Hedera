@@ -28,8 +28,9 @@ public class LocalEZPageviewDay {
 
 	public static void main(String[] args) throws IOException {
 		
-		DateTime month = dtfMonth.parseDateTime(args[2]);
-		int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
+		DateTime month = dtfMonth.parseDateTime(args[3]);
+		// int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
+		int dayOfMonth = Integer.parseInt(args[2]);
 
 		ArrayListOfInts value = new ArrayListOfInts((33) * 3 / 2 + 2);
 		value.setSize(dayOfMonth + 2);

@@ -19,6 +19,8 @@ public class WikipediaTitleConstants {
 	};
 	
 	public static final String[] DEWIKI_NON_ARTICLE_PREFIX = {
-		"Datei:","Benutzer:","Portal:"
+		"Datei:","Benutzer:","Portal:","Kategorie:","Wikipedia:","Wikipedia/",
+		"Wikipedia#","Spezial:","Diskussion:","Vorlage:","Hilfe:","simple:","hr:","hu:",
+		"http://","https://","//upload",
 	};
 }
