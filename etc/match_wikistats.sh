@@ -12,8 +12,8 @@
 # The dictionary is for Wikipedia English (EN) version
 
 # Normalize the EZ page view
-sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewDay $1 $1.out $2 $3
-# sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewHour $1 $1.out $2 $3
+sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewDay $1 $2 $3 $1.out $4
+# sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewHour $1 $2 $3 $1.out $4
 
 # Sort by title
 LANG=en_EN sort -k1,1 $1.out > $1.sort
@@ -28,7 +28,7 @@ LANG=en_EN join $4 $1.aggr | awk '{for(i=2;i<=NF;i++)printf "%s", $i (i==NF?ORS:
 LANG=en_EN sort -k1,1 $1.ts > $1.sort
 
 # Aggregate the view counts
-sh $(pwd)/etc/run-local-jars.sh org.hedera.AggregateEZPageview $1.sort $1.ts $2 $3
+sh $(pwd)/etc/run-local-jars.sh org.hedera.AggregateEZPageview $1.sort $1.ts $3 $4
 
 # Remove the temporary file
 rm -rf $1.out
