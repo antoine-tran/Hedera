@@ -28,7 +28,7 @@ public class LocalEZPageviewDay {
 
 	public static void main(String[] args) throws IOException {
 		
-		DateTime month = dtfMonth.parseDateTime(args[3]);
+		DateTime month = dtfMonth.parseDateTime(args[1]);
 		// int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
 		int dayOfMonth = Integer.parseInt(args[2]);
 
@@ -54,7 +54,7 @@ public class LocalEZPageviewDay {
 
 		long begin = System.currentTimeMillis();
 
-		FileWriter writer = new FileWriter(args[1]);
+		FileWriter writer = new FileWriter(args[3]);
 		Writer o = new BufferedWriter(writer);
 
 		// Customize to other languages
