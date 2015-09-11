@@ -59,9 +59,9 @@ public class LocalEZPageviewDay {
 
 		// Customize to other languages
 		String lang1 = "en", lang2 = "EN";
-		if (args.length > 3) {
-			lang1 = args[3];
-			lang2 = args[3].toUpperCase();
+		if (args.length > 4) {
+			lang1 = args[4];
+			lang2 = args[4].toUpperCase();
 		}
 		
 		for (String line : FileUtility.readLines(is,null)) {

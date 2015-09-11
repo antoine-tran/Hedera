@@ -30,7 +30,7 @@ public class LocalEZPageviewHour {
 		DateTime month = dtfMonth.parseDateTime(args[3]);
 		// int dayOfMonth = month.dayOfMonth(	).getMaximumValue();
 		int dayOfMonth = Integer.parseInt(args[2]);
-		
+
 		int hourOfMonth = dayOfMonth * 24;
 
 		ArrayListOfInts value = new ArrayListOfInts((33) * 3 / 2 + 2);
@@ -58,15 +58,22 @@ public class LocalEZPageviewHour {
 		FileWriter writer = new FileWriter(args[1]);
 		Writer o = new BufferedWriter(writer);
 
+		// Customize to other languages
+		String lang1 = "en", lang2 = "EN";
+		if (args.length > 4) {
+			lang1 = args[4];
+			lang2 = args[4].toUpperCase();
+		}
+
 		for (String line : FileUtility.readLines(is,null)) {
 			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
 			}*/
 			if (line.length() < 4) continue;
-			if ((line.charAt(0) != 'e' && line.charAt(0) != 'E') 
-					|| (line.charAt(1) != 'n' && line.charAt(0) != 'E') 
+			if ((line.charAt(0) != lang1.charAt(0) && line.charAt(0) != lang2.charAt(0)) 
+					|| (line.charAt(1) != lang1.charAt(1) && line.charAt(1) != lang2.charAt(1)) 
 					|| line.charAt(2) != '.' 
-					|| (line.charAt(3) != 'z' && line.charAt(0) != 'Z')) {
+					|| (line.charAt(3) != 'z' && line.charAt(3) != 'Z')) {
 				continue;
 			}
 			int i = line.indexOf(' ');
@@ -160,7 +167,7 @@ public class LocalEZPageviewHour {
 			} else if (title.startsWith("wiki/")) {
 				title = title.substring(5, title.length());
 			}
-			
+
 			title = title.trim();
 
 			if (title.isEmpty()) {
@@ -281,12 +288,12 @@ public class LocalEZPageviewHour {
 			if (chr >= '0' && chr <= '9') {
 				hourView = hourView * 10 + (chr - '0');
 			}
-			
+
 			// some hour count is missing
 			else if (chr == '?') {
 				// Do nothing, just move on
 			}
-			
+
 			else {
 				if (hourIdx >= 0) {
 					value.set(dayIdx*24 + 2 + hourIdx, hourView);
