@@ -6,7 +6,10 @@
 # Input 2 is the month of wiki stat in "YYYY-mm" format
 # input 3 is the id-title map file [ format: title TAB id ]
 
-# Example sh match_wikistats.sh pagecounts-2013-12-ge.bz2 2013-12 31 title2id.20140502
+# Example sh match_wikistats.sh pagecounts-2013-12-ge.bz2 2013-12 31 title2id.20140502 EN
+# (parse the pagecount of Dec 2013, which has 31 days, and convert into the time series 
+# key-ed by page id, using the dictionary of title-pageid stored in the file title2id.20140502. 
+# The dictionary is for Wikipedia English (EN) version
 
 # Normalize the EZ page view
 sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewDay $1 $1.out $2 $3
