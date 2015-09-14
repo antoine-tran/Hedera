@@ -69,12 +69,13 @@ public class LocalEZPageviewDay {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
 			}*/
 			if (line.length() < 4) continue;
+			System.out.println(line);
 			if ((line.charAt(0) != lang1.charAt(0) && line.charAt(0) != lang2.charAt(0)) 
 					|| (line.charAt(1) != lang1.charAt(1) && line.charAt(1) != lang2.charAt(1)) 
 					|| line.charAt(2) != '.' 
 					|| (line.charAt(3) != 'z' && line.charAt(3) != 'Z')) {
 				continue;
-			}
+			}			
 			int i = line.indexOf(' ');
 			int j = line.indexOf(' ', i+1);
 
