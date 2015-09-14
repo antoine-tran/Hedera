@@ -14,12 +14,14 @@ def aggr(infile,outfile,m):
 
     # We load everything into the memory
     ts = defaultdict(list)
+    print infile
     with codecs.open(infile,'r','utf-8') as reader:
         for line in reader:
             i = line.find(' ')
             ent = line[:i]
+            print ent
             if not ent in ts:
-                ts[e] = [0]*(m+1)
+                ts[ent] = [0]*(m+1)
             cnt = 0
 
             # skip month
@@ -27,7 +29,7 @@ def aggr(infile,outfile,m):
 
             while cnt < m+1:
                 j = line.find(' ',i+1)
-                ts[e][cnt] += int(line[i+1:j])
+                ts[ent][cnt] += int(line[i+1:j])
                 cnt += 1
                 i = j
 

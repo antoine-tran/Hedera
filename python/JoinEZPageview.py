@@ -21,7 +21,7 @@ def join_ts_dict(tsfile,dictfile,outfile):
             i = line.find(' ')
             ent = line[:i]
             if ent in t2id:
-                o.write(t2id[ent])
+                o.write(str(t2id[ent]))
                 o.write(line[i+1:])
         o.close()
 
