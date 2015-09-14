@@ -64,12 +64,14 @@ public class LocalEZPageviewDay {
 			lang2 = args[4].toUpperCase();
 		}
 		
+		System.out.println(lang1 + " " + lang2);
+		
 		for (String line : FileUtility.readLines(is,null)) {
 			/*if (++lineCnt % 1000000 == 0) {
 				System.out.println(System.currentTimeMillis() + ": processed " + lineCnt);
 			}*/
 			if (line.length() < 4) continue;
-			System.out.println(line);
+			// System.out.println(line);
 			if ((line.charAt(0) != lang1.charAt(0) && line.charAt(0) != lang2.charAt(0)) 
 					|| (line.charAt(1) != lang1.charAt(1) && line.charAt(1) != lang2.charAt(1)) 
 					|| line.charAt(2) != '.' 
