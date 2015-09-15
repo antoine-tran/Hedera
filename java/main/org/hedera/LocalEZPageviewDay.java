@@ -176,9 +176,12 @@ public class LocalEZPageviewDay {
 				}
 
 				// everything from idx+1 to nextIdx is for one day
-				extractViewsForOneDay(compactTs, idx+1, nextIdx, value);
-
-				idx = nextIdx;
+				try {
+					extractViewsForOneDay(compactTs, idx + 1, nextIdx, value);
+					idx = nextIdx;
+				} catch (Exception e) {
+					continue;
+				}
 			}
 
 			StringBuilder sb = new StringBuilder();
