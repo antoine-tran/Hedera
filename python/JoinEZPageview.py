@@ -12,8 +12,11 @@ def join_ts_dict(tsfile,dictfile,outfile):
     t2id = defaultdict(int)
     with codecs.open(dictfile,'r','utf-8') as reader:
         for line in reader:
-            i = line.find(' ')
-            t2id[line[:i]] = int(line.rstrip()[i+1:])
+            try:
+                i = line.find(' ')
+                t2id[line[:i]] = int(line.rstrip()[i+1:])
+            except:
+                continue
 
     with codecs.open(tsfile,'r','utf-8') as reader:
         o = codecs.open(outfile,'w','utf-8')
