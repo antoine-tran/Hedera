@@ -34,7 +34,7 @@ sh $(pwd)/etc/run-local-jars.sh org.hedera.LocalEZPageviewDay $1 $2 $3 $1.out $5
 
 ###################################################################################
 echo "aggregating..."
-python $(pwd)/python/AggregateEZPageview.py $1.sort $1.aggr $3
+python $(pwd)/python/AggregateEZPageview.py $1.out $1.aggr $3
 echo "joining..."
 python $(pwd)/python/JoinEZPageview.py $1.aggr $4 $1.ts1
 echo "aggregating..."
