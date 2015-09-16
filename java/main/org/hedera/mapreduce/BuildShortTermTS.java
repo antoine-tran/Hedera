@@ -5,6 +5,7 @@ import gnu.trove.procedure.TObjectIntProcedure;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -127,6 +128,11 @@ public class BuildShortTermTS extends JobConfig implements Tool {
         Job job = setup(TextInputFormat.class, SequenceFileOutputFormat.class,
                 PairOfStrings.class, Text.class, PairOfStrings.class, Text.class,
                 MyMapper.class, MyReducer.class, args);
+        Configuration conf = job.getConfiguration();
+        conf.set("mapreduce.map.memory.mb", "4096");
+        conf.set("mapreduce.map.java.opts", "-Xmx4096m");
+        conf.set("mapreduce.reduce.memory.mb", "4096");
+        conf.set("mapreduce.reduce.java.opts", "-Xmx4096m");
         job.waitForCompletion(true);
         return 0;
     }
@@ -137,6 +143,11 @@ public class BuildShortTermTS extends JobConfig implements Tool {
         Job job = setup(SequenceFileInputFormat.class, TextOutputFormat.class,
                 PairOfStrings.class, Text.class, PairOfStrings.class, Text.class,
                 Mapper.class, IntSumReducer.class, args);
+        Configuration conf = job.getConfiguration();
+        conf.set("mapreduce.map.memory.mb", "4096");
+        conf.set("mapreduce.map.java.opts", "-Xmx4096m");
+        conf.set("mapreduce.reduce.memory.mb", "4096");
+        conf.set("mapreduce.reduce.java.opts", "-Xmx4096m");
         job.waitForCompletion(true);
         return 0;
     }
