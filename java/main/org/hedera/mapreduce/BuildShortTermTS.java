@@ -77,7 +77,7 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 
             // Now if we are not crashed yet, move on
             TObjectIntHashMap<String> mi = combinations(idx);
-            idx = null;
+            if (mi == null) return;
 
             mi.forEachEntry(new TObjectIntProcedure<String>() {
                 public boolean execute(String k, int v) {
