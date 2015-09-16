@@ -130,10 +130,10 @@ public class BuildShortTermTS extends JobConfig implements Tool {
                 PairOfStrings.class, IntWritable.class,
                 MyMapper.class, MyReducer.class, args);
         Configuration conf = job.getConfiguration();
-        conf.set("mapreduce.map.memory.mb", "4096");
-        conf.set("mapreduce.map.java.opts", "-Xmx4096m");
-        conf.set("mapreduce.reduce.memory.mb", "4096");
-        conf.set("mapreduce.reduce.java.opts", "-Xmx4096m");
+        conf.set("mapreduce.map.memory.mb", "3000");
+        conf.set("mapreduce.map.java.opts", "-Xmx3000m");
+        conf.set("mapreduce.reduce.memory.mb", "3000");
+        conf.set("mapreduce.reduce.java.opts", "-Xmx3000m");
         job.waitForCompletion(true);
         return 0;
     }
@@ -146,10 +146,10 @@ public class BuildShortTermTS extends JobConfig implements Tool {
                 PairOfStrings.class, IntWritable.class,
                 Mapper.class, IntSumReducer.class, args);
         Configuration conf = job.getConfiguration();
-        conf.set("mapreduce.map.memory.mb", "4096");
-        conf.set("mapreduce.map.java.opts", "-Xmx4096m");
-        conf.set("mapreduce.reduce.memory.mb", "4096");
-        conf.set("mapreduce.reduce.java.opts", "-Xmx4096m");
+        conf.set("mapreduce.map.memory.mb", "3000");
+        conf.set("mapreduce.map.java.opts", "-Xmx3000m");
+        conf.set("mapreduce.reduce.memory.mb", "3000");
+        conf.set("mapreduce.reduce.java.opts", "-Xmx3000m");
         job.waitForCompletion(true);
         return 0;
     }
