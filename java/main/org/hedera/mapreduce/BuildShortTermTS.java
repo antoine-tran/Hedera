@@ -126,7 +126,8 @@ public class BuildShortTermTS extends JobConfig implements Tool {
             IOException, ClassNotFoundException {
         System.out.println("Phase 1");
         Job job = setup(TextInputFormat.class, SequenceFileOutputFormat.class,
-                PairOfStrings.class, Text.class, PairOfStrings.class, Text.class,
+                PairOfStrings.class, Text.class,
+                PairOfStrings.class, IntWritable.class,
                 MyMapper.class, MyReducer.class, args);
         Configuration conf = job.getConfiguration();
         conf.set("mapreduce.map.memory.mb", "4096");
@@ -141,7 +142,8 @@ public class BuildShortTermTS extends JobConfig implements Tool {
             IOException, ClassNotFoundException {
         System.out.println("Phase 1");
         Job job = setup(SequenceFileInputFormat.class, TextOutputFormat.class,
-                PairOfStrings.class, Text.class, PairOfStrings.class, Text.class,
+                PairOfStrings.class, IntWritable.class,
+                PairOfStrings.class, IntWritable.class,
                 Mapper.class, IntSumReducer.class, args);
         Configuration conf = job.getConfiguration();
         conf.set("mapreduce.map.memory.mb", "4096");
