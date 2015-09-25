@@ -111,7 +111,7 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 
 		@Override
 		public int getPartition(PairOfStrings key, IntWritable val, int numReduceTasks) {
-			return (key.getLeftElement().hashCode() % Integer.MAX_VALUE) % numReduceTasks;
+			return Math.abs(key.getLeftElement().hashCode() % Integer.MAX_VALUE) % numReduceTasks;
 		}
 	}
 
