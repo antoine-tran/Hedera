@@ -209,12 +209,56 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 		// Emit one last point
 		protected void cleanup(Context context) throws IOException, InterruptedException {
 			if (prevPair != null) {
+				
+				while (curDate.isBefore(end)) {
+					ts.append(String.valueOf(0));
+					ts.append(' ');
+					curDate = curDate.plusDays(1);
+				}
+				
 				KEY.set(prevPair);
 				VALUE.set(ts.toString());
 				context.write(KEY, VALUE);
 			}
 			ts.delete(0, ts.length());
 			prevPair = null;
+			begin = end = curDate = null;
+		}
+	}
+	
+	private static class MyReducer11 extends Reducer<PairOfStrings, IntWritable, Text, Text> {		
+
+		private final Text KEY = new Text();
+		private final Text VALUE = new Text();
+		
+		// This is nasty: We have to use global variables to do our job
+		private DateTime begin = null, end = null, curDate = null;
+		private String prevPair = null;
+		private StringBuilder ts = new StringBuilder();
+		
+		@Override
+		protected void setup(Context context) throws IOException, InterruptedException {
+			super.setup(context);			
+			Configuration conf = context.getConfiguration();
+			begin = dtf.parseDateTime("2015-01-30");
+			end = dtf.parseDateTime("2015-03-02");
+		}
+
+		@Override
+		protected void reduce(PairOfStrings key, Iterable<IntWritable> vals, Context context)
+						throws IOException, InterruptedException {
+			
+			// Sum before doing any fancy stuff
+			int sum = 0;
+			for (IntWritable v : vals) sum += v.get();			
+			KEY.set(key.getLeftElement() + "\t" + key.getRightElement());
+			VALUE.set(String.valueOf(sum));
+			context.write(KEY, VALUE);
+		}
+		
+		@Override
+		// Emit one last point
+		protected void cleanup(Context context) throws IOException, InterruptedException {			
 			begin = end = curDate = null;
 		}
 	}
@@ -254,7 +298,10 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 			phase2(args);
 		}
 		else if ("ts".equals(phase)) {
-			phase3(args);
+			phase3(args, false);
+		}
+		else if ("tst".equals(phase)) {
+			phase3(args, true);
 		}
 		return 0;
 	}
@@ -279,12 +326,12 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 		return 0;
 	}
 
-	private int phase3(String[] args) throws InterruptedException,
+	private int phase3(String[] args, boolean test) throws InterruptedException,
 	IOException, ClassNotFoundException {
 		System.out.println("Phase 3");
 		Job job = setup(SequenceFileInputFormat.class, TextOutputFormat.class,
 				PairOfStrings.class, IntWritable.class, PairOfStrings.class, IntWritable.class,
-				Mapper.class, MyReducer1.class, args);
+				Mapper.class, (test) ? MyReducer11.class : MyReducer1.class, args);
 		Configuration conf = job.getConfiguration();
 		
 		String beginTime = "2015-01-30";
