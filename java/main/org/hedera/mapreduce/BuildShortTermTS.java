@@ -147,6 +147,25 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 			return compare;
 		}
 	}
+
+	private static class MyMapper1 extends Mapper<LongWritable, Text, PairOfStrings, IntWritable> {
+
+		private final PairOfStrings KEY = new PairOfStrings();
+		private final IntWritable VALUE = new IntWritable();
+
+		@Override
+		protected void map(LongWritable key, Text value, Context context)
+				throws IOException, InterruptedException {
+			String line = value.toString();
+			int i = line.indexOf('\t');
+			int j = line.indexOf(',');
+			String s1 = line.substring(1, j);
+			String s2 = line.substring(j+2, i-1);
+			KEY.set(s1,s2);
+			VALUE.set(Integer.parseInt(line.substring(i+1)));
+			context.write(KEY, VALUE);
+		}
+	}
 	
 	private static class MyReducer1 extends Reducer<PairOfStrings, IntWritable, Text, Text> {		
 
@@ -331,7 +350,7 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 		System.out.println("Phase 3");
 		Job job = setup(SequenceFileInputFormat.class, TextOutputFormat.class,
 				PairOfStrings.class, IntWritable.class, PairOfStrings.class, IntWritable.class,
-				Mapper.class, (test) ? MyReducer11.class : MyReducer1.class, args);
+				MyMapper1.class, (test) ? MyReducer11.class : MyReducer1.class, args);
 		Configuration conf = job.getConfiguration();
 		
 		String beginTime = "2015-01-30";
