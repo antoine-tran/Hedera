@@ -348,7 +348,7 @@ public class BuildShortTermTS extends JobConfig implements Tool {
 	private int phase3(String[] args, boolean test) throws InterruptedException,
 	IOException, ClassNotFoundException {
 		System.out.println("Phase 3");
-		Job job = setup(SequenceFileInputFormat.class, TextOutputFormat.class,
+		Job job = setup(TextInputFormat.class, TextOutputFormat.class,
 				PairOfStrings.class, IntWritable.class, PairOfStrings.class, IntWritable.class,
 				MyMapper1.class, (test) ? MyReducer11.class : MyReducer1.class, args);
 		Configuration conf = job.getConfiguration();
